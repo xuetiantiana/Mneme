@@ -1,0 +1,47 @@
+{
+    "name": "vite-project",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vue-tsc && vite build",
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d dist",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@amcharts/amcharts4": "^4.10.39",
+        "axios": "^1.7.2",
+        "crypto-js": "^4.2.0",
+        "d3": "^7.9.0",
+        "diagram-js": "^15.7.0",
+        "echarts": "^5.5.1",
+        "element-plus": "^2.7.8",
+        "express": "^5.2.1",
+        "fabric": "^7.1.0",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^3.0.0",
+        "konva": "^10.2.0",
+        "pinia": "^3.0.3",
+        "spearman-rho": "^1.0.6",
+        "swiper": "^11.1.12",
+        "uuid": "^13.0.0",
+        "vue": "^3.4.21",
+        "vue-konva": "^3.3.0",
+        "vue-router": "^4.3.0"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.4",
+        "echarts-gl": "^2.0.9",
+        "fast-glob": "^3.3.2",
+        "path": "^0.12.7",
+        "sass": "^1.77.4",
+        "typescript": "^5.2.2",
+        "unplugin-auto-import": "^0.18.2",
+        "unplugin-vue-components": "^0.27.3",
+        "vite": "^5.2.0",
+        "vite-plugin-svg-icons": "^2.0.1",
+        "vue-tsc": "^2.0.6"
+    }
+}
