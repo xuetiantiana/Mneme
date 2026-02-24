@@ -94,6 +94,8 @@ const showRight = ref(true);
   }
 
   .right-panel {
+    width: 30%;
+    min-width: 400px;
     border-right: none;
     border-left: 1px solid #ddd;
   }

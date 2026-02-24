@@ -16,7 +16,6 @@
       </div>
     </div>
     <div class="right-panel">
-      
       <div
         class="canvas-wrapper"
         ref="canvasContainer"
@@ -30,22 +29,28 @@
         @dblclick="handleDoubleClick"
         @contextmenu.prevent
       >
-        <canvas ref="canvasRef" style="width: 100%;"></canvas>
-        
+        <canvas ref="canvasRef" style="width: 100%"></canvas>
+
         <textarea
           v-if="editingText"
           ref="textInputRef"
           class="text-input-overlay"
           :style="{
             left: editingText.x * appState.scale + appState.scrollX + 'px',
-            top: editingText.y * appState.scale + appState.scrollY - (editingText.element.fontSize || 16) * appState.scale + 'px',
+            top:
+              editingText.y * appState.scale +
+              appState.scrollY -
+              (editingText.element.fontSize || 16) * appState.scale +
+              'px',
             width: editingText.width * appState.scale + 'px',
             height: editingText.height * appState.scale + 'px',
-            fontSize: (editingText.element.fontSize || 16) * appState.scale + 'px',
+            fontSize:
+              (editingText.element.fontSize || 16) * appState.scale + 'px',
             color: editingText.element.strokeColor,
             fontWeight: editingText.element.fontWeight || 'normal',
             padding: '0px',
-            lineHeight: (editingText.element.fontSize || 16) * appState.scale + 'px'
+            lineHeight:
+              (editingText.element.fontSize || 16) * appState.scale + 'px',
           }"
           v-model="editingText.element.text"
           @blur="finishEditingText"
@@ -55,24 +60,23 @@
         ></textarea>
       </div>
 
-      <!-- <div class="header-section">
-        <div class="title">无限画布编辑器</div>
+      <div class="header-section" style="">
         <div class="toolbar">
-          <button 
+          <button
             :class="{ active: currentTool === 'select' }"
             @click="setTool('select')"
-            title="选择工具"
+            title="编辑画布"
           >
-            选择
+            编辑
           </button>
-          <button 
+          <button
             :class="{ active: currentTool === 'pan' }"
             @click="setTool('pan')"
             title="移动画布"
           >
             移动
           </button>
-          <button 
+          <!-- <button 
             :class="{ active: currentTool === 'rectangle' }"
             @click="setTool('rectangle')"
             title="绘制矩形"
@@ -124,9 +128,9 @@
             <button @click="deleteSelected">删除选中</button>
             <button @click="clearCanvas">清空画布</button>
             <button @click="exportCanvas">导出图片</button>
-          </div>
+          </div> -->
         </div>
-      </div> -->
+      </div>
       <!-- <div class="status-bar">
         <span>元素数量: {{ canvasElements.length }}</span>
         <span>坐标: ({{ Math.round(appState.scrollX) }}, {{ Math.round(appState.scrollY) }})</span>
@@ -143,6 +147,13 @@ import image1 from "@/assets/images/1691549357221680.png";
 import image2 from "@/assets/images/OIP-C.png";
 import image3 from "@/assets/images/OIP-C2.png";
 
+const props = defineProps({
+  allowScale: {
+    type: Boolean,
+    default: true,
+  },
+});
+
 const emit = defineEmits(["showPopup"]);
 
 const canvasRef = ref(null);
@@ -152,16 +163,16 @@ const ctx = ref(null);
 const images = ref([
   {
     name: "示例图片1",
-    src: image1
+    src: image1,
   },
   {
     name: "示例图片2",
-    src: image2
+    src: image2,
   },
   {
     name: "示例图片3",
-    src: image3
-  }
+    src: image3,
+  },
 ]);
 
 const appState = reactive({
@@ -171,7 +182,7 @@ const appState = reactive({
   width: 0,
   height: 0,
   offsetLeft: 0,
-  offsetTop: 0
+  offsetTop: 0,
 });
 
 const canvasElements = ref([]);
@@ -181,7 +192,7 @@ const selectedElements = ref([]);
 watch(
   canvasElements,
   (newValue, oldValue) => {
-    console.log('!!!!!canvasElements变化:', newValue);
+    console.log("!!!!!canvasElements变化:", newValue);
   },
   { deep: true }
 );
@@ -209,28 +220,28 @@ const HANDLE_SIZE = 10;
 const memoryAddPosition = { x: 0, y: 0 };
 // 添加默认文本元素
 // 功能：在画布中心添加一个默认的文本元素
-const dawnTopicTopic = ()=>{
+const dawnTopicTopic = () => {
   const canvas = canvasRef.value;
   if (!canvas) return;
-  
+
   const text = "我和我的猫的故事";
   const fontSize = 18;
   const fontWeight = "bold";
   let textWidth = 200;
-  
+
   // 确保文本宽度至少为33px
   textWidth = Math.max(33, textWidth);
-  
+
   // 计算文本高度
   const textResult = drawTextWithWrapping(ctx.value, text, 0, 0, {
     maxWidth: textWidth,
     fontSize: fontSize,
     fontWeight: fontWeight,
     color: "#000000",
-    dryRun: true
+    dryRun: true,
   });
   const textHeight = textResult.height;
-  
+
   const textElement = {
     id: Date.now(),
     type: "text",
@@ -243,7 +254,7 @@ const dawnTopicTopic = ()=>{
     strokeColor: "#000",
     strokeWidth: strokeWidth.value,
     text: text,
-    backgroundColor: "red"
+    backgroundColor: "red",
   };
   canvasElements.value.push(textElement);
   // selectedElements.value = [textElement];
@@ -255,8 +266,7 @@ const dawnTopicTopic = ()=>{
   memoryAddPosition.x = textElement.x;
   memoryAddPosition.y = textElement.y;
   emit("showPopup", { x: offset.x, y: offset.y });
-  
-}
+};
 
 // 添加卡片元素
 // 功能：创建一个包含文本和图片的卡片元素
@@ -271,39 +281,39 @@ const addCardElement = (text, imageSrc, x, y, width = 400) => {
   img.onload = () => {
     // 计算内边距
     const padding = 20;
-    
+
     // 计算文本区域高度
     const fontSize = 14;
     const lineHeight = fontSize * 1.2;
     let textWidth = width - padding * 2;
-    
+
     // 确保文本宽度至少为33px
-  textWidth = Math.max(33, textWidth);
-  
-  // 计算文本行数（使用专门的函数）
-  const textResult = drawTextWithWrapping(ctx.value, text, 0, 0, {
-    maxWidth: textWidth,
-    fontSize: fontSize,
-    fontWeight: "normal",
-    color: "#000000",
-    dryRun: true
-  });
-  const textHeight = textResult.height;
-    
+    textWidth = Math.max(33, textWidth);
+
+    // 计算文本行数（使用专门的函数）
+    const textResult = drawTextWithWrapping(ctx.value, text, 0, 0, {
+      maxWidth: textWidth,
+      fontSize: fontSize,
+      fontWeight: "normal",
+      color: "#000000",
+      dryRun: true,
+    });
+    const textHeight = textResult.height;
+
     // 计算图片尺寸：宽度为卡片宽度的90%
     const imgWidth = width * 0.9;
     const aspectRatio = img.width / img.height;
     const imgHeight = imgWidth / aspectRatio;
-    
+
     // 计算卡片总高度（自适应）
     const cardHeight = padding * 3 + textHeight + imgHeight;
-    
+
     // 计算元素位置
     const textX = padding;
     const textY = padding;
     const imgX = (width - imgWidth) / 2;
     const imgY = padding + textHeight + padding;
-    
+
     const cardElement = {
       id: Date.now(),
       type: "card",
@@ -326,7 +336,7 @@ const addCardElement = (text, imageSrc, x, y, width = 400) => {
           fontWeight: "normal",
           strokeColor: "#333333",
           text: text,
-          parentId: Date.now()
+          parentId: Date.now(),
         },
         {
           id: Date.now() + 2,
@@ -337,9 +347,9 @@ const addCardElement = (text, imageSrc, x, y, width = 400) => {
           height: imgHeight,
           src: imageSrc,
           image: img,
-          parentId: Date.now()
-        }
-      ]
+          parentId: Date.now(),
+        },
+      ],
     };
     canvasElements.value.push(cardElement);
     drawElements();
@@ -350,7 +360,7 @@ const addCardElement = (text, imageSrc, x, y, width = 400) => {
   img.src = imageSrc;
 };
 
-const dwanMemoryC1= (data)=>{
+const dwanMemoryC1 = (data) => {
   console.log(data);
   // memoryAddPosition 将图片和文字添加在该位置
   // 使用卡片元素来包含文字和图片
@@ -360,20 +370,20 @@ const dwanMemoryC1= (data)=>{
     memoryAddPosition.x,
     memoryAddPosition.y
   );
-}
+};
 
 let rafId = null;
 
 defineExpose({
-  dwanMemoryC1
+  dwanMemoryC1,
 });
-onMounted(async() => {
+onMounted(async () => {
   await initCanvas();
   window.addEventListener("resize", handleResize);
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
 
-  dawnTopicTopic();
+  // dawnTopicTopic();
 });
 
 onUnmounted(() => {
@@ -385,32 +395,30 @@ onUnmounted(() => {
   }
 });
 
-const initCanvas = async() => {
+const initCanvas = async () => {
   const canvas = canvasRef.value;
   const container = canvasContainer.value;
   if (canvas && container) {
     const { offsetWidth, offsetHeight, offsetLeft, offsetTop } = container;
-    
+
     canvas.width = offsetWidth * window.devicePixelRatio;
     canvas.height = offsetHeight * window.devicePixelRatio;
     canvas.style.width = `${offsetWidth}px`;
     canvas.style.height = `${offsetHeight}px`;
-    
+
     ctx.value = canvas.getContext("2d");
     ctx.value.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
+
     appState.width = offsetWidth;
     appState.height = offsetHeight;
     appState.offsetLeft = offsetLeft;
     appState.offsetTop = offsetTop;
     appState.scrollX = offsetWidth / 2;
     appState.scrollY = offsetHeight / 2;
-    
+
     renderScene();
   }
 };
-
-
 
 // 处理窗口大小变化
 // 功能：当窗口大小变化时，重新初始化画布
@@ -431,7 +439,10 @@ const handleKeyDown = (event) => {
       canvasRef.value.style.cursor = "grab";
     }
   }
-  if ((event.code === "Delete" || event.code === "Backspace") && selectedElements.value.length > 0) {
+  if (
+    (event.code === "Delete" || event.code === "Backspace") &&
+    selectedElements.value.length > 0
+  ) {
     event.preventDefault();
     deleteSelected();
   }
@@ -461,7 +472,7 @@ const updateCursor = () => {
       rectangle: "crosshair",
       circle: "crosshair",
       line: "crosshair",
-      text: "text"
+      text: "text",
     };
     canvasRef.value.style.cursor = cursors[currentTool.value] || "default";
   }
@@ -487,7 +498,7 @@ const clientToCanvasCoords = (clientX, clientY) => {
   const { left, top } = getCanvasRect();
   return {
     x: clientX - left,
-    y: clientY - top
+    y: clientY - top,
   };
 };
 
@@ -536,17 +547,17 @@ const sceneCoordsToCanvasOffset = (sceneX, sceneY) => {
 // 使用requestAnimationFrame实现循环渲染，保持60fps
 const renderScene = () => {
   if (!ctx.value || !canvasRef.value) return;
-  
+
   const canvas = canvasRef.value;
   const { width, height } = appState;
-  
+
   ctx.value.clearRect(0, 0, width, height);
-  
+
   drawBackground();
   drawGrid();
   drawElements();
   drawSelection();
-  
+
   if (rafId) {
     cancelAnimationFrame(rafId);
   }
@@ -565,30 +576,30 @@ const drawBackground = () => {
 // 功能：绘制背景网格线，帮助用户对齐元素
 const drawGrid = () => {
   if (!ctx.value) return;
-  
+
   const gridSize = 50 * appState.scale;
   const startX = appState.scrollX % gridSize;
   const startY = appState.scrollY % gridSize;
-  
+
   ctx.value.strokeStyle = "#e0e0e0";
   ctx.value.lineWidth = 1;
   ctx.value.setLineDash([5, 5]);
-  
+
   ctx.value.beginPath();
-  
+
   for (let x = startX; x < appState.width; x += gridSize) {
     ctx.value.moveTo(x, 0);
     ctx.value.lineTo(x, appState.height);
   }
-  
+
   for (let y = startY; y < appState.height; y += gridSize) {
     ctx.value.moveTo(0, y);
     ctx.value.lineTo(appState.width, y);
   }
-  
+
   ctx.value.stroke();
   ctx.value.setLineDash([]);
-  
+
   drawAxis();
 };
 
@@ -596,20 +607,20 @@ const drawGrid = () => {
 // 功能：绘制场景原点(0,0)的红色坐标轴，帮助用户定位
 const drawAxis = () => {
   if (!ctx.value) return;
-  
+
   const origin = sceneCoordsToViewportCoords(0, 0);
-  
-  ctx.value.strokeStyle = "#ff0000";
+
+  ctx.value.strokeStyle = "#ddd";
   ctx.value.lineWidth = 2;
   ctx.value.setLineDash([10, 5]);
-  
+
   ctx.value.beginPath();
   ctx.value.moveTo(origin.x, 0);
   ctx.value.lineTo(origin.x, appState.height);
   ctx.value.moveTo(0, origin.y);
   ctx.value.lineTo(appState.width, origin.y);
   ctx.value.stroke();
-  
+
   ctx.value.setLineDash([]);
 };
 
@@ -617,8 +628,8 @@ const drawAxis = () => {
 // 功能：遍历并绘制所有canvas元素
 const drawElements = () => {
   if (!ctx.value) return;
-  
-  canvasElements.value.forEach(element => {
+
+  canvasElements.value.forEach((element) => {
     drawElement(element);
   });
 };
@@ -637,15 +648,25 @@ const drawElement = (element, options = {}) => {
     context = ctx.value,
     scale = appState.scale,
     useViewportCoords = true,
-    parentTransform = { x: 0, y: 0 }
+    parentTransform = { x: 0, y: 0 },
   } = options;
-  
+
   if (!context) return;
-  
-  const { x, y, width, height, type, strokeColor, strokeWidth, points, children } = element;
+
+  const {
+    x,
+    y,
+    width,
+    height,
+    type,
+    strokeColor,
+    strokeWidth,
+    points,
+    children,
+  } = element;
   const actualX = x + parentTransform.x;
   const actualY = y + parentTransform.y;
-  
+
   let drawX, drawY;
   if (useViewportCoords) {
     const viewportPos = sceneCoordsToViewportCoords(actualX, actualY);
@@ -655,9 +676,9 @@ const drawElement = (element, options = {}) => {
     drawX = actualX;
     drawY = actualY;
   }
-  
+
   context.save();
-  
+
   switch (type) {
     case "card":
       context.fillStyle = element.backgroundColor;
@@ -670,7 +691,7 @@ const drawElement = (element, options = {}) => {
         element.borderRadius * scale
       );
       context.fill();
-      
+
       if (useViewportCoords && element.shadowColor) {
         context.shadowColor = element.shadowColor;
         context.shadowBlur = 10 * scale;
@@ -679,27 +700,27 @@ const drawElement = (element, options = {}) => {
         context.fill();
         context.shadowColor = "transparent";
       }
-      
+
       if (children && children.length > 0) {
-        children.forEach(child => {
-          drawElement(child, { context, scale, useViewportCoords, parentTransform: { x: actualX, y: actualY } });
+        children.forEach((child) => {
+          drawElement(child, {
+            context,
+            scale,
+            useViewportCoords,
+            parentTransform: { x: actualX, y: actualY },
+          });
         });
       }
       break;
-      
+
     case "rectangle":
       context.strokeStyle = strokeColor;
       context.lineWidth = strokeWidth * scale;
       context.lineCap = "round";
       context.lineJoin = "round";
-      context.strokeRect(
-        drawX,
-        drawY,
-        width * scale,
-        height * scale
-      );
+      context.strokeRect(drawX, drawY, width * scale, height * scale);
       break;
-      
+
     case "circle":
       context.strokeStyle = strokeColor;
       context.lineWidth = strokeWidth * scale;
@@ -716,7 +737,7 @@ const drawElement = (element, options = {}) => {
       );
       context.stroke();
       break;
-      
+
     case "line":
       if (points && points.length >= 2) {
         context.strokeStyle = strokeColor;
@@ -724,12 +745,18 @@ const drawElement = (element, options = {}) => {
         context.lineCap = "round";
         context.lineJoin = "round";
         context.beginPath();
-        
+
         if (useViewportCoords) {
-          const start = sceneCoordsToViewportCoords(points[0].x + actualX, points[0].y + actualY);
+          const start = sceneCoordsToViewportCoords(
+            points[0].x + actualX,
+            points[0].y + actualY
+          );
           context.moveTo(start.x, start.y);
           for (let i = 1; i < points.length; i++) {
-            const point = sceneCoordsToViewportCoords(points[i].x + actualX, points[i].y + actualY);
+            const point = sceneCoordsToViewportCoords(
+              points[i].x + actualX,
+              points[i].y + actualY
+            );
             context.lineTo(point.x, point.y);
           }
         } else {
@@ -738,17 +765,17 @@ const drawElement = (element, options = {}) => {
             context.lineTo(points[i].x + actualX, points[i].y + actualY);
           }
         }
-        
+
         context.stroke();
       }
       break;
-      
+
     case "text":
       const text = element.text || "文本";
       const fontSize = element.fontSize || 16;
       const fontWeight = element.fontWeight || "normal";
       const fontSizeScaled = fontSize * scale;
-      
+
       if (element.backgroundColor) {
         context.fillStyle = element.backgroundColor;
         context.fillRect(
@@ -758,17 +785,17 @@ const drawElement = (element, options = {}) => {
           (element.height || fontSize * 1.2) * scale
         );
       }
-      
+
       const textResult = drawTextWithWrapping(context, text, drawX, drawY, {
         maxWidth: (element.width || Infinity) * scale,
         fontSize: fontSizeScaled,
         fontWeight: fontWeight,
-        color: element.strokeColor || "#000000"
+        color: element.strokeColor || "#000000",
       });
-      
+
       element.height = textResult.height;
       break;
-      
+
     case "image":
       if (element.image) {
         context.drawImage(
@@ -781,7 +808,7 @@ const drawElement = (element, options = {}) => {
       }
       break;
   }
-  
+
   context.restore();
 };
 
@@ -793,7 +820,7 @@ const drawElement = (element, options = {}) => {
 const getElementAbsolutePosition = (element) => {
   let absoluteX = element.x;
   let absoluteY = element.y;
-  
+
   // 如果元素有父元素，递归计算绝对坐标
   if (element.parentId) {
     const findParent = (elements, parentId) => {
@@ -810,7 +837,7 @@ const getElementAbsolutePosition = (element) => {
       }
       return null;
     };
-    
+
     const parent = findParent(canvasElements.value, element.parentId);
     if (parent) {
       const parentAbsPos = getElementAbsolutePosition(parent);
@@ -818,7 +845,7 @@ const getElementAbsolutePosition = (element) => {
       absoluteY += parentAbsPos.y;
     }
   }
-  
+
   return { x: absoluteX, y: absoluteY };
 };
 
@@ -844,17 +871,17 @@ const drawTextWithWrapping = (ctx, text, x, y, options = {}) => {
     fontWeight = "normal",
     color = "#000000",
     lineHeight = fontSize * 1.2,
-    dryRun = false
+    dryRun = false,
   } = options;
-  
+
   if (!ctx || !text) return { height: 0 };
-  
+
   // 设置字体样式
   ctx.font = `${fontWeight} ${fontSize}px Arial`;
   if (!dryRun) {
     ctx.fillStyle = color;
   }
-  
+
   // 如果没有宽度限制，直接绘制
   if (maxWidth === Infinity) {
     if (!dryRun) {
@@ -862,17 +889,17 @@ const drawTextWithWrapping = (ctx, text, x, y, options = {}) => {
     }
     return { height: lineHeight };
   }
-  
+
   // 实现文本自动换行
   const lines = [];
   let currentLine = "";
-  
+
   // 逐字符测量文本宽度
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     const testLine = currentLine + char;
     const metrics = ctx.measureText(testLine);
-    
+
     if (metrics.width > maxWidth) {
       lines.push(currentLine);
       currentLine = char;
@@ -880,18 +907,18 @@ const drawTextWithWrapping = (ctx, text, x, y, options = {}) => {
       currentLine = testLine;
     }
   }
-  
+
   if (currentLine) {
     lines.push(currentLine);
   }
-  
+
   // 绘制多行文本（dryRun模式下不绘制）
   if (!dryRun) {
     lines.forEach((line, index) => {
       ctx.fillText(line, x, y + index * lineHeight);
     });
   }
-  
+
   return { height: lines.length * lineHeight };
 };
 
@@ -900,7 +927,7 @@ const drawTextWithWrapping = (ctx, text, x, y, options = {}) => {
 const drawSelection = () => {
   // 1. 安全检查：如果没有画布上下文或没有选中元素，直接返回
   if (!ctx.value || selectedElements.value.length === 0) return;
-  
+
   // 2. 保存当前画布状态
   ctx.value.save();
 
@@ -908,30 +935,33 @@ const drawSelection = () => {
   ctx.value.strokeStyle = "#2196F3";
   ctx.value.lineWidth = 2;
   ctx.value.setLineDash([5, 5]);
-  
-  selectedElements.value.forEach(element => {
+
+  selectedElements.value.forEach((element) => {
     // 计算元素的绝对坐标（考虑父元素的位置）
     const absolutePos = getElementAbsolutePosition(element);
     // 将元素的绝对场景坐标转换为视口坐标（考虑缩放和滚动）
-    const viewportPos = sceneCoordsToViewportCoords(absolutePos.x, absolutePos.y);
-    
+    const viewportPos = sceneCoordsToViewportCoords(
+      absolutePos.x,
+      absolutePos.y
+    );
+
     if (element.type === "text") {
       const text = element.text || "文本";
       const fontSize = element.fontSize || 16;
       const fontWeight = element.fontWeight || "normal";
       const fontSizeScaled = fontSize * appState.scale;
       const textWidth = element.width || 200;
-      
+
       // 使用drawTextWithWrapping的dryRun模式计算文本高度
       const textResult = drawTextWithWrapping(ctx.value, text, 0, 0, {
         maxWidth: textWidth,
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: "#000000",
-        dryRun: true
+        dryRun: true,
       });
       const textHeight = textResult.height;
-      
+
       // Canvas文本绘制是从基线开始的，第一行的基线在viewportPos.y位置
       // drawTextWithWrapping返回的height = lines.length * lineHeight
       // 文本的顶部在第一行基线上方一个字体大小的位置
@@ -949,41 +979,85 @@ const drawSelection = () => {
       const absHeight = Math.abs(element.height);
       const scaledWidth = absWidth * appState.scale;
       const scaledHeight = absHeight * appState.scale;
-      
+
       // 如果宽度或高度为负，调整viewportPos以正确显示选择框
-      const actualViewportX = element.width < 0 ? viewportPos.x - scaledWidth : viewportPos.x;
-      const actualViewportY = element.height < 0 ? viewportPos.y - scaledHeight : viewportPos.y;
-      
+      const actualViewportX =
+        element.width < 0 ? viewportPos.x - scaledWidth : viewportPos.x;
+      const actualViewportY =
+        element.height < 0 ? viewportPos.y - scaledHeight : viewportPos.y;
+
       ctx.value.strokeRect(
-          actualViewportX - 5,
-          actualViewportY - 5,
-          scaledWidth + 10,
-          scaledHeight + 10
-        );
-      
+        actualViewportX - 5,
+        actualViewportY - 5,
+        scaledWidth + 10,
+        scaledHeight + 10
+      );
+
       // 绘制调整大小手柄（对图片、矩形和卡片）
-      if (element.type === "image" || element.type === "rectangle" || element.type === "card") {
+      if (
+        element.type === "image" ||
+        element.type === "rectangle" ||
+        element.type === "card"
+      ) {
         ctx.value.save();
         ctx.value.setLineDash([]);
         ctx.value.fillStyle = "#2196F3";
         ctx.value.strokeStyle = "#fff";
         ctx.value.lineWidth = 2;
-        
+
         const handleSize = HANDLE_SIZE;
         const handles = [
-          { x: actualViewportX - handleSize / 2, y: actualViewportY - handleSize / 2, name: "nw" },
-          { x: actualViewportX + scaledWidth / 2 - handleSize / 2, y: actualViewportY - handleSize / 2, name: "n" },
-          { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY - handleSize / 2, name: "ne" },
-          { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY + scaledHeight / 2 - handleSize / 2, name: "e" },
-          { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "se" },
-          { x: actualViewportX + scaledWidth / 2 - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "s" },
-          { x: actualViewportX - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "sw" },
-          { x: actualViewportX - handleSize / 2, y: actualViewportY + scaledHeight / 2 - handleSize / 2, name: "w" }
+          {
+            x: actualViewportX - handleSize / 2,
+            y: actualViewportY - handleSize / 2,
+            name: "nw",
+          },
+          {
+            x: actualViewportX + scaledWidth / 2 - handleSize / 2,
+            y: actualViewportY - handleSize / 2,
+            name: "n",
+          },
+          {
+            x: actualViewportX + scaledWidth - handleSize / 2,
+            y: actualViewportY - handleSize / 2,
+            name: "ne",
+          },
+          {
+            x: actualViewportX + scaledWidth - handleSize / 2,
+            y: actualViewportY + scaledHeight / 2 - handleSize / 2,
+            name: "e",
+          },
+          {
+            x: actualViewportX + scaledWidth - handleSize / 2,
+            y: actualViewportY + scaledHeight - handleSize / 2,
+            name: "se",
+          },
+          {
+            x: actualViewportX + scaledWidth / 2 - handleSize / 2,
+            y: actualViewportY + scaledHeight - handleSize / 2,
+            name: "s",
+          },
+          {
+            x: actualViewportX - handleSize / 2,
+            y: actualViewportY + scaledHeight - handleSize / 2,
+            name: "sw",
+          },
+          {
+            x: actualViewportX - handleSize / 2,
+            y: actualViewportY + scaledHeight / 2 - handleSize / 2,
+            name: "w",
+          },
         ];
-        
-        handles.forEach(handle => {
+
+        handles.forEach((handle) => {
           ctx.value.beginPath();
-          ctx.value.arc(handle.x + handleSize / 2, handle.y + handleSize / 2, handleSize / 2, 0, Math.PI * 2);
+          ctx.value.arc(
+            handle.x + handleSize / 2,
+            handle.y + handleSize / 2,
+            handleSize / 2,
+            0,
+            Math.PI * 2
+          );
           ctx.value.fill();
           ctx.value.stroke();
         });
@@ -991,7 +1065,7 @@ const drawSelection = () => {
       }
     }
   });
-  
+
   ctx.value.restore();
 };
 
@@ -1013,45 +1087,88 @@ const setTool = (tool) => {
 // 返回：手柄名称（nw、ne、sw、se）或null
 const getResizeHandleAt = (clientX, clientY) => {
   if (selectedElements.value.length !== 1) return null;
-  
+
   const element = selectedElements.value[0];
-  if (element.type !== "image" && element.type !== "rectangle" && element.type !== "card") return null;
-  
+  if (
+    element.type !== "image" &&
+    element.type !== "rectangle" &&
+    element.type !== "card"
+  )
+    return null;
+
   const absolutePos = getElementAbsolutePosition(element);
   const viewportPos = sceneCoordsToViewportCoords(absolutePos.x, absolutePos.y);
-  
+
   // 使用绝对值确保宽度和高度为正数
   const absWidth = Math.abs(element.width);
   const absHeight = Math.abs(element.height);
   const scaledWidth = absWidth * appState.scale;
   const scaledHeight = absHeight * appState.scale;
-  
+
   // 如果宽度或高度为负，调整viewportPos
-  const actualViewportX = element.width < 0 ? viewportPos.x - scaledWidth : viewportPos.x;
-  const actualViewportY = element.height < 0 ? viewportPos.y - scaledHeight : viewportPos.y;
-  
+  const actualViewportX =
+    element.width < 0 ? viewportPos.x - scaledWidth : viewportPos.x;
+  const actualViewportY =
+    element.height < 0 ? viewportPos.y - scaledHeight : viewportPos.y;
+
   // 计算鼠标相对于canvas的坐标
   const mouseCanvasCoords = clientToCanvasCoords(clientX, clientY);
-  
+
   const handleSize = HANDLE_SIZE;
   const handles = [
-    { x: actualViewportX - handleSize / 2, y: actualViewportY - handleSize / 2, name: "nw" },
-    { x: actualViewportX + scaledWidth / 2 - handleSize / 2, y: actualViewportY - handleSize / 2, name: "n" },
-    { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY - handleSize / 2, name: "ne" },
-    { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY + scaledHeight / 2 - handleSize / 2, name: "e" },
-    { x: actualViewportX + scaledWidth - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "se" },
-    { x: actualViewportX + scaledWidth / 2 - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "s" },
-    { x: actualViewportX - handleSize / 2, y: actualViewportY + scaledHeight - handleSize / 2, name: "sw" },
-    { x: actualViewportX - handleSize / 2, y: actualViewportY + scaledHeight / 2 - handleSize / 2, name: "w" }
+    {
+      x: actualViewportX - handleSize / 2,
+      y: actualViewportY - handleSize / 2,
+      name: "nw",
+    },
+    {
+      x: actualViewportX + scaledWidth / 2 - handleSize / 2,
+      y: actualViewportY - handleSize / 2,
+      name: "n",
+    },
+    {
+      x: actualViewportX + scaledWidth - handleSize / 2,
+      y: actualViewportY - handleSize / 2,
+      name: "ne",
+    },
+    {
+      x: actualViewportX + scaledWidth - handleSize / 2,
+      y: actualViewportY + scaledHeight / 2 - handleSize / 2,
+      name: "e",
+    },
+    {
+      x: actualViewportX + scaledWidth - handleSize / 2,
+      y: actualViewportY + scaledHeight - handleSize / 2,
+      name: "se",
+    },
+    {
+      x: actualViewportX + scaledWidth / 2 - handleSize / 2,
+      y: actualViewportY + scaledHeight - handleSize / 2,
+      name: "s",
+    },
+    {
+      x: actualViewportX - handleSize / 2,
+      y: actualViewportY + scaledHeight - handleSize / 2,
+      name: "sw",
+    },
+    {
+      x: actualViewportX - handleSize / 2,
+      y: actualViewportY + scaledHeight / 2 - handleSize / 2,
+      name: "w",
+    },
   ];
-  
+
   for (const handle of handles) {
-    if (mouseCanvasCoords.x >= handle.x && mouseCanvasCoords.x <= handle.x + handleSize &&
-        mouseCanvasCoords.y >= handle.y && mouseCanvasCoords.y <= handle.y + handleSize) {
+    if (
+      mouseCanvasCoords.x >= handle.x &&
+      mouseCanvasCoords.x <= handle.x + handleSize &&
+      mouseCanvasCoords.y >= handle.y &&
+      mouseCanvasCoords.y <= handle.y + handleSize
+    ) {
       return handle.name;
     }
   }
-  
+
   return null;
 };
 
@@ -1062,18 +1179,22 @@ const getResizeHandleAt = (clientX, clientY) => {
 const handleMouseDown = (event) => {
   const { clientX, clientY } = event;
   const sceneCoords = viewportCoordsToSceneCoords(clientX, clientY);
-  
+
   dragStart.value = sceneCoords;
   lastMousePos.value = { x: clientX, y: clientY };
-  
-  if (currentTool.value === "pan" || event.button === 1 || (event.button === 0 && event.altKey)) {
+
+  if (
+    currentTool.value === "pan" ||
+    event.button === 1 ||
+    (event.button === 0 && event.altKey)
+  ) {
     isPanning.value = true;
     if (canvasRef.value) {
       canvasRef.value.style.cursor = "grabbing";
     }
     return;
   }
-  
+
   if (currentTool.value === "select") {
     // 先检查是否点击了调整手柄
     const handle = getResizeHandleAt(clientX, clientY);
@@ -1087,11 +1208,11 @@ const handleMouseDown = (event) => {
         width: element.width,
         height: element.height,
         mouseX: sceneCoords.x,
-        mouseY: sceneCoords.y
+        mouseY: sceneCoords.y,
       };
       return;
     }
-    
+
     const clickedElement = findElementAt(sceneCoords.x, sceneCoords.y);
     if (clickedElement) {
       if (!event.shiftKey) {
@@ -1110,19 +1231,19 @@ const handleMouseDown = (event) => {
     }
     return;
   }
-  
+
   if (["rectangle", "circle", "line", "text"].includes(currentTool.value)) {
     isDrawing.value = true;
-    
+
     // 文本元素需要设置初始宽高
     let initialWidth = 0;
     let initialHeight = 0;
-    
+
     if (currentTool.value === "text") {
       initialWidth = 200;
       initialHeight = 20;
     }
-    
+
     const newElement = {
       id: Date.now(),
       type: currentTool.value,
@@ -1132,8 +1253,11 @@ const handleMouseDown = (event) => {
       height: initialHeight,
       strokeColor: strokeColor.value,
       strokeWidth: strokeWidth.value,
-      points: currentTool.value === "line" ? [{ x: sceneCoords.x, y: sceneCoords.y }] : [],
-      text: currentTool.value === "text" ? "双击编辑文本" : ""
+      points:
+        currentTool.value === "line"
+          ? [{ x: sceneCoords.x, y: sceneCoords.y }]
+          : [],
+      text: currentTool.value === "text" ? "双击编辑文本" : "",
     };
     canvasElements.value.push(newElement);
   }
@@ -1146,18 +1270,18 @@ const handleMouseDown = (event) => {
 const handleDoubleClick = (event) => {
   event.stopPropagation();
   event.preventDefault();
-  
+
   isDoubleClick.value = true;
-  
+
   const { clientX, clientY } = event;
   const sceneCoords = viewportCoordsToSceneCoords(clientX, clientY);
-  
+
   const clickedElement = findElementAt(sceneCoords.x, sceneCoords.y);
-  
+
   if (clickedElement && clickedElement.type === "text") {
     startEditingText(clickedElement);
   }
-  
+
   setTimeout(() => {
     isDoubleClick.value = false;
   }, 200);
@@ -1170,22 +1294,22 @@ const handleDoubleClick = (event) => {
 const startEditingText = (element) => {
   // 计算元素的绝对坐标（考虑父元素的位置）
   const absolutePos = getElementAbsolutePosition(element);
-  
+
   // 确保文本宽度至少为33px
   const textWidth = Math.max(element.width || 200, 33);
-  
+
   // 使用元素的fontSize和height
   const fontSize = element.fontSize || 16;
   const textHeight = element.height || fontSize * 1.2;
-  
+
   editingText.value = {
     element: element,
     x: absolutePos.x,
     y: absolutePos.y,
     width: textWidth,
-    height: textHeight
+    height: textHeight,
   };
-  
+
   setTimeout(() => {
     if (textInputRef.value) {
       textInputRef.value.focus();
@@ -1200,27 +1324,27 @@ const finishEditingText = () => {
   if (editingText.value) {
     const text = editingText.value.element.text || "文本";
     editingText.value.element.text = text;
-    
+
     // 重新计算文本高度
     const element = editingText.value.element;
     const fontSize = element.fontSize || 16;
     const fontWeight = element.fontWeight || "normal";
     const textWidth = element.width || 200;
-    
+
     // 确保文本宽度至少为33px
     const finalTextWidth = Math.max(textWidth, 33);
     element.width = finalTextWidth;
-    
+
     // 使用drawTextWithWrapping的dryRun模式计算文本高度
     const textResult = drawTextWithWrapping(ctx.value, text, 0, 0, {
       maxWidth: finalTextWidth,
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: "#000000",
-      dryRun: true
+      dryRun: true,
     });
     element.height = textResult.height;
-    
+
     editingText.value = null;
   }
 };
@@ -1245,20 +1369,25 @@ const handleTextInputKeydown = (event) => {
 const handleMouseMove = (event) => {
   const { clientX, clientY } = event;
   const sceneCoords = viewportCoordsToSceneCoords(clientX, clientY);
-  
+
   // 更新光标样式（在选择模式下）
-  if (currentTool.value === "select" && !isDragging.value && !isResizing.value && !isPanning.value) {
+  if (
+    currentTool.value === "select" &&
+    !isDragging.value &&
+    !isResizing.value &&
+    !isPanning.value
+  ) {
     const handle = getResizeHandleAt(clientX, clientY);
     if (handle) {
       const cursors = {
-        "nw": "nw-resize",
-        "n": "n-resize",
-        "ne": "ne-resize",
-        "e": "e-resize",
-        "se": "se-resize",
-        "s": "s-resize",
-        "sw": "sw-resize",
-        "w": "w-resize"
+        nw: "nw-resize",
+        n: "n-resize",
+        ne: "ne-resize",
+        e: "e-resize",
+        se: "se-resize",
+        s: "s-resize",
+        sw: "sw-resize",
+        w: "w-resize",
       };
       if (canvasRef.value) {
         canvasRef.value.style.cursor = cursors[handle];
@@ -1270,7 +1399,7 @@ const handleMouseMove = (event) => {
       }
     }
   }
-  
+
   if (isPanning.value) {
     const deltaX = clientX - lastMousePos.value.x;
     const deltaY = clientY - lastMousePos.value.y;
@@ -1279,19 +1408,19 @@ const handleMouseMove = (event) => {
     lastMousePos.value = { x: clientX, y: clientY };
     return;
   }
-  
+
   if (isResizing.value && selectedElements.value.length > 0) {
     const element = selectedElements.value[0];
     const deltaX = sceneCoords.x - resizeStart.value.mouseX;
     const deltaY = sceneCoords.y - resizeStart.value.mouseY;
-    
+
     let newX = resizeStart.value.x;
     let newY = resizeStart.value.y;
     let newWidth = resizeStart.value.width;
     let newHeight = resizeStart.value.height;
-    
+
     const aspectRatio = resizeStart.value.width / resizeStart.value.height;
-    
+
     switch (resizeHandle.value) {
       case "se": // 右下角 - 按比例缩放
         newWidth = Math.max(10, resizeStart.value.width + deltaX);
@@ -1328,30 +1457,31 @@ const handleMouseMove = (event) => {
         newX = resizeStart.value.x + resizeStart.value.width - newWidth;
         break;
     }
-    
+
     element.x = newX;
     element.y = newY;
     element.width = newWidth;
     element.height = newHeight;
     return;
   }
-  
+
   if (isDragging.value && selectedElements.value.length > 0) {
     const deltaX = sceneCoords.x - dragStart.value.x;
     const deltaY = sceneCoords.y - dragStart.value.y;
-    
-    selectedElements.value.forEach(element => {
+
+    selectedElements.value.forEach((element) => {
       element.x += deltaX;
       element.y += deltaY;
     });
-    
+
     dragStart.value = sceneCoords;
     return;
   }
-  
+
   if (isDrawing.value && canvasElements.value.length > 0) {
-    const currentElement = canvasElements.value[canvasElements.value.length - 1];
-    
+    const currentElement =
+      canvasElements.value[canvasElements.value.length - 1];
+
     if (currentElement.type === "line") {
       currentElement.points.push({ x: sceneCoords.x, y: sceneCoords.y });
       currentElement.width = sceneCoords.x - currentElement.x;
@@ -1370,17 +1500,26 @@ const handleMouseUp = () => {
     isPanning.value = false;
     updateCursor();
   }
-  
+
   if (isResizing.value) {
     isResizing.value = false;
     resizeHandle.value = null;
     updateCursor();
   }
-  
-  if (isDrawing.value && canvasElements.value.length > 0 && !isDoubleClick.value) {
-    const currentElement = canvasElements.value[canvasElements.value.length - 1];
-    
-    if (currentElement.type !== "text" && Math.abs(currentElement.width) < 5 && Math.abs(currentElement.height) < 5) {
+
+  if (
+    isDrawing.value &&
+    canvasElements.value.length > 0 &&
+    !isDoubleClick.value
+  ) {
+    const currentElement =
+      canvasElements.value[canvasElements.value.length - 1];
+
+    if (
+      currentElement.type !== "text" &&
+      Math.abs(currentElement.width) < 5 &&
+      Math.abs(currentElement.height) < 5
+    ) {
       canvasElements.value.pop();
     } else {
       selectedElements.value = [currentElement];
@@ -1389,7 +1528,7 @@ const handleMouseUp = () => {
       updateCursor();
     }
   }
-  
+
   isDragging.value = false;
   isDrawing.value = false;
 };
@@ -1399,19 +1538,22 @@ const handleMouseUp = () => {
 // 参数：
 //   - event: 鼠标滚轮事件对象
 const handleWheel = (event) => {
+  if (!props.allowScale) {
+    return;
+  }
   event.preventDefault();
-  
+
   const delta = event.deltaY > 0 ? 0.9 : 1.1;
   const newScale = Math.max(0.1, Math.min(10, appState.scale * delta));
-  
+
   const { clientX, clientY } = event;
   const mouseCanvasCoords = clientToCanvasCoords(clientX, clientY);
-  
+
   const worldX = (mouseCanvasCoords.x - appState.scrollX) / appState.scale;
   const worldY = (mouseCanvasCoords.y - appState.scrollY) / appState.scale;
-  
+
   appState.scale = newScale;
-  
+
   appState.scrollX = mouseCanvasCoords.x - worldX * appState.scale;
   appState.scrollY = mouseCanvasCoords.y - worldY * appState.scale;
 };
@@ -1423,9 +1565,9 @@ const zoomIn = () => {
   const centerY = appState.height / 2;
   const worldX = (centerX - appState.scrollX) / appState.scale;
   const worldY = (centerY - appState.scrollY) / appState.scale;
-  
+
   appState.scale = Math.min(10, appState.scale * 1.2);
-  
+
   appState.scrollX = centerX - worldX * appState.scale;
   appState.scrollY = centerY - worldY * appState.scale;
 };
@@ -1437,9 +1579,9 @@ const zoomOut = () => {
   const centerY = appState.height / 2;
   const worldX = (centerX - appState.scrollX) / appState.scale;
   const worldY = (centerY - appState.scrollY) / appState.scale;
-  
+
   appState.scale = Math.max(0.1, appState.scale / 1.2);
-  
+
   appState.scrollX = centerX - worldX * appState.scale;
   appState.scrollY = centerY - worldY * appState.scale;
 };
@@ -1478,27 +1620,35 @@ const findElementAt = (x, y) => {
 //   - y: 场景y坐标
 //   - parentTransform: 父元素的变换（默认{ x: 0, y: 0 }）
 // 返回：找到的元素或null
-const findElementAtRecursive = (element, x, y, parentTransform = { x: 0, y: 0 }) => {
+const findElementAtRecursive = (
+  element,
+  x,
+  y,
+  parentTransform = { x: 0, y: 0 }
+) => {
   const { x: ex, y: ey, width, height, type, text, children } = element;
   const actualX = ex + parentTransform.x;
   const actualY = ey + parentTransform.y;
-  
+
   // 对于包含子元素的卡片，先检查子元素
   if (children && children.length > 0) {
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i];
-      const foundChild = findElementAtRecursive(child, x, y, { x: actualX, y: actualY });
+      const foundChild = findElementAtRecursive(child, x, y, {
+        x: actualX,
+        y: actualY,
+      });
       if (foundChild) {
         return foundChild;
       }
     }
   }
-  
+
   // 检查当前元素是否被点击
   if (isPointInElement(actualX, actualY, width, height, type, text, x, y)) {
     return element;
   }
-  
+
   return null;
 };
 
@@ -1524,21 +1674,21 @@ const isPointInElement = (ex, ey, width, height, type, text, x, y) => {
     const fontSize = 16;
     const textWidth = width || 200;
     const textHeight = height || fontSize;
-    
+
     const minX = ex;
     const maxX = ex + textWidth;
     // 文本的顶部在第一行基线上方一个字体大小的位置
     const minY = ey - fontSize;
     // 文本的底部在 ey + textHeight 的位置（因为textHeight已经包含了最后一行的高度）
     const maxY = ey + textHeight;
-    
+
     return x >= minX && x <= maxX && y >= minY && y <= maxY;
   } else {
     const minX = Math.min(ex, ex + width);
     const maxX = Math.max(ex, ex + width);
     const minY = Math.min(ey, ey + height);
     const maxY = Math.max(ey, ey + height);
-    
+
     return x >= minX && x <= maxX && y >= minY && y <= maxY;
   }
 };
@@ -1560,21 +1710,27 @@ const handleDragStart = (event, image) => {
 const handleDrop = (event) => {
   event.preventDefault();
   const sceneCoords = viewportCoordsToSceneCoords(event.clientX, event.clientY);
-  const dragType = event.dataTransfer.getData('dragType');
-  
+  const dragType = event.dataTransfer.getData("dragType");
+
   if (draggedImage.value) {
-    addImageToCanvas(draggedImage.value.src, 200, 200, sceneCoords.x, sceneCoords.y);
+    addImageToCanvas(
+      draggedImage.value.src,
+      100,
+      100,
+      sceneCoords.x,
+      sceneCoords.y
+    );
     draggedImage.value = null;
-  } else if (dragType === 'whole-card') {
-    const cardData = event.dataTransfer.getData('cardData');
+  } else if (dragType === "whole-card") {
+    const cardData = event.dataTransfer.getData("cardData");
     if (cardData) {
       const card = JSON.parse(cardData);
       addCardToCanvas(card, sceneCoords.x, sceneCoords.y);
     }
-  } else if (dragType === 'single-image') {
-    const imageSrc = event.dataTransfer.getData('imageSrc');
+  } else if (dragType === "single-image") {
+    const imageSrc = event.dataTransfer.getData("imageSrc");
     if (imageSrc) {
-      addImageToCanvas(imageSrc, 200, 200, sceneCoords.x, sceneCoords.y);
+      addImageToCanvas(imageSrc, 100, 100, sceneCoords.x, sceneCoords.y);
     }
   }
 };
@@ -1585,13 +1741,13 @@ const addImageToCanvas = (imageSrc, maxWidth, maxHeight, centerX, centerY) => {
   img.onload = () => {
     let width = img.width;
     let height = img.height;
-    
+
     if (width > maxWidth || height > maxHeight) {
       const ratio = Math.min(maxWidth / width, maxHeight / height);
       width *= ratio;
       height *= ratio;
     }
-    
+
     const newElement = {
       id: Date.now(),
       type: "image",
@@ -1602,14 +1758,14 @@ const addImageToCanvas = (imageSrc, maxWidth, maxHeight, centerX, centerY) => {
       src: imageSrc,
       image: img,
       strokeColor: strokeColor.value,
-      strokeWidth: strokeWidth.value
+      strokeWidth: strokeWidth.value,
     };
-    
+
     canvasElements.value.push(newElement);
     selectedElements.value = [newElement];
   };
   img.onerror = () => {
-    console.error('Failed to load image:', imageSrc);
+    console.error("Failed to load image:", imageSrc);
   };
   img.src = imageSrc;
 };
@@ -1621,13 +1777,13 @@ const createImageElement = (imageSrc, maxWidth, maxHeight, x, y, parentId) => {
     img.onload = () => {
       let width = img.width;
       let height = img.height;
-      
+
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         width *= ratio;
         height *= ratio;
       }
-      
+
       const imgElement = {
         id: Date.now(),
         type: "image",
@@ -1637,14 +1793,14 @@ const createImageElement = (imageSrc, maxWidth, maxHeight, x, y, parentId) => {
         height: height,
         src: imageSrc,
         image: img,
-        parentId: parentId
+        parentId: parentId,
       };
-      
+
       resolve(imgElement);
     };
     img.onerror = () => {
-      console.error('Failed to load image:', imageSrc);
-      reject(new Error('Failed to load image'));
+      console.error("Failed to load image:", imageSrc);
+      reject(new Error("Failed to load image"));
     };
     img.src = imageSrc;
   });
@@ -1655,18 +1811,19 @@ const addCardToCanvas = (card, centerX, centerY) => {
   const cardWidth = 400;
   const fontSize = 14;
   const lineHeight = fontSize * 1.2;
-  
+
   const textHeight = lineHeight * 2;
   const imagesPerRow = 2;
   const imgItemWidth = (cardWidth - padding * 3) / imagesPerRow;
   const imgItemHeight = 120;
   const imgStartY = padding + textHeight + padding;
-  
+
   const totalImages = card.images.length;
   const rows = Math.ceil(totalImages / imagesPerRow);
-  const totalImgHeight = rows * imgItemHeight + (rows > 0 ? (rows - 1) * padding : 0);
+  const totalImgHeight =
+    rows * imgItemHeight + (rows > 0 ? (rows - 1) * padding : 0);
   const cardHeight = padding * 3 + textHeight + totalImgHeight;
-  
+
   const cardElement = {
     id: Date.now(),
     type: "card",
@@ -1677,9 +1834,9 @@ const addCardToCanvas = (card, centerX, centerY) => {
     backgroundColor: "#ffffff",
     borderRadius: 8,
     shadowColor: "rgba(0, 0, 0, 0.1)",
-    children: []
+    children: [],
   };
-  
+
   const textElement = {
     id: Date.now() + 1,
     type: "text",
@@ -1691,21 +1848,21 @@ const addCardToCanvas = (card, centerX, centerY) => {
     fontWeight: "bold",
     strokeColor: "#333333",
     text: card.title,
-    parentId: cardElement.id
+    parentId: cardElement.id,
   };
   cardElement.children.push(textElement);
-  
+
   let loadedImagesCount = 0;
-  
+
   if (totalImages === 0) {
     canvasElements.value.push(cardElement);
     return;
   }
-  
+
   const imagePromises = card.images.map((imgSrc, index) => {
     const col = index % imagesPerRow;
     const row = Math.floor(index / imagesPerRow);
-    
+
     return createImageElement(
       imgSrc,
       imgItemWidth,
@@ -1713,39 +1870,41 @@ const addCardToCanvas = (card, centerX, centerY) => {
       padding + col * (imgItemWidth + padding),
       imgStartY + row * (imgItemHeight + padding),
       cardElement.id
-    ).then(imgElement => {
+    ).then((imgElement) => {
       const aspectRatio = imgElement.image.width / imgElement.image.height;
       let displayWidth = imgItemWidth;
       let displayHeight = imgItemHeight;
-      
+
       if (aspectRatio > 1) {
         displayHeight = imgItemWidth / aspectRatio;
       } else {
         displayWidth = imgItemHeight * aspectRatio;
       }
-      
+
       imgElement.x += (imgItemWidth - displayWidth) / 2;
       imgElement.y += (imgItemHeight - displayHeight) / 2;
       imgElement.width = displayWidth;
       imgElement.height = displayHeight;
-      
+
       cardElement.children.push(imgElement);
       loadedImagesCount++;
     });
   });
-  
-  Promise.all(imagePromises).then(() => {
-    canvasElements.value.push(cardElement);
-  }).catch(err => {
-    console.error('Error loading images for card:', err);
-    canvasElements.value.push(cardElement);
-  });
+
+  Promise.all(imagePromises)
+    .then(() => {
+      canvasElements.value.push(cardElement);
+    })
+    .catch((err) => {
+      console.error("Error loading images for card:", err);
+      canvasElements.value.push(cardElement);
+    });
 };
 
 // 删除选中的元素
 // 功能：从画布中删除所有选中的元素（包括子元素）
 const deleteSelected = () => {
-  selectedElements.value.forEach(element => {
+  selectedElements.value.forEach((element) => {
     const index = canvasElements.value.indexOf(element);
     if (index !== -1) {
       canvasElements.value.splice(index, 1);
@@ -1785,26 +1944,30 @@ const clearCanvas = () => {
 const exportCanvas = () => {
   const tempCanvas = document.createElement("canvas");
   const tempCtx = tempCanvas.getContext("2d");
-  
+
   const bounds = calculateBounds();
   const padding = 50;
-  
+
   tempCanvas.width = (bounds.width + padding * 2) * window.devicePixelRatio;
   tempCanvas.height = (bounds.height + padding * 2) * window.devicePixelRatio;
   tempCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  
+
   tempCtx.fillStyle = "#ffffff";
   tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-  
+
   tempCtx.save();
   tempCtx.translate(-bounds.x + padding, -bounds.y + padding);
-  
-  canvasElements.value.forEach(element => {
-    drawElement(element, { context: tempCtx, scale: 1, useViewportCoords: false });
+
+  canvasElements.value.forEach((element) => {
+    drawElement(element, {
+      context: tempCtx,
+      scale: 1,
+      useViewportCoords: false,
+    });
   });
-  
+
   tempCtx.restore();
-  
+
   const link = document.createElement("a");
   link.download = `canvas-export-${Date.now()}.png`;
   link.href = tempCanvas.toDataURL("image/png");
@@ -1822,23 +1985,26 @@ const calculateElementBounds = (element, parentTransform = { x: 0, y: 0 }) => {
   const actualY = element.y + parentTransform.y;
   const actualRight = actualX + element.width;
   const actualBottom = actualY + element.height;
-  
+
   let minX = actualX;
   let minY = actualY;
   let maxX = actualRight;
   let maxY = actualBottom;
-  
+
   // 处理子元素
   if (element.children && element.children.length > 0) {
-    element.children.forEach(child => {
-      const childBounds = calculateElementBounds(child, { x: actualX, y: actualY });
+    element.children.forEach((child) => {
+      const childBounds = calculateElementBounds(child, {
+        x: actualX,
+        y: actualY,
+      });
       minX = Math.min(minX, childBounds.minX);
       minY = Math.min(minY, childBounds.minY);
       maxX = Math.max(maxX, childBounds.maxX);
       maxY = Math.max(maxY, childBounds.maxY);
     });
   }
-  
+
   return { minX, minY, maxX, maxY };
 };
 
@@ -1849,38 +2015,27 @@ const calculateBounds = () => {
   if (canvasElements.value.length === 0) {
     return { x: 0, y: 0, width: 100, height: 100 };
   }
-  
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  
-  canvasElements.value.forEach(element => {
+
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+
+  canvasElements.value.forEach((element) => {
     const bounds = calculateElementBounds(element);
     minX = Math.min(minX, bounds.minX);
     minY = Math.min(minY, bounds.minY);
     maxX = Math.max(maxX, bounds.maxX);
     maxY = Math.max(maxY, bounds.maxY);
   });
-  
+
   return {
     x: minX,
     y: minY,
     width: maxX - minX,
-    height: maxY - minY
+    height: maxY - minY,
   };
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
 
 <style lang="scss" scoped>
@@ -1888,7 +2043,7 @@ const calculateBounds = () => {
   display: flex;
   height: 100%;
   width: 100%;
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   overflow: hidden;
 }
 
@@ -1953,10 +2108,20 @@ const calculateBounds = () => {
 }
 
 .header-section {
-  padding: 12px 16px;
+  padding: 6px 5px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fafafa;
   flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  .toolbar {
+    display: flex;
+    flex-direction: column;
+    button {
+      font-size: 10px;
+    }
+  }
 }
 
 .title {
@@ -1977,18 +2142,18 @@ const calculateBounds = () => {
     font-size: 13px;
     font-weight: 500;
     color: #fff;
-    background-color: #2196F3;
+    background-color: #2196f3;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
 
     &:hover {
-      background-color: #1976D2;
+      background-color: #1976d2;
     }
 
     &.active {
-      background-color: #0D47A1;
+      background-color: #0d47a1;
       box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
     }
   }
@@ -2036,13 +2201,13 @@ const calculateBounds = () => {
       font-size: 14px;
       font-weight: 600;
       color: #fff;
-      background-color: #607D8B;
+      background-color: #607d8b;
       border: none;
       border-radius: 3px;
       cursor: pointer;
 
       &:hover {
-        background-color: #455A64;
+        background-color: #455a64;
       }
     }
 
@@ -2064,7 +2229,7 @@ const calculateBounds = () => {
       font-size: 13px;
       font-weight: 500;
       color: #fff;
-      background-color: #4CAF50;
+      background-color: #4caf50;
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -2082,10 +2247,10 @@ const calculateBounds = () => {
       }
 
       &:nth-child(2) {
-        background-color: #FF9800;
+        background-color: #ff9800;
 
         &:hover {
-          background-color: #F57C00;
+          background-color: #f57c00;
         }
       }
     }
@@ -2102,10 +2267,10 @@ const calculateBounds = () => {
     display: block;
     background-color: #fff;
   }
-  
+
   .text-input-overlay {
     position: absolute;
-    border: 2px solid #2196F3;
+    border: 2px solid #2196f3;
     border-radius: 4px;
     padding: 8px 12px;
     outline: none;

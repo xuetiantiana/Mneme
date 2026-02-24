@@ -39,7 +39,7 @@
           </div>
 
           <div style="height: 300px">
-            <HierarchicalCanvasComponent></HierarchicalCanvasComponent>
+            <HierarchicalCanvasComponent :allowScale="false"></HierarchicalCanvasComponent>
           </div>
         </div>
       </div>
