@@ -55,7 +55,7 @@
         ></textarea>
       </div>
 
-      <div class="header-section">
+      <!-- <div class="header-section">
         <div class="title">无限画布编辑器</div>
         <div class="toolbar">
           <button 
@@ -126,13 +126,13 @@
             <button @click="exportCanvas">导出图片</button>
           </div>
         </div>
-      </div>
-      <div class="status-bar">
+      </div> -->
+      <!-- <div class="status-bar">
         <span>元素数量: {{ canvasElements.length }}</span>
         <span>坐标: ({{ Math.round(appState.scrollX) }}, {{ Math.round(appState.scrollY) }})</span>
         <span>缩放: {{ Math.round(appState.scale * 100) }}%</span>
         
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -1560,13 +1560,65 @@ const handleDragStart = (event, image) => {
 const handleDrop = (event) => {
   event.preventDefault();
   const sceneCoords = viewportCoordsToSceneCoords(event.clientX, event.clientY);
+  const dragType = event.dataTransfer.getData('dragType');
   
   if (draggedImage.value) {
+    addImageToCanvas(draggedImage.value.src, 200, 200, sceneCoords.x, sceneCoords.y);
+    draggedImage.value = null;
+  } else if (dragType === 'whole-card') {
+    const cardData = event.dataTransfer.getData('cardData');
+    if (cardData) {
+      const card = JSON.parse(cardData);
+      addCardToCanvas(card, sceneCoords.x, sceneCoords.y);
+    }
+  } else if (dragType === 'single-image') {
+    const imageSrc = event.dataTransfer.getData('imageSrc');
+    if (imageSrc) {
+      addImageToCanvas(imageSrc, 200, 200, sceneCoords.x, sceneCoords.y);
+    }
+  }
+};
+
+const addImageToCanvas = (imageSrc, maxWidth, maxHeight, centerX, centerY) => {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    let width = img.width;
+    let height = img.height;
+    
+    if (width > maxWidth || height > maxHeight) {
+      const ratio = Math.min(maxWidth / width, maxHeight / height);
+      width *= ratio;
+      height *= ratio;
+    }
+    
+    const newElement = {
+      id: Date.now(),
+      type: "image",
+      x: centerX - width / 2,
+      y: centerY - height / 2,
+      width: width,
+      height: height,
+      src: imageSrc,
+      image: img,
+      strokeColor: strokeColor.value,
+      strokeWidth: strokeWidth.value
+    };
+    
+    canvasElements.value.push(newElement);
+    selectedElements.value = [newElement];
+  };
+  img.onerror = () => {
+    console.error('Failed to load image:', imageSrc);
+  };
+  img.src = imageSrc;
+};
+
+const createImageElement = (imageSrc, maxWidth, maxHeight, x, y, parentId) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const maxWidth = 200;
-      const maxHeight = 200;
       let width = img.width;
       let height = img.height;
       
@@ -1576,24 +1628,118 @@ const handleDrop = (event) => {
         height *= ratio;
       }
       
-      const newElement = {
+      const imgElement = {
         id: Date.now(),
         type: "image",
-        x: sceneCoords.x - width / 2,
-        y: sceneCoords.y - height / 2,
+        x: x,
+        y: y,
         width: width,
         height: height,
+        src: imageSrc,
         image: img,
-        strokeColor: strokeColor.value,
-        strokeWidth: strokeWidth.value
+        parentId: parentId
       };
       
-      canvasElements.value.push(newElement);
-      selectedElements.value = [newElement];
+      resolve(imgElement);
     };
-    img.src = draggedImage.value.src;
-    draggedImage.value = null;
+    img.onerror = () => {
+      console.error('Failed to load image:', imageSrc);
+      reject(new Error('Failed to load image'));
+    };
+    img.src = imageSrc;
+  });
+};
+
+const addCardToCanvas = (card, centerX, centerY) => {
+  const padding = 20;
+  const cardWidth = 400;
+  const fontSize = 14;
+  const lineHeight = fontSize * 1.2;
+  
+  const textHeight = lineHeight * 2;
+  const imagesPerRow = 2;
+  const imgItemWidth = (cardWidth - padding * 3) / imagesPerRow;
+  const imgItemHeight = 120;
+  const imgStartY = padding + textHeight + padding;
+  
+  const totalImages = card.images.length;
+  const rows = Math.ceil(totalImages / imagesPerRow);
+  const totalImgHeight = rows * imgItemHeight + (rows > 0 ? (rows - 1) * padding : 0);
+  const cardHeight = padding * 3 + textHeight + totalImgHeight;
+  
+  const cardElement = {
+    id: Date.now(),
+    type: "card",
+    x: centerX - cardWidth / 2,
+    y: centerY - cardHeight / 2,
+    width: cardWidth,
+    height: cardHeight,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    shadowColor: "rgba(0, 0, 0, 0.1)",
+    children: []
+  };
+  
+  const textElement = {
+    id: Date.now() + 1,
+    type: "text",
+    x: padding,
+    y: padding + lineHeight,
+    width: cardWidth - padding * 2,
+    height: textHeight,
+    fontSize: fontSize,
+    fontWeight: "bold",
+    strokeColor: "#333333",
+    text: card.title,
+    parentId: cardElement.id
+  };
+  cardElement.children.push(textElement);
+  
+  let loadedImagesCount = 0;
+  
+  if (totalImages === 0) {
+    canvasElements.value.push(cardElement);
+    return;
   }
+  
+  const imagePromises = card.images.map((imgSrc, index) => {
+    const col = index % imagesPerRow;
+    const row = Math.floor(index / imagesPerRow);
+    
+    return createImageElement(
+      imgSrc,
+      imgItemWidth,
+      imgItemHeight,
+      padding + col * (imgItemWidth + padding),
+      imgStartY + row * (imgItemHeight + padding),
+      cardElement.id
+    ).then(imgElement => {
+      const aspectRatio = imgElement.image.width / imgElement.image.height;
+      let displayWidth = imgItemWidth;
+      let displayHeight = imgItemHeight;
+      
+      if (aspectRatio > 1) {
+        displayHeight = imgItemWidth / aspectRatio;
+      } else {
+        displayWidth = imgItemHeight * aspectRatio;
+      }
+      
+      imgElement.x += (imgItemWidth - displayWidth) / 2;
+      imgElement.y += (imgItemHeight - displayHeight) / 2;
+      imgElement.width = displayWidth;
+      imgElement.height = displayHeight;
+      
+      cardElement.children.push(imgElement);
+      loadedImagesCount++;
+    });
+  });
+  
+  Promise.all(imagePromises).then(() => {
+    canvasElements.value.push(cardElement);
+  }).catch(err => {
+    console.error('Error loading images for card:', err);
+    canvasElements.value.push(cardElement);
+  });
 };
 
 // 删除选中的元素
@@ -1740,7 +1886,8 @@ const calculateBounds = () => {
 <style lang="scss" scoped>
 .canvas-container {
   display: flex;
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   background-color: #E8E8E8;
   overflow: hidden;
 }
@@ -1946,7 +2093,7 @@ const calculateBounds = () => {
 }
 
 .canvas-wrapper {
-  flex: 1;
+  height: 100%;
   position: relative;
   overflow: hidden;
   background-color: #fafafa;

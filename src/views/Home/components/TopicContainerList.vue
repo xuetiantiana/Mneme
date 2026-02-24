@@ -37,8 +37,8 @@
               :autosize="{ minRows: 2, maxRows: 4 }"
             />
           </div>
-          
-          <div>
+
+          <div style="height: 300px">
             <HierarchicalCanvasComponent></HierarchicalCanvasComponent>
           </div>
         </div>
