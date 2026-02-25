@@ -1,5 +1,6 @@
 <template>
   <div class="topic-container-list">
+    <el-button class="add-topic-btn" style="width: 10em;" @click="addNewTopic">新建主题容器</el-button>
     <div class="topic-list-scroll">
       <div
         v-for="(topic, index) in topics"
@@ -45,48 +46,36 @@
       </div>
     </div>
     <div class="bottom-action">
-      <button class="action-btn">Generate</button>
+      <el-button class="action-btn" type="primary" :disabled="selectedCount === 0">Generate</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import konvaComponent from "@/components/konvaComponent.vue";  
 
 const topics = ref([
   {
     title: "猫咪对人的信任",
     selected: true,
-    desc: "",
-    image:
-      "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20cat%20sleeping%20on%20sofa%20with%20christmas%20tree&image_size=landscape_4_3",
-  },
-  {
-    title: "Topic 2",
-    selected: true,
-    details: null,
-    image: null,
-  },
-  {
-    title: "Topic 3",
-    selected: false,
-    details: null,
-    image: null,
-  },
-  {
-    title: "Topic 4",
-    selected: false,
-    details: null,
-    image: null,
-  },
-  {
-    title: "Topic 5",
-    selected: false,
-    details: null,
-    image: null,
+    desc: "人物：\n场景：\n 情节：",
   },
 ]);
+
+const selectedCount = computed(() => {
+  return topics.value.filter(topic => topic.selected).length;
+});
+
+const addNewTopic = () => {
+  const newTopic = {
+    title: ``,
+    selected: false,
+    details: null,
+    image: null,
+  };
+  topics.value.push(newTopic);
+};
 </script>
 
 <style scoped lang="scss">
@@ -95,6 +84,28 @@ const topics = ref([
   display: flex;
   flex-direction: column;
   padding: 16px;
+
+  .add-topic-btn {
+    width: 100%;
+    background: #1890ff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 16px;
+
+    &:hover {
+      background: #40a9ff;
+    }
+
+    &:active {
+      background: #096dd9;
+    }
+  }
 
   .topic-list-scroll {
     flex: 1;
@@ -120,8 +131,8 @@ const topics = ref([
 
       .topic-checkbox {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 0px;
+        right: 0px;
         width: 1rem;
         height: 1rem;
         cursor: pointer;
@@ -196,19 +207,14 @@ const topics = ref([
     justify-content: center;
 
     .action-btn {
-      background: #999;
-      color: #fff;
+     
       border: none;
       border-radius: 24px;
       padding: 12px 32px;
       font-size: 16px;
       font-weight: 500;
-      cursor: pointer;
       transition: all 0.2s ease;
 
-      &:hover {
-        background: #666;
-      }
     }
   }
 }
