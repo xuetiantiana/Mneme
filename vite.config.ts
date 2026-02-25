@@ -38,11 +38,17 @@ export default defineConfig({
     //   interval: 1000 // 监听的间隔时间(ms)
     // },
     proxy: {
-      "/api": { // “/api” 以及前置字符串会被替换为真正域名
+      "/api": { // "/api" 以及前置字符串会被替换为真正域名
         target: "http://20.163.194.92:5000/", // 请求域名
         secure: false, // 请求是否为https
         changeOrigin: true, // 是否跨域
         rewrite: (path) => path.replace(/^\/api/, "")
+      },
+      "/image-proxy": {
+        target: "https://trae-api-cn.mchost.guru",
+        secure: false,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/image-proxy/, "")
       }
     }
   },

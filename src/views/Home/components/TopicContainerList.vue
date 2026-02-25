@@ -39,7 +39,7 @@
           </div>
 
           <div style="height: 300px">
-            <HierarchicalCanvasComponent :allowScale="false"></HierarchicalCanvasComponent>
+            <konvaComponent></konvaComponent>
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@
 
 <script setup>
 import { ref } from "vue";
-import HierarchicalCanvasComponent from "@/views/Home/components/HierarchicalCanvasComponent.vue";
+import konvaComponent from "@/components/konvaComponent.vue";  
 
 const topics = ref([
   {
