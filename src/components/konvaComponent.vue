@@ -58,6 +58,9 @@
                 <button class="export-btn" @click="exportCanvas">
                     导出
                 </button>
+                <button class="export-info-btn" @click="exportElementInfo">
+                    导出元素信息
+                </button>
                 <button class="clear-btn" @click="clearCanvas">清除画布</button>
             </div>
         </div>
@@ -687,6 +690,82 @@ const exportCanvas = () => {
     document.body.removeChild(link)
 }
 
+// 导出画布中所有元素的详细信息到控制台
+const exportElementInfo = () => {
+    if (!layer) {
+        console.log('图层不存在')
+        return
+    }
+
+    const children = layer.getChildren()
+    if (children.length === 0) {
+        console.log('画布中没有元素')
+        return
+    }
+
+    const nodes = children.filter(n => n !== transformer && n !== selectionBox)
+    if (nodes.length === 0) {
+        console.log('画布中没有图形元素')
+        return
+    }
+
+    console.log('=== 画布元素详细信息 ===')
+    console.log(`总元素数量: ${nodes.length}`,nodes)
+    console.log('')
+
+    nodes.forEach((node, index) => {
+        const elementInfo = {
+            序号: index + 1,
+            类型: node.className,
+            ID: node.id() || '未设置',
+            位置: {
+                x: node.x(),
+                y: node.y()
+            },
+            尺寸: {
+                width: node.width(),
+                height: node.height()
+            },
+            旋转: node.rotation(),
+            缩放: {
+                x: node.scaleX(),
+                y: node.scaleY()
+            },
+            可拖拽: node.draggable(),
+            可见: node.visible(),
+            透明度: node.opacity()
+        }
+
+        if (node instanceof Konva.Image) {
+            elementInfo['图片信息'] = {
+                原始宽度: node.image()?.width || 0,
+                原始高度: node.image()?.height || 0
+            }
+        } else if (node instanceof Konva.Text) {
+            elementInfo['文字信息'] = {
+                内容: node.text(),
+                字体大小: node.fontSize(),
+                字体: node.fontFamily(),
+                颜色: node.fill()
+            }
+        } else if (node instanceof Konva.Line) {
+            elementInfo['线条信息'] = {
+                点数量: node.points().length / 2,
+                颜色: node.stroke(),
+                线宽: node.strokeWidth(),
+                线帽: node.lineCap(),
+                线接: node.lineJoin()
+            }
+        }
+
+        console.log(`元素 ${index + 1}:`, elementInfo)
+    })
+
+    console.log('')
+    console.log('=== 完整 JSON 数据 ===')
+    console.log(stage.toJSON())
+}
+
 // 清除画布
 // 删除图层中的所有节点，包括图形、文字、图片等
 const clearCanvas = () => {
@@ -946,6 +1025,20 @@ input[type="range"] {
 
 .export-btn:hover {
     background: #40a9ff;
+}
+
+.export-info-btn {
+    padding: 8px 16px;
+    background: #722ed1;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.export-info-btn:hover {
+    background: #9254de;
 }
 
 .canvas-container {
