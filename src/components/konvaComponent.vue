@@ -32,7 +32,7 @@
                     @change="handleImageUpload"
                 /> -->
             </div>
-            <div class="tool-group">
+            <!-- <div class="tool-group">
                 <label class="color-label">
                     颜色:
                     <input type="color" v-model="brushColor" />
@@ -65,11 +65,15 @@
                 <button class="export-info-btn" @click="exportElementInfo">
                     导出元素信息
                 </button>
+
+                <button class="send-nodes-btn" @click="sendSelectedNodesToParent">
+                    将选中的节点发送给父元素
+                </button>
                 <button class="get-selected-btn" @click="getSelectedNodesInfo">
                     获取选中节点
                 </button>
                 <button class="clear-btn" @click="clearCanvas">清除画布</button>
-            </div>
+            </div> -->
         </div>
         <div style="width: 100%;min-height: 200px;height: 100%;">
             <div 
@@ -88,6 +92,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 // 导入 Konva 库，用于 2D 画布操作
 import Konva from 'konva'
+
+const emit = defineEmits(['sendSelectedNodes'])
 
 // DOM 元素引用
 const container = ref<HTMLDivElement>() // 画布容器
@@ -806,50 +812,7 @@ const exportElementInfo = () => {
     console.log('')
 
     nodes.forEach((node, index) => {
-        const elementInfo = {
-            序号: index + 1,
-            类型: node.className,
-            ID: node.id() || '未设置',
-            位置: {
-                x: node.x(),
-                y: node.y()
-            },
-            尺寸: {
-                width: node.width(),
-                height: node.height()
-            },
-            旋转: node.rotation(),
-            缩放: {
-                x: node.scaleX(),
-                y: node.scaleY()
-            },
-            可拖拽: node.draggable(),
-            可见: node.visible(),
-            透明度: node.opacity()
-        }
-
-        if (node instanceof Konva.Image) {
-            elementInfo['图片信息'] = {
-                原始宽度: node.image()?.width || 0,
-                原始高度: node.image()?.height || 0
-            }
-        } else if (node instanceof Konva.Text) {
-            elementInfo['文字信息'] = {
-                内容: node.text(),
-                字体大小: node.fontSize(),
-                字体: node.fontFamily(),
-                颜色: node.fill()
-            }
-        } else if (node instanceof Konva.Line) {
-            elementInfo['线条信息'] = {
-                点数量: node.points().length / 2,
-                颜色: node.stroke(),
-                线宽: node.strokeWidth(),
-                线帽: node.lineCap(),
-                线接: node.lineJoin()
-            }
-        }
-
+        const elementInfo = getNodeInfo(node, index)
         console.log(`元素 ${index + 1}:`, elementInfo)
     })
 
@@ -858,64 +821,97 @@ const exportElementInfo = () => {
     console.log(stage.toJSON())
 }
 
+// 获取节点的详细信息
+const getNodeInfo = (node: Konva.Node, index: number) => {
+    console.log('node', node)
+    const nodeInfo = {
+        index: index + 1,
+        type: node.className,
+        id: node.id() || '未设置',
+        position: {
+            x: node.x(),
+            y: node.y()
+        },
+        size: {
+            width: node.width(),
+            height: node.height()
+        },
+        rotation: node.rotation(),
+        scale: {
+            x: node.scaleX(),
+            y: node.scaleY()
+        },
+        draggable: node.draggable(),
+        visible: node.visible(),
+        opacity: node.opacity()
+    }
+
+    if (node instanceof Konva.Image) {
+        nodeInfo['imageInfo'] = {
+            src: (node.image() as HTMLImageElement)?.src || '',
+            originalWidth: node.image()?.width || 0,
+            originalHeight: node.image()?.height || 0
+        }
+    } else if (node instanceof Konva.Text) {
+        nodeInfo['textInfo'] = {
+            content: node.text(),
+            fontSize: node.fontSize(),
+            fontFamily: node.fontFamily(),
+            color: node.fill()
+        }
+    } else if (node instanceof Konva.Line) {
+        nodeInfo['lineInfo'] = {
+            pointCount: node.points().length / 2,
+            color: node.stroke(),
+            strokeWidth: node.strokeWidth(),
+            lineCap: node.lineCap(),
+            lineJoin: node.lineJoin()
+        }
+    } else if (node instanceof Konva.Rect) {
+        nodeInfo['rectInfo'] = {
+            fill: node.fill(),
+            stroke: node.stroke(),
+            strokeWidth: node.strokeWidth(),
+            cornerRadius: node.cornerRadius()
+        }
+    }
+
+    return nodeInfo
+}
+
 // 获取当前选中的节点详细信息
 const getSelectedNodesInfo = () => {
     if (selectedNodes.length === 0) {
         console.log('当前没有选中的节点')
-        return
+        return []
     }
 
     console.log('=== 当前选中的节点信息 ===')
     console.log(`选中节点数量: ${selectedNodes.length}`)
     console.log('')
 
-    selectedNodes.forEach((node, index) => {
-        const nodeInfo = {
-            序号: index + 1,
-            类型: node.className,
-            ID: node.id() || '未设置',
-            位置: {
-                x: node.x(),
-                y: node.y()
-            },
-            尺寸: {
-                width: node.width(),
-                height: node.height()
-            },
-            旋转: node.rotation(),
-            缩放: {
-                x: node.scaleX(),
-                y: node.scaleY()
-            },
-            可拖拽: node.draggable(),
-            可见: node.visible(),
-            透明度: node.opacity()
-        }
-
-        if (node instanceof Konva.Image) {
-            nodeInfo['图片信息'] = {
-                原始宽度: node.image()?.width || 0,
-                原始高度: node.image()?.height || 0
-            }
-        } else if (node instanceof Konva.Text) {
-            nodeInfo['文字信息'] = {
-                内容: node.text(),
-                字体大小: node.fontSize(),
-                字体: node.fontFamily(),
-                颜色: node.fill()
-            }
-        } else if (node instanceof Konva.Line) {
-            nodeInfo['线条信息'] = {
-                点数量: node.points().length / 2,
-                颜色: node.stroke(),
-                线宽: node.strokeWidth(),
-                线帽: node.lineCap(),
-                线接: node.lineJoin()
-            }
-        }
-
+    const nodesData = selectedNodes.map((node, index) => {
+        const nodeInfo = getNodeInfo(node, index)
         console.log(`选中节点 ${index + 1}:`, nodeInfo)
+        return nodeInfo
     })
+
+    return nodesData
+}
+
+// 将选中的节点发送给父元素
+const sendSelectedNodesToParent = () => {
+    if (selectedNodes.length === 0) {
+        console.log('当前没有选中的节点')
+        return
+    }
+
+    const nodesData = selectedNodes.map((node, index) => {
+        return getNodeInfo(node, index)
+    })
+
+    emit('sendSelectedNodes', nodesData)
+    console.log('已将选中的节点发送给父元素:', nodesData)
 }
 
 // 清除画布
@@ -1033,6 +1029,220 @@ const getDropPosition = (e: DragEvent) => {
     // 使用逆变换矩阵将屏幕坐标转换为舞台坐标
     return transform.point({ x, y })
 }
+
+// 将别的canvas的节点（多个）旋绕到当前的canvas中，垂直水平居中
+const renderNodes = (nodesData) => {
+    if (!layer) {
+        console.log('图层不存在')
+        return
+    }
+
+    if (!nodesData || nodesData.length === 0) {
+        console.log('没有可渲染的节点')
+        return
+    }
+
+    console.log('=== 开始渲染节点到画布 ===')
+    console.log(`节点数量: ${nodesData.length}`)
+
+    // 计算所有节点的边界框
+    // 用于确定节点占据的区域，以便后续计算缩放和居中
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+
+    nodesData.forEach((nodeData) => {
+        // 计算节点的右下角坐标（考虑缩放）
+        const nodeRight = nodeData.position.x + nodeData.size.width * nodeData.scale.x
+        const nodeBottom = nodeData.position.y + nodeData.size.height * nodeData.scale.y
+
+        // 更新边界框的最小值和最大值
+        minX = Math.min(minX, nodeData.position.x)
+        minY = Math.min(minY, nodeData.position.y)
+        maxX = Math.max(maxX, nodeRight)
+        maxY = Math.max(maxY, nodeBottom)
+    })
+
+    // 计算节点内容的总宽度和高度
+    const contentWidth = maxX - minX
+    const contentHeight = maxY - minY
+
+    // 获取画布的宽度和高度
+    const canvasWidth = stage.width()
+    const canvasHeight = stage.height()
+
+    console.log('节点边界框:', { minX, minY, maxX, maxY })
+    console.log('节点内容尺寸:', { contentWidth, contentHeight })
+    console.log('画布尺寸:', { canvasWidth, canvasHeight })
+
+    // 计算缩放比例，确保所有节点都能放入画布中
+    // 留出 40px 的边距，避免节点贴边
+    const padding = 40
+    const scaleX = (canvasWidth - padding * 2) / contentWidth
+    const scaleY = (canvasHeight - padding * 2) / contentHeight
+    // 取较小的缩放比例，确保宽度和高度都能放入
+    let newScale = Math.min(scaleX, scaleY)
+    // 限制最大缩放比例为 1，避免节点过大
+    newScale = Math.min(newScale, 1)
+
+    console.log('计算出的缩放比例:', newScale)
+
+    // 计算居中偏移量
+    // 将节点内容居中显示在画布中央
+    // 公式：(画布尺寸 - 缩放后的内容尺寸) / 2 - 缩放后的最小坐标
+    const offsetX = (canvasWidth - contentWidth * newScale) / 2 - minX * newScale
+    const offsetY = (canvasHeight - contentHeight * newScale) / 2 - minY * newScale
+
+    console.log('=== 垂直居中调试信息 ===')
+    console.log('minY:', minY, 'maxY:', maxY)
+    console.log('contentHeight:', contentHeight)
+    console.log('canvasHeight:', canvasHeight)
+    console.log('newScale:', newScale)
+    console.log('offsetY 计算公式: (canvasHeight - contentHeight * newScale) / 2 - minY * newScale')
+    console.log('offsetY 计算过程:', `(${canvasHeight} - ${contentHeight} * ${newScale}) / 2 - ${minY} * ${newScale}`)
+    console.log('offsetY 计算结果:', (canvasHeight - contentHeight * newScale) / 2 - minY * newScale)
+    console.log('居中偏移量:', { offsetX, offsetY })
+    console.log('验证居中计算:')
+    console.log('  水平中心:', (minX + maxX) / 2, '-> 缩放后:', (minX + maxX) / 2 * newScale + offsetX, '画布中心:', canvasWidth / 2)
+    console.log('  垂直中心:', (minY + maxY) / 2, '-> 缩放后:', (minY + maxY) / 2 * newScale + offsetY, '画布中心:', canvasHeight / 2)
+
+    // 调整所有节点的坐标和缩放比例
+    // 保持节点的原始scale，只调整位置
+    const adjustedNodesData = nodesData.map((nodeData) => {
+        return {
+            ...nodeData,
+            position: {
+                x: nodeData.position.x * newScale + offsetX,
+                y: nodeData.position.y * newScale + offsetY
+            },
+            scale: {
+                x: nodeData.scale.x * newScale,
+                y: nodeData.scale.y * newScale
+            }
+        }
+    })
+
+    // 不设置stage的缩放比例
+    // 保持stage.scale为1，让每个节点独立缩放
+    // stage.scale({ x: 1, y: 1 })
+    console.log('节点独立缩放，stage保持scale为1')
+
+    // 渲染调整后的节点
+    adjustedNodesData.forEach((nodeData, index) => {
+        console.log(`渲染节点 ${index + 1}:`, nodeData)
+        console.log(`  原始位置: (${nodeData.position.x}, ${nodeData.position.y})`)
+        console.log(`  调整后位置: (${nodeData.position.x}, ${nodeData.position.y})`)
+        console.log(`  原始尺寸: ${nodeData.size.width} x ${nodeData.size.height}`)
+        console.log(`  节点缩放: ${nodeData.scale.x} x ${nodeData.scale.y}`)
+        
+        let konvaNode = null
+
+        if (nodeData.type === 'Image') {
+            konvaNode = createKonvaImage(nodeData)
+        } else if (nodeData.type === 'Text') {
+            konvaNode = createKonvaText(nodeData)
+        } else if (nodeData.type === 'Line') {
+            konvaNode = createKonvaLine(nodeData)
+        } else if (nodeData.type === 'Rect') {
+            konvaNode = createKonvaRect(nodeData)
+        }
+
+        if (konvaNode) {
+            konvaNode.on('click tap', (evt) => {
+                handleNodeClick(evt, konvaNode)
+            })
+            layer.add(konvaNode)
+            console.log(`节点 ${index + 1} 已添加到画布，实际位置: (${konvaNode.x()}, ${konvaNode.y()})`, konvaNode)
+        }
+    })
+
+    console.log('=== 所有节点已渲染到画布 ===')
+}
+
+const createKonvaImage = (nodeData) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    
+    if (nodeData.imageInfo && nodeData.imageInfo.src) {
+        img.src = nodeData.imageInfo.src
+    }
+    
+    return new Konva.Image({
+        image: img,
+        x: nodeData.position.x,
+        y: nodeData.position.y,
+        width: nodeData.size.width,
+        height: nodeData.size.height,
+        rotation: nodeData.rotation,
+        scaleX: nodeData.scale.x,
+        scaleY: nodeData.scale.y,
+        draggable: nodeData.draggable,
+        visible: nodeData.visible,
+        opacity: nodeData.opacity
+    })
+}
+
+const createKonvaText = (nodeData) => {
+    return new Konva.Text({
+        x: nodeData.position.x,
+        y: nodeData.position.y,
+        text: nodeData.textInfo.content,
+        fontSize: nodeData.textInfo.fontSize,
+        fontFamily: nodeData.textInfo.fontFamily,
+        fill: nodeData.textInfo.color,
+        rotation: nodeData.rotation,
+        scaleX: nodeData.scale.x,
+        scaleY: nodeData.scale.y,
+        draggable: nodeData.draggable,
+        visible: nodeData.visible,
+        opacity: nodeData.opacity
+    })
+}
+
+const createKonvaLine = (nodeData) => {
+    return new Konva.Line({
+        x: nodeData.position.x,
+        y: nodeData.position.y,
+        points: [], 
+        stroke: nodeData.lineInfo.color,
+        strokeWidth: nodeData.lineInfo.strokeWidth,
+        lineCap: nodeData.lineInfo.lineCap,
+        lineJoin: nodeData.lineInfo.lineJoin,
+        rotation: nodeData.rotation,
+        scaleX: nodeData.scale.x,
+        scaleY: nodeData.scale.y,
+        draggable: nodeData.draggable,
+        visible: nodeData.visible,
+        opacity: nodeData.opacity,
+        lineCap: 'round',
+        lineJoin: 'round'
+    })
+}
+
+const createKonvaRect = (nodeData) => {
+    return new Konva.Rect({
+        x: nodeData.position.x,
+        y: nodeData.position.y,
+        width: nodeData.size.width,
+        height: nodeData.size.height,
+        fill: nodeData.rectInfo.fill,
+        stroke: nodeData.rectInfo.stroke,
+        strokeWidth: nodeData.rectInfo.strokeWidth,
+        cornerRadius: nodeData.rectInfo.cornerRadius,
+        rotation: nodeData.rotation,
+        scaleX: nodeData.scale.x,
+        scaleY: nodeData.scale.y,
+        draggable: nodeData.draggable,
+        visible: nodeData.visible,
+        opacity: nodeData.opacity
+    })
+}
+
+defineExpose({
+    getSelectedNodesInfo,
+    renderNodes
+})
 </script>
 
 <style scoped>
@@ -1054,6 +1264,7 @@ const getDropPosition = (e: DragEvent) => {
     flex-wrap: wrap;
     position: absolute;
     top: 0;
+    transform: translateY(-50%);
     left: 0;
     right: 0;
     z-index: 100;
@@ -1212,6 +1423,20 @@ input[type="range"] {
 
 .get-selected-btn:hover {
     background: #ffa940;
+}
+
+.send-nodes-btn {
+    padding: 8px 16px;
+    background: #52c41a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.send-nodes-btn:hover {
+    background: #73d13d;
 }
 
 .canvas-container {

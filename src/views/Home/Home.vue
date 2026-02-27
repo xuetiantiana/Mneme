@@ -30,7 +30,9 @@
         <span>Wroking memory</span>
         <div class="header-right"></div>
       </div>
-      <div class="main-content"></div>
+      <div class="main-content">
+        <WorkingMemory @renderNodesToTopic="handleRenderNodesToTopic"></WorkingMemory>
+      </div>
     </div>
 
     <!-- right-panel -->
@@ -43,7 +45,7 @@
       </div>
       <div class="panel-content">
 
-        <TopicContainerList></TopicContainerList>
+        <TopicContainerList ref="topicContainerListRef"></TopicContainerList>
       </div>
     </div>
     <button
@@ -62,8 +64,18 @@ import { ref } from "vue";
 import PCMListComponent from "@/views/Home/components/PCMListComponent.vue";
 import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
 
+import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
+
 const showLeft = ref(true);
 const showRight = ref(true);
+const topicContainerListRef = ref(null);
+
+const handleRenderNodesToTopic = (nodesData) => {
+    console.log('Home接收到要渲染的节点数据:', nodesData);
+    if (topicContainerListRef.value) {
+        topicContainerListRef.value.renderNodesToFirstCanvas(nodesData);
+    }
+};
 </script>
 
 <style scoped lang="scss">
@@ -147,7 +159,6 @@ const showRight = ref(true);
     .main-content {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
     }
   }
 

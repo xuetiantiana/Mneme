@@ -3,7 +3,7 @@
     <el-button class="add-topic-btn" style="width: 10em;" @click="addNewTopic">新建主题容器</el-button>
     <div class="topic-list-scroll">
       <div
-        v-for="(topic, index) in topics"
+        v-for="(topic, index) in topicContainers"
         :key="index"
         class="topic-container-item"
         :class="{ active: topic.selected }"
@@ -40,7 +40,10 @@
           </div>
 
           <div style="height: 300px">
-            <konvaComponent></konvaComponent>
+            <konvaComponent 
+              :ref="(el) => setKonvaRef(el, index)" 
+              @sendSelectedNodes="handleSelectedNodes">
+            </konvaComponent>
           </div>
         </div>
       </div>
@@ -55,7 +58,7 @@
 import { ref, computed } from "vue";
 import konvaComponent from "@/components/konvaComponent.vue";  
 
-const topics = ref([
+const topicContainers = ref([
   {
     title: "猫咪对人的信任",
     selected: true,
@@ -64,18 +67,52 @@ const topics = ref([
 ]);
 
 const selectedCount = computed(() => {
-  return topics.value.filter(topic => topic.selected).length;
+  return topicContainers.value.filter(topic => topic.selected).length;
 });
 
 const addNewTopic = () => {
   const newTopic = {
     title: ``,
     selected: false,
-    details: null,
+    desc: "人物：\n场景：\n 情节：",
     image: null,
   };
-  topics.value.push(newTopic);
+  topicContainers.value.push(newTopic);
 };
+
+const handleSelectedNodes = (nodesData) => {
+  console.log('父组件接收到选中的节点数据:', nodesData);
+};
+
+const konvaRefs = ref([]);
+
+const setKonvaRef = (el, index) => {
+  konvaRefs.value[index] = el;
+};
+
+const renderNodesToFirstCanvas = (nodesData) => {
+  console.log('TopicContainerList接收到要渲染的节点数据:', nodesData.nodes);
+  console.log('目标画布索引:', nodesData.canvasIndex);
+  
+  const canvasIndex = nodesData.canvasIndex || 0;
+  
+  if (konvaRefs.value[canvasIndex]) {
+    console.log(`konvaRefs.value[${canvasIndex}] 存在`);
+    console.log('方法:', Object.keys(konvaRefs.value[canvasIndex]));
+    if (typeof konvaRefs.value[canvasIndex].renderNodes === 'function') {
+      konvaRefs.value[canvasIndex].renderNodes(nodesData.nodes);
+      console.log(`已将节点渲染到画布 ${canvasIndex}`);
+    } else {
+      console.log('renderNodes 方法不存在');
+    }
+  } else {
+    console.log(`画布 ${canvasIndex} 引用不存在`);
+  }
+};
+
+defineExpose({
+  renderNodesToFirstCanvas
+});
 </script>
 
 <style scoped lang="scss">
