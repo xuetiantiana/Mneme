@@ -1,11 +1,17 @@
 <template>
     <div class="drawing-board">
-        <div class="toolbar" style="display: none;">
+        <div class="toolbar" >
             <div class="tool-group">
-                <button :class="['tool-btn', { active: currentTool === 'select' }]" @click="setTool('select')">
-                    选择
+                <button :class="['tool-btn', { active: currentTool === 'select' }]" @click="setTool('select')" title="编辑画布">
+                    编辑画布
                 </button>
-                <button :class="['tool-btn', { active: currentTool === 'brush' }]" @click="setTool('brush')">
+                <button :class="['tool-btn', { active: currentTool === 'pan' }]" @click="setTool('pan')" title="移动整个视图">
+                    移动视图
+                </button>
+                <button class="tool-btn" @click="resetView">
+                    重置视图
+                </button>
+                <!-- <button :class="['tool-btn', { active: currentTool === 'brush' }]" @click="setTool('brush')">
                     画笔
                 </button>
                 <button :class="['tool-btn', { active: currentTool === 'eraser' }]" @click="setTool('eraser')">
@@ -17,16 +23,14 @@
                 <button :class="['tool-btn', { active: currentTool === 'image' }]" @click="triggerImageUpload">
                     图片
                 </button>
-                <button :class="['tool-btn', { active: currentTool === 'pan' }]" @click="setTool('pan')">
-                    平移
-                </button>
+                
                 <input
                     ref="imageInput"
                     type="file"
                     accept="image/*"
                     style="display: none"
                     @change="handleImageUpload"
-                />
+                /> -->
             </div>
             <div class="tool-group">
                 <label class="color-label">
@@ -61,10 +65,13 @@
                 <button class="export-info-btn" @click="exportElementInfo">
                     导出元素信息
                 </button>
+                <button class="get-selected-btn" @click="getSelectedNodesInfo">
+                    获取选中节点
+                </button>
                 <button class="clear-btn" @click="clearCanvas">清除画布</button>
             </div>
         </div>
-        <div style="width: 100%;height: 500px;">
+        <div style="width: 100%;min-height: 200px;height: 100%;">
             <div 
                 ref="container" 
                 :class="['canvas-container', { panning: currentTool === 'pan' }]" 
@@ -120,7 +127,14 @@ onMounted(() => {
     layer = new Konva.Layer()
     stage.add(layer)
 
-    transformer = new Konva.Transformer()
+    transformer = new Konva.Transformer({
+        borderStroke: '#1890ff',
+        borderStrokeWidth: 2,
+        anchorStroke: '#1890ff',
+        anchorFill: '#ffffff',
+        anchorSize: 10,
+        rotateAnchorOffset: 20
+    })
     layer.add(transformer)
 
     selectionBox = new Konva.Rect({
@@ -247,6 +261,9 @@ const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => 
     if (currentTool.value === 'select') {
         const clickedOnEmpty = e.target === e.target.getStage()
         if (clickedOnEmpty) {
+            // 先移除所有节点的选中样式
+            selectedNodes.forEach(n => removeNodeSelectStyle(n))
+            
             selectedNodes = []
             transformer!.nodes([])
             
@@ -355,6 +372,9 @@ const handleMouseUp = () => {
         const box = selectionBox!.getClientRect()
         const shapes = layer!.getChildren()
         
+        // 先移除所有节点的选中样式
+        selectedNodes.forEach(n => removeNodeSelectStyle(n))
+        
         selectedNodes = []
         shapes.forEach(shape => {
             if (shape === transformer || shape === selectionBox) return
@@ -364,6 +384,9 @@ const handleMouseUp = () => {
                 selectedNodes.push(shape)
             }
         })
+        
+        // 为所有选中的节点添加选中样式
+        selectedNodes.forEach(n => addNodeSelectStyle(n))
         
         transformer!.nodes(selectedNodes)
     selectedNodes.forEach(n => n.moveToTop())
@@ -408,8 +431,14 @@ const handleNodeClick = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>, nod
 
     // 如果没有按下修饰键，执行单选操作
     if (!metaPressed) {
+        // 先移除所有节点的选中样式
+        selectedNodes.forEach(n => removeNodeSelectStyle(n))
+        
         // 如果点击的节点不在已选列表中，则只选中该节点
         if (selectedNodes.indexOf(node) === -1) {
+            selectedNodes = [node]
+        } else {
+            // 如果点击的节点已在已选列表中，保持选中
             selectedNodes = [node]
         }
     } else {
@@ -424,12 +453,74 @@ const handleNodeClick = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>, nod
         }
     }
 
+    // 为所有选中的节点添加选中样式
+    selectedNodes.forEach(n => addNodeSelectStyle(n))
+
     // 更新变换器的选中节点列表
     transformer!.nodes(selectedNodes)
     // 将所有选中的节点移到图层顶部
     selectedNodes.forEach(n => n.moveToTop())
     // 将变换器移到最顶部，确保选择框可见
     transformer!.moveToTop()
+}
+
+// 为节点添加选中样式
+const addNodeSelectStyle = (node: Konva.Node) => {
+    // 保存节点的原始样式
+    if (!node.getAttr('_originalShadowColor')) {
+        node.setAttr('_originalShadowColor', node.shadowColor())
+        node.setAttr('_originalShadowBlur', node.shadowBlur())
+        node.setAttr('_originalShadowOffset', node.shadowOffset())
+        node.setAttr('_originalShadowOpacity', node.shadowOpacity())
+    }
+    
+    // 添加选中样式：蓝色阴影
+    node.shadowColor('red')
+    node.shadowBlur(15)
+    node.shadowOffset({ x: 0, y: 0 })
+    node.shadowOpacity(0.6)
+    
+    // 如果是文字，添加边框效果
+    if (node instanceof Konva.Text) {
+        if (!node.getAttr('_originalStroke')) {
+            node.setAttr('_originalStroke', node.stroke())
+            node.setAttr('_originalStrokeWidth', node.strokeWidth())
+        }
+        node.stroke('#1890ff')
+        node.strokeWidth(2)
+    }
+    
+    // 如果是线条，改变颜色
+    if (node instanceof Konva.Line) {
+        if (!node.getAttr('_originalStroke')) {
+            node.setAttr('_originalStroke', node.stroke())
+            node.setAttr('_originalStrokeWidth', node.strokeWidth())
+        }
+        node.setAttr('_originalStroke', node.stroke())
+        node.stroke('#1890ff')
+        node.strokeWidth(node.strokeWidth() + 2)
+    }
+}
+
+// 移除节点的选中样式
+const removeNodeSelectStyle = (node: Konva.Node) => {
+    // 恢复节点的原始样式
+    node.shadowColor(node.getAttr('_originalShadowColor') || 'black')
+    node.shadowBlur(node.getAttr('_originalShadowBlur') || 0)
+    node.shadowOffset(node.getAttr('_originalShadowOffset') || { x: 0, y: 0 })
+    node.shadowOpacity(node.getAttr('_originalShadowOpacity') || 0)
+    
+    // 如果是文字，移除边框效果
+    if (node instanceof Konva.Text) {
+        node.stroke(node.getAttr('_originalStroke') || 'transparent')
+        node.strokeWidth(node.getAttr('_originalStrokeWidth') || 0)
+    }
+    
+    // 如果是线条，恢复原始颜色和线宽
+    if (node instanceof Konva.Line) {
+        node.stroke(node.getAttr('_originalStroke') || '#000000')
+        node.strokeWidth(node.getAttr('_originalStrokeWidth') || 5)
+    }
 }
 
 // 处理文字添加事件
@@ -565,8 +656,9 @@ const handleImageUpload = (e: Event) => {
 // 参数 tool: 工具类型，包括选择、画笔、橡皮擦、文字、图片、平移
 const setTool = (tool: 'select' | 'brush' | 'eraser' | 'text' | 'image' | 'pan') => {
     currentTool.value = tool
-    // 如果切换到非选择工具，清空选中节点
+    // 如果切换到非选择工具，清空选中节点并移除选中样式
     if (tool !== 'select' && transformer) {
+        selectedNodes.forEach(n => removeNodeSelectStyle(n))
         selectedNodes = []
         transformer.nodes([])
     }
@@ -766,6 +858,66 @@ const exportElementInfo = () => {
     console.log(stage.toJSON())
 }
 
+// 获取当前选中的节点详细信息
+const getSelectedNodesInfo = () => {
+    if (selectedNodes.length === 0) {
+        console.log('当前没有选中的节点')
+        return
+    }
+
+    console.log('=== 当前选中的节点信息 ===')
+    console.log(`选中节点数量: ${selectedNodes.length}`)
+    console.log('')
+
+    selectedNodes.forEach((node, index) => {
+        const nodeInfo = {
+            序号: index + 1,
+            类型: node.className,
+            ID: node.id() || '未设置',
+            位置: {
+                x: node.x(),
+                y: node.y()
+            },
+            尺寸: {
+                width: node.width(),
+                height: node.height()
+            },
+            旋转: node.rotation(),
+            缩放: {
+                x: node.scaleX(),
+                y: node.scaleY()
+            },
+            可拖拽: node.draggable(),
+            可见: node.visible(),
+            透明度: node.opacity()
+        }
+
+        if (node instanceof Konva.Image) {
+            nodeInfo['图片信息'] = {
+                原始宽度: node.image()?.width || 0,
+                原始高度: node.image()?.height || 0
+            }
+        } else if (node instanceof Konva.Text) {
+            nodeInfo['文字信息'] = {
+                内容: node.text(),
+                字体大小: node.fontSize(),
+                字体: node.fontFamily(),
+                颜色: node.fill()
+            }
+        } else if (node instanceof Konva.Line) {
+            nodeInfo['线条信息'] = {
+                点数量: node.points().length / 2,
+                颜色: node.stroke(),
+                线宽: node.strokeWidth(),
+                线帽: node.lineCap(),
+                线接: node.lineJoin()
+            }
+        }
+
+        console.log(`选中节点 ${index + 1}:`, nodeInfo)
+    })
+}
+
 // 清除画布
 // 删除图层中的所有节点，包括图形、文字、图片等
 const clearCanvas = () => {
@@ -808,10 +960,10 @@ const handleDrop = (e: DragEvent) => {
         let width = imgObj.width
         let height = imgObj.height
         
-        // 如果图片宽度超过舞台宽度的80%，按比例缩小
-        if (width > stageWidth * 0.8) {
-            const ratio = (stageWidth * 0.8) / width
-            width = stageWidth * 0.8
+        // 如果图片宽度超过200px，按比例缩小
+        if (width > 200) {
+            const ratio = 200 / width
+            width = 200
             height = height * ratio
         }
         
@@ -889,16 +1041,22 @@ const getDropPosition = (e: DragEvent) => {
     flex-direction: column;
     height: 100%;
     width: 100%;
+    position: relative;
 }
 
 .toolbar {
     display: flex;
     gap: 20px;
-    padding: 15px;
+    padding: 10px;
     background: #f5f5f5;
     border-bottom: 1px solid #ddd;
     align-items: center;
     flex-wrap: wrap;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
 }
 
 .tool-group {
@@ -908,7 +1066,8 @@ const getDropPosition = (e: DragEvent) => {
 }
 
 .tool-btn {
-    padding: 8px 16px;
+    font-size: .875em;
+    padding: 2px 8px;
     border: 1px solid #ddd;
     background: white;
     border-radius: 4px;
@@ -1041,13 +1200,28 @@ input[type="range"] {
     background: #9254de;
 }
 
+.get-selected-btn {
+    padding: 8px 16px;
+    background: #fa8c16;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.get-selected-btn:hover {
+    background: #ffa940;
+}
+
 .canvas-container {
     flex: 1;
     background: white;
-    background-image: 
+    /* background-image: 
         linear-gradient(to right, #f0f0f0 1px, transparent 1px),
         linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-size: 20px 20px; */
+    background: #fff;
     border: 1px solid #ddd;
     overflow: hidden;
     cursor: default;
