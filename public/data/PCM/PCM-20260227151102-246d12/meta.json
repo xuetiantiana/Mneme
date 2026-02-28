@@ -1,0 +1,351 @@
+{
+  "id": "PCM-20260227151102-246d12",
+  "created_at": "2026-02-27T15:11:55.958918",
+  "unit_summary": "在上海的文创园中漫步，感受即将下雨的凉爽与灵性的意境。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227151102-246d12/uploads/be5b6270_4-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260227151102-246d12/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "雕塑与自然的灵性结合",
+      "entities": [
+        "雕塑",
+        "树木",
+        "水面"
+      ],
+      "abstract_concepts": [
+        "灵性",
+        "意境"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "即将下雨的凉爽天气",
+      "entities": [
+        "天空",
+        "树木"
+      ],
+      "abstract_concepts": [
+        "凉爽",
+        "舒适"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F2"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "雕塑与自然的和谐共存",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "灵性的视觉表达",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_03",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "自然与艺术的融合",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "欣赏与宁静",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "灵性触动",
+      "t": 3,
+      "specificity": 5,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "树木的视觉绿意",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "image"
+      ],
+      "modality": "visual",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "雕塑与水面的视觉张力",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "灵性的意境氛围",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "即将下雨的预感",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "天气的舒适感",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_03",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "凉爽成为记忆的主导",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_E_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "舒适与放松",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_E_02",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "期待下雨的宁静",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_S_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": "凉爽的空气触感",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": "bodily",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_S_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "gustatory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "树木与天空的色彩和谐",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_02",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "即将下雨的氛围感",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [],
+    "text_has_image_missing": [],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 50,
+          "y1": 30,
+          "x2": 200,
+          "y2": 160
+        },
+        "crop_path": "data/PCM-20260227151102-246d12/crops/S_overlap_F1.png",
+        "interpretations": []
+      },
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_overlap_F2",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 16,
+          "y1": 66,
+          "x2": 206,
+          "y2": 174
+        },
+        "crop_path": "data/PCM-20260227151102-246d12/crops/S_overlap_F2.png",
+        "interpretations": []
+      }
+    ]
+  }
+}

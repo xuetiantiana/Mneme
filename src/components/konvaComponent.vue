@@ -939,6 +939,7 @@ const handleDrop = (e: DragEvent) => {
     if (dragType === 'single-image') {
         // 获取拖拽的图片URL
         const imgSrc = e.dataTransfer!.getData('imageSrc')
+        const id = e.dataTransfer!.getData('id') || ''
         if (!imgSrc) {
             return
         }
@@ -979,7 +980,8 @@ const handleDrop = (e: DragEvent) => {
                 y: dropPos.y - height / 2,
                 width: width,
                 height: height,
-                draggable: true
+                draggable: true,
+                id: id
             })
 
             // 为图片添加点击事件，用于选中
@@ -1014,6 +1016,7 @@ const handleDrop = (e: DragEvent) => {
     else if (dragType === 'text') {
         // 获取拖拽的文本内容
         const textContent = e.dataTransfer!.getData('textContent')
+        const id = e.dataTransfer!.getData('id') || ''
         if (!textContent) {
             return
         }
@@ -1029,7 +1032,8 @@ const handleDrop = (e: DragEvent) => {
             fontSize: 24,
             fontFamily: 'Arial',
             fill: '#000000',
-            draggable: true
+            draggable: true,
+            id: id
         })
 
         // 为文本添加点击事件，用于选中

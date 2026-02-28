@@ -111,6 +111,7 @@ const renderNodesToFirstCanvas = (nodesData) => {
 };
 
 defineExpose({
+  topicContainers,
   renderNodesToFirstCanvas
 });
 </script>

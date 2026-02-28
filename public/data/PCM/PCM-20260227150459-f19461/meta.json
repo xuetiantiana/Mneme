@@ -1,0 +1,328 @@
+{
+  "id": "PCM-20260227150459-f19461",
+  "created_at": "2026-02-27T15:07:12.084843",
+  "unit_summary": "在深圳宠物店观察小狗的温馨时刻",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳宠物店"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227150459-f19461/uploads/09311931_1-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260227150459-f19461/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "宠物店玻璃柜中的小狗",
+      "entities": [
+        "小狗",
+        "玻璃柜"
+      ],
+      "abstract_concepts": [
+        "温馨",
+        "放松"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "深圳商场的日常生活",
+      "entities": [],
+      "abstract_concepts": [
+        "日常",
+        "舒适"
+      ],
+      "source": [
+        "author_text"
+      ],
+      "seg_id": "S_text_F2"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "温馨的日常仪式",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "放松心情的片刻",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_03",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "玻璃柜中的温暖氛围",
+      "t": 3,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "舒缓",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "温暖",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "毛茸茸的视觉感受",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "visual",
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "柔和色调的视觉舒适",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "玻璃柜的简约构图",
+      "t": 3,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_M_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "深圳商场的日常舒适感",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "日常生活的片段",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_E_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "舒适",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_E_02",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "怀念",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_S_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "visual",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_S_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "商场的现代感",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_A_02",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "日常生活的流动性",
+      "t": 3,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": 3
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [],
+    "text_has_image_missing": [
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_text_F2",
+        "generation_prompt": "手绘绘本风格，深圳商场的日常生活；舒适的氛围，现代感的环境，png",
+        "generated_image_path": "data/PCM-20260227150459-f19461/generated/S_text_F2.png",
+        "interpretations": []
+      }
+    ],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 50,
+          "y1": 50,
+          "x2": 200,
+          "y2": 300
+        },
+        "crop_path": "data/PCM-20260227150459-f19461/crops/S_overlap_F1.png",
+        "interpretations": []
+      }
+    ]
+  }
+}

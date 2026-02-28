@@ -1,0 +1,480 @@
+{
+  "id": "PCM-20260227150806-963cae",
+  "created_at": "2026-02-27T15:11:02.210345",
+  "unit_summary": "在西安寺庙内与小猫互动的宁静时刻。",
+  "context": {
+    "time_anchor": "2025.10",
+    "place_anchor": "西安寺庙"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227150806-963cae/uploads/f915525c_3-1.png"
+    },
+    {
+      "media_id": "M_img_02",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227150806-963cae/uploads/894dd7eb_3-2.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260227150806-963cae/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "寺庙内猫咪安详地坐在垫子上",
+      "entities": [
+        "猫",
+        "垫子",
+        "供奉箱"
+      ],
+      "abstract_concepts": [
+        "宁静",
+        "融合"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "寺庙环境中的供奉箱和花",
+      "entities": [
+        "供奉箱",
+        "花",
+        "建筑结构"
+      ],
+      "abstract_concepts": [
+        "宗教氛围"
+      ],
+      "source": [
+        "image"
+      ],
+      "seg_id": "S_image_F2"
+    },
+    {
+      "signifier_id": "F3",
+      "label": "游客喂猫的场景",
+      "entities": [],
+      "abstract_concepts": [
+        "互动",
+        "和谐"
+      ],
+      "source": [
+        "author_text"
+      ],
+      "seg_id": "S_text_F3"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "猫咪与寺庙环境的和谐共存",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "宁静的氛围增强了寺庙的神圣感",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "安详",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "平和",
+      "t": 3,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "猫咪的毛发柔软",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": "tactile",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "猫咪与垫子的色彩和谐",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "寺庙的宁静与猫咪的姿态形成视觉平衡",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_AI_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "供奉箱象征着宗教信仰的中心",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_M_AI_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "花朵增添了寺庙的生机",
+      "t": 3,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_E_AI_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "庄严",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_E_AI_02",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "宁静",
+      "t": 3,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": "花的色彩鲜艳",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "visual",
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "image"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_AI_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "供奉箱与花的组合形成视觉焦点",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_A_AI_02",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "建筑结构的对称性增强了视觉平衡",
+      "t": 3,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F3_M_01",
+      "signifier_id": "F3",
+      "kind": "meaning",
+      "text": "游客与猫咪的互动象征着和谐共处",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_M_02",
+      "signifier_id": "F3",
+      "kind": "meaning",
+      "text": "喂食行为体现了人们的关爱",
+      "t": 3,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_E_01",
+      "signifier_id": "F3",
+      "kind": "emotion",
+      "text": "温馨",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_E_02",
+      "signifier_id": "F3",
+      "kind": "emotion",
+      "text": "愉悦",
+      "t": 3,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_S_01",
+      "signifier_id": "F3",
+      "kind": "sensory",
+      "text": "猫咪的喵喵声",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_S_02",
+      "signifier_id": "F3",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "olfactory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_A_01",
+      "signifier_id": "F3",
+      "kind": "aesthetic",
+      "text": "游客与猫咪的互动形成动态画面",
+      "t": 0,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F3_A_02",
+      "signifier_id": "F3",
+      "kind": "aesthetic",
+      "text": "和谐氛围中的温暖色调",
+      "t": 3,
+      "specificity": 2,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_image_F2",
+        "label": "寺庙环境中的供奉箱和花",
+        "image_index": 1,
+        "crop_guidance": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 254,
+          "y2": 339
+        },
+        "crop_path": "data/PCM-20260227150806-963cae/crops/S_image_F2.png",
+        "interpretations": [
+          "I_F2_M_AI_01",
+          "I_F2_M_AI_02",
+          "I_F2_E_AI_01",
+          "I_F2_E_AI_02",
+          "I_F2_S_AI_01",
+          "I_F2_A_AI_01",
+          "I_F2_A_AI_02"
+        ]
+      }
+    ],
+    "text_has_image_missing": [
+      {
+        "signifier_id": "F3",
+        "seg_id": "S_text_F3",
+        "generation_prompt": "手绘绘本风格，游客喂猫的场景；互动和谐的氛围，温馨愉悦的情感，猫咪的喵喵声，png",
+        "generated_image_path": "data/PCM-20260227150806-963cae/generated/S_text_F3.png",
+        "interpretations": []
+      }
+    ],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 97,
+          "y1": 204,
+          "x2": 156,
+          "y2": 311
+        },
+        "crop_path": "data/PCM-20260227150806-963cae/crops/S_overlap_F1.png",
+        "interpretations": []
+      }
+    ]
+  }
+}

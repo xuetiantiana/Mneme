@@ -1,0 +1,129 @@
+{
+  "id": "PCM-20260227150712-e1e52a",
+  "created_at": "2026-02-27T15:08:06.714388",
+  "unit_summary": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳楼下路边"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260227150712-e1e52a/uploads/76c999f7_2-1.png"
+    ],
+    "text": "一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。",
+    "time_place": "2025.11,深圳楼下路边的疯狂动物城快闪",
+    "received_at": "2026-02-27T15:07:12.104320"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "疯狂动物城快闪现场的小老鼠雕塑",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227150712-e1e52a/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "动画与现实的对比产生新鲜感",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_02",
+            "text": "现场感增强了角色的立体感",
+            "specificity": 4
+          },
+          {
+            "id": "I_F1_M_03",
+            "text": "雕塑成为记忆的视觉锚点",
+            "specificity": 4
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "惊喜与好奇",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "怀旧与亲切",
+            "specificity": 4
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F1_S_01",
+            "text": "雕塑的视觉冲击力",
+            "specificity": 3,
+            "modality": "visual"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "雕塑与背景的色彩协调",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_A_02",
+            "text": "雕塑的形态与动画风格一致",
+            "specificity": 4
+          }
+        ]
+      },
+      "image_index": 0
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_image_F2",
+      "label": "装饰背景与建筑结构",
+      "type": "image_has_text_missing",
+      "source": [
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227150712-e1e52a/crops/S_image_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_AI_01",
+            "text": "城市氛围与主题装饰的融合",
+            "specificity": 2
+          },
+          {
+            "id": "I_F2_M_AI_02",
+            "text": "建筑结构的童话感",
+            "specificity": 2
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_AI_01",
+            "text": "愉悦与轻松",
+            "specificity": 2
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_AI_01",
+            "text": "建筑的视觉吸引力",
+            "specificity": 2,
+            "modality": "visual"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_AI_01",
+            "text": "建筑与路灯的色彩对比",
+            "specificity": 2
+          }
+        ]
+      },
+      "image_index": 0
+    }
+  ]
+}

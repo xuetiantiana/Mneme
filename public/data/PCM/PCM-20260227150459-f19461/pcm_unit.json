@@ -1,0 +1,131 @@
+{
+  "id": "PCM-20260227150459-f19461",
+  "created_at": "2026-02-27T15:07:12.084843",
+  "unit_summary": "在深圳宠物店观察小狗的温馨时刻",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳宠物店"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260227150459-f19461/uploads/09311931_1-1.png"
+    ],
+    "text": "看宠物店里面很多小狗\n我住在深圳的时候，每天都会去深圳楼下的商场吃饭，  然后顺便去看一看这个宠物店的小狗小猫放松一下。",
+    "time_place": "2025.11，深圳宠物店",
+    "received_at": "2026-02-27T15:04:59.594527"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "宠物店玻璃柜中的小狗",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227150459-f19461/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "温馨的日常仪式",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_02",
+            "text": "放松心情的片刻",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_03",
+            "text": "玻璃柜中的温暖氛围",
+            "specificity": 2
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "舒缓",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "温暖",
+            "specificity": 3
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F1_S_01",
+            "text": "毛茸茸的视觉感受",
+            "specificity": 2,
+            "modality": "visual"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "柔和色调的视觉舒适",
+            "specificity": 2
+          },
+          {
+            "id": "I_F1_A_02",
+            "text": "玻璃柜的简约构图",
+            "specificity": 2
+          }
+        ]
+      },
+      "image_index": 0
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "深圳商场的日常生活",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227150459-f19461/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "深圳商场的日常舒适感",
+            "specificity": 3
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "日常生活的片段",
+            "specificity": 3
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "舒适",
+            "specificity": 3
+          },
+          {
+            "id": "I_F2_E_02",
+            "text": "怀念",
+            "specificity": 3
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_01",
+            "text": "商场的现代感",
+            "specificity": 2
+          },
+          {
+            "id": "I_F2_A_02",
+            "text": "日常生活的流动性",
+            "specificity": 2
+          }
+        ]
+      }
+    }
+  ]
+}

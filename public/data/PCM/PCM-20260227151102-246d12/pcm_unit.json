@@ -1,0 +1,145 @@
+{
+  "id": "PCM-20260227151102-246d12",
+  "created_at": "2026-02-27T15:11:55.958918",
+  "unit_summary": "在上海的文创园中漫步，感受即将下雨的凉爽与灵性的意境。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260227151102-246d12/uploads/be5b6270_4-1.png"
+    ],
+    "text": "随便走走，当时快要下雨了，天气比较舒服,\n很喜欢这张照片整体的意境\n凉爽、灵性",
+    "time_place": "2025.6,上海的一个文创园",
+    "received_at": "2026-02-27T15:11:02.225244"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "雕塑与自然的灵性结合",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227151102-246d12/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "雕塑与自然的和谐共存",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_02",
+            "text": "灵性的视觉表达",
+            "specificity": 4
+          },
+          {
+            "id": "I_F1_M_03",
+            "text": "自然与艺术的融合",
+            "specificity": 3
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "欣赏与宁静",
+            "specificity": 4
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "灵性触动",
+            "specificity": 5
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F1_S_01",
+            "text": "树木的视觉绿意",
+            "specificity": 2,
+            "modality": "visual"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "雕塑与水面的视觉张力",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_A_02",
+            "text": "灵性的意境氛围",
+            "specificity": 4
+          }
+        ]
+      },
+      "image_index": 0
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_overlap_F2",
+      "label": "即将下雨的凉爽天气",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227151102-246d12/crops/S_overlap_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "即将下雨的预感",
+            "specificity": 3
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "天气的舒适感",
+            "specificity": 2
+          },
+          {
+            "id": "I_F2_M_03",
+            "text": "凉爽成为记忆的主导",
+            "specificity": 3
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "舒适与放松",
+            "specificity": 3
+          },
+          {
+            "id": "I_F2_E_02",
+            "text": "期待下雨的宁静",
+            "specificity": 4
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_01",
+            "text": "凉爽的空气触感",
+            "specificity": 2,
+            "modality": "bodily"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_01",
+            "text": "树木与天空的色彩和谐",
+            "specificity": 3
+          },
+          {
+            "id": "I_F2_A_02",
+            "text": "即将下雨的氛围感",
+            "specificity": 4
+          }
+        ]
+      },
+      "image_index": 0
+    }
+  ]
+}

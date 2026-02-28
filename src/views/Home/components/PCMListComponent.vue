@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 
 const selectAll = ref(false);
@@ -70,131 +70,34 @@ const currentItem = ref({});
 const popupPosition = ref({ top: 0, left: 0 });
 
 const getImageProxyUrl = (url) => {
-  return url.replace("https://trae-api-cn.mchost.guru", "/image-proxy");
+  return url.replace("http://localhost:8000/api/images/data", "/data/PCM");
 };
 
-const memoryItems = ref([
-  {
-    title: "Art",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=abstract%20art%20painting&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=graphic%20design%20poster&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Graphic Design",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=graphic%20design%20poster&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=typography%20design&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Fashion",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fashion%20photography%20model&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fashion%20accessories&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Film Photography",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=film%20photography%20vintage&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=analog%20camera%20photos&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Cinema",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinema%20movie%20scene&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=film%20camera%20equipment&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "UI/UX",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ui%20design%20interface&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ux%20design%20wireframe&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Fashion",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fashion%20photography%20model&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fashion%20accessories&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Film Photography",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=film%20photography%20vintage&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=analog%20camera%20photos&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "Cinema",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinema%20movie%20scene&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=film%20camera%20equipment&image_size=square"
-      ),
-    ],
-  },
-  {
-    title: "UI/UX",
-    selected: false,
-    images: [
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ui%20design%20interface&image_size=square"
-      ),
-      getImageProxyUrl(
-        "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ux%20design%20wireframe&image_size=square"
-      ),
-    ],
-  },
-]);
+const memoryItems = ref([]);
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/data/PCM/pcm_list_response.json');
+    const data = await response.json();
+    
+    if (data.units && Array.isArray(data.units)) {
+      memoryItems.value = data.units.map(unit => ({
+        id: unit.id,
+        title: unit.unit_summary || '未命名记忆',
+        selected: false,
+        images: unit.user_input?.images?.map(img => getImageProxyUrl(img)) || [],
+        createdAt: unit.created_at,
+        text: unit.user_input?.text || '',
+        timePlace: unit.user_input?.time_place || '',
+        segments: unit.segments || []
+      }));
+      
+      console.log('已加载 PCM 数据:', memoryItems.value.length, '条记忆', memoryItems.value);
+    }
+  } catch (error) {
+    console.error('加载 PCM 数据失败:', error);
+  }
+});
 
 const getImageStyle = (index) => {
   const offsets = [
@@ -240,10 +143,35 @@ const handleCardDragStart = (event, item) => {
 const handleItemClick = (event, item) => {
   const liElement = event.currentTarget;
   const rect = liElement.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  const popupWidth = 400;
+  const popupHeight = 500;
+  const margin = 8;
+  
+  let top = rect.bottom + margin;
+  let left = rect.left;
+  
+  if (top + popupHeight > viewportHeight) {
+    top = rect.top - popupHeight - margin;
+  }
+  
+  if (left + popupWidth > viewportWidth) {
+    left = viewportWidth - popupWidth - margin;
+  }
+  
+  if (left < margin) {
+    left = margin;
+  }
+  
+  if (top < margin) {
+    top = margin;
+  }
   
   popupPosition.value = {
-    top: rect.bottom + 8,
-    left: rect.left
+    top: top,
+    left: left
   };
   
   currentItem.value = item;

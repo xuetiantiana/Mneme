@@ -1,0 +1,129 @@
+{
+  "id": "PCM-20260227151155-843b28",
+  "created_at": "2026-02-27T15:13:42.380461",
+  "unit_summary": "在上海的文创园中，环形结构与彩色画作营造出一种清爽的仪式感。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260227151155-843b28/uploads/bc5b27a0_5-1.png"
+    ],
+    "text": "灵性、干净、清爽\n整体的环形给人一种仪式感\n虽然是夏天但是很凉爽的感觉\n有点像观夏的线下店的调性",
+    "time_place": "2025.6,上海的一个文创园",
+    "received_at": "2026-02-27T15:11:55.979917"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "环形结构与彩色画作的视觉体验",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227151155-843b28/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "环形结构带来仪式感",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_02",
+            "text": "彩色画作增添活力",
+            "specificity": 3
+          },
+          {
+            "id": "I_F1_M_03",
+            "text": "灵性与清爽的结合",
+            "specificity": 4
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "清爽舒适",
+            "specificity": 4
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "灵性愉悦",
+            "specificity": 4
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F1_S_01",
+            "text": "凉爽的空气",
+            "specificity": 3,
+            "modality": "bodily"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "环形结构的仪式感",
+            "specificity": 4
+          },
+          {
+            "id": "I_F1_A_02",
+            "text": "彩色画作的视觉冲击",
+            "specificity": 3
+          }
+        ]
+      },
+      "image_index": 0
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_image_F2",
+      "label": "树木环绕的步道",
+      "type": "image_has_text_missing",
+      "source": [
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260227151155-843b28/crops/S_image_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_AI_01",
+            "text": "树木环绕带来自然宁静",
+            "specificity": 2
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_AI_01",
+            "text": "宁静放松",
+            "specificity": 2
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_AI_01",
+            "text": "树叶的轻声沙沙",
+            "specificity": 2,
+            "modality": "auditory"
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_AI_01",
+            "text": "步道的自然流动感",
+            "specificity": 2
+          },
+          {
+            "id": "I_F2_A_AI_02",
+            "text": "树木的绿意盎然",
+            "specificity": 2
+          }
+        ]
+      },
+      "image_index": 0
+    }
+  ]
+}

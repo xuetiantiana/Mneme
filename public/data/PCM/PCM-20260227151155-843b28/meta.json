@@ -1,0 +1,316 @@
+{
+  "id": "PCM-20260227151155-843b28",
+  "created_at": "2026-02-27T15:13:42.380461",
+  "unit_summary": "在上海的文创园中，环形结构与彩色画作营造出一种清爽的仪式感。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227151155-843b28/uploads/bc5b27a0_5-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260227151155-843b28/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "环形结构与彩色画作的视觉体验",
+      "entities": [
+        "环形结构",
+        "彩色画作"
+      ],
+      "abstract_concepts": [
+        "仪式感",
+        "清爽"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "树木环绕的步道",
+      "entities": [
+        "步道",
+        "树木"
+      ],
+      "abstract_concepts": [
+        "自然",
+        "宁静"
+      ],
+      "source": [
+        "image"
+      ],
+      "seg_id": "S_image_F2"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "环形结构带来仪式感",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "彩色画作增添活力",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_03",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "灵性与清爽的结合",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "清爽舒适",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "灵性愉悦",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "凉爽的空气",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": "bodily",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "环形结构的仪式感",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "彩色画作的视觉冲击",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_AI_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "树木环绕带来自然宁静",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_E_AI_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "宁静放松",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": "树叶的轻声沙沙",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "auditory",
+      "conf": 2
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "image"
+      ],
+      "modality": "bodily",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_AI_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "步道的自然流动感",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_A_AI_02",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "树木的绿意盎然",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_image_F2",
+        "label": "树木环绕的步道",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 254,
+          "y2": 337
+        },
+        "crop_path": "data/PCM-20260227151155-843b28/crops/S_image_F2.png",
+        "interpretations": [
+          "I_F2_M_AI_01",
+          "I_F2_E_AI_01",
+          "I_F2_S_AI_01",
+          "I_F2_A_AI_01",
+          "I_F2_A_AI_02"
+        ]
+      }
+    ],
+    "text_has_image_missing": [],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 62,
+          "y1": 101,
+          "x2": 185,
+          "y2": 232
+        },
+        "crop_path": "data/PCM-20260227151155-843b28/crops/S_overlap_F1.png",
+        "interpretations": []
+      }
+    ]
+  }
+}

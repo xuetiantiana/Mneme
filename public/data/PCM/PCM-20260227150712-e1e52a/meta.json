@@ -1,0 +1,316 @@
+{
+  "id": "PCM-20260227150712-e1e52a",
+  "created_at": "2026-02-27T15:08:06.714388",
+  "unit_summary": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳楼下路边"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260227150712-e1e52a/uploads/76c999f7_2-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260227150712-e1e52a/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "疯狂动物城快闪现场的小老鼠雕塑",
+      "entities": [
+        "小老鼠雕塑",
+        "疯狂动物城装饰背景"
+      ],
+      "abstract_concepts": [
+        "现场感",
+        "动画与现实的对比"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "装饰背景与建筑结构",
+      "entities": [
+        "建筑结构",
+        "绿色路灯"
+      ],
+      "abstract_concepts": [
+        "城市氛围",
+        "主题装饰"
+      ],
+      "source": [
+        "image"
+      ],
+      "seg_id": "S_image_F2"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "动画与现实的对比产生新鲜感",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "现场感增强了角色的立体感",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_M_03",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "雕塑成为记忆的视觉锚点",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "惊喜与好奇",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "怀旧与亲切",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "雕塑的视觉冲击力",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": "visual",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "雕塑与背景的色彩协调",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "雕塑的形态与动画风格一致",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_M_AI_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "城市氛围与主题装饰的融合",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_M_AI_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "建筑结构的童话感",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_E_AI_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "愉悦与轻松",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": "建筑的视觉吸引力",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "visual",
+      "conf": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_AI_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "image"
+      ],
+      "modality": "auditory",
+      "conf": null
+    },
+    {
+      "interpretation_id": "I_F2_A_AI_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "建筑与路灯的色彩对比",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "conf": 3
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_image_F2",
+        "label": "装饰背景与建筑结构",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 254,
+          "y2": 339
+        },
+        "crop_path": "data/PCM-20260227150712-e1e52a/crops/S_image_F2.png",
+        "interpretations": [
+          "I_F2_M_AI_01",
+          "I_F2_M_AI_02",
+          "I_F2_E_AI_01",
+          "I_F2_S_AI_01",
+          "I_F2_A_AI_01"
+        ]
+      }
+    ],
+    "text_has_image_missing": [],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 50,
+          "y1": 150,
+          "x2": 200,
+          "y2": 300
+        },
+        "crop_path": "data/PCM-20260227150712-e1e52a/crops/S_overlap_F1.png",
+        "interpretations": []
+      }
+    ]
+  }
+}
