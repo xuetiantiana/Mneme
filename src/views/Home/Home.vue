@@ -31,7 +31,11 @@
         <div class="header-right"></div>
       </div>
       <div class="main-content">
-        <WorkingMemory @renderNodesToTopic="handleRenderNodesToTopic"></WorkingMemory>
+        <WorkingMemory 
+          ref="workingMemoryRef" 
+          :topicContainers="getTopicContainers()"
+          @renderNodesToTopic="handleRenderNodesToTopic">
+        </WorkingMemory>
       </div>
     </div>
 
@@ -69,6 +73,14 @@ import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 const showLeft = ref(true);
 const showRight = ref(true);
 const topicContainerListRef = ref(null);
+const workingMemoryRef = ref(null);
+
+const getTopicContainers = () => {
+  if (topicContainerListRef.value) {
+    return topicContainerListRef.value.topicContainers || [];
+  }
+  return [];
+};
 
 const handleRenderNodesToTopic = (nodesData) => {
     console.log('Home接收到要渲染的节点数据:', nodesData);

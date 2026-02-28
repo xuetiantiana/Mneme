@@ -1,18 +1,31 @@
 <template >
     <div style="width: 100%;height: 100%;display: flex;flex-direction: column;">
-        <div style="padding: 16px;display: flex;gap: 16px;">
-            <button class="render-nodes-btn" @click="handleRenderNodes(1)">发送到主题画布</button>
+        <div style="padding: 16px;display: flex;gap: 16px;flex-wrap: wrap;">
+            <button 
+                v-for="(topic, index) in topicContainers" 
+                :key="index"
+                class="render-nodes-btn" 
+                @click="handleRenderNodes(index)">
+                发送到主题画布{{ index + 1 }}
+            </button>
         </div>
         
-        <div style="flex: 1;">
+        <div style="flex: 1;margin-top: 2em;">
             <KonvaComponent ref="konvaRef" />
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, defineProps } from 'vue'
 import konvaComponent from "@/components/konvaComponent.vue";
+
+const props = defineProps({
+    topicContainers: {
+        type: Array,
+        default: () => []
+    }
+})
 
 const emit = defineEmits(['renderNodesToTopic'])
 
@@ -33,7 +46,7 @@ const handleGetSelectedNodes = () => {
     }
 }
 
-const handleRenderNodes = () => {
+const handleRenderNodes = (canvasIndex) => {
     // 先获取选中的节点信息
     handleGetSelectedNodes()
     
@@ -41,9 +54,10 @@ const handleRenderNodes = () => {
     if (selectedNodesData.value.length > 0) {
         console.log('=== 发送节点数据到主题画布 ===')
         console.log(`节点数量: ${selectedNodesData.value.length}`)
+        console.log(`目标画布索引: ${canvasIndex}`)
         emit('renderNodesToTopic', {
             nodes: selectedNodesData.value,
-            canvasIndex: 1
+            canvasIndex: canvasIndex
         })
         console.log('已发送节点数据到父组件')
     } else {

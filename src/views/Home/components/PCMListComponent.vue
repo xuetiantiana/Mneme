@@ -5,14 +5,15 @@
       <input type="checkbox" v-model="selectAll" @change="handleSelectAll" />
     </div>
 
-    <div class="cards-grid">
-      <div
+    <ul class="cards-grid">
+      <li
         v-for="(item, index) in memoryItems"
         :key="index"
         class="card-item"
         :class="{ selected: item.selected }"
         draggable="true"
         @dragstart="handleCardDragStart($event, item)"
+        @click="handleItemClick($event, item)"
       >
         <button
           class="add-btn"
@@ -47,15 +48,26 @@
         <div class="card-footer">
           <span class="card-title">{{ item.title }}</span>
         </div>
-      </div>
-    </div>
+      </li>
+    </ul>
+
+    <PCMDetailPopup
+      :visible="popupVisible"
+      :item="currentItem"
+      :position="popupPosition"
+      @close="handleClosePopup"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 
 const selectAll = ref(false);
+const popupVisible = ref(false);
+const currentItem = ref({});
+const popupPosition = ref({ top: 0, left: 0 });
 
 const getImageProxyUrl = (url) => {
   return url.replace("https://trae-api-cn.mchost.guru", "/image-proxy");
@@ -223,6 +235,23 @@ const handleCardDragStart = (event, item) => {
   event.dataTransfer.effectAllowed = "copy";
   event.dataTransfer.setData("cardData", JSON.stringify(item));
   event.dataTransfer.setData("dragType", "whole-card");
+};
+
+const handleItemClick = (event, item) => {
+  const liElement = event.currentTarget;
+  const rect = liElement.getBoundingClientRect();
+  
+  popupPosition.value = {
+    top: rect.bottom + 8,
+    left: rect.left
+  };
+  
+  currentItem.value = item;
+  popupVisible.value = true;
+};
+
+const handleClosePopup = () => {
+  popupVisible.value = false;
 };
 </script>
 
