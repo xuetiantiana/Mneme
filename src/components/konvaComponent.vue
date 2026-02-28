@@ -932,129 +932,139 @@ const handleDragOver = (e: DragEvent) => {
 const handleDrop = (e: DragEvent) => {
     e.preventDefault()
     
-    // 获取拖拽类型
-    const dragType = e.dataTransfer!.getData('dragType')
+    // 获取拖拽数据
+    const dragDataStr = e.dataTransfer!.getData('dragData')
+    if (!dragDataStr) {
+        return
+    }
     
-    // 处理单个图片的拖拽
-    if (dragType === 'single-image') {
-        // 获取拖拽的图片URL
-        const imgSrc = e.dataTransfer!.getData('imageSrc')
-        const id = e.dataTransfer!.getData('id') || ''
-        if (!imgSrc) {
-            return
-        }
-        
-        // 创建图片对象并设置跨域属性
-        const imgObj = new Image()
-        imgObj.crossOrigin = 'anonymous'
-        imgObj.onload = () => {
-            // 获取舞台尺寸
-            const stageWidth = stage!.width()
-            const stageHeight = stage!.height()
-            
-            // 获取原始图片尺寸
-            let width = imgObj.width
-            let height = imgObj.height
-            
-            // 如果图片宽度超过200px，按比例缩小
-            if (width > 200) {
-                const ratio = 200 / width
-                width = 200
-                height = height * ratio
+    // 解析拖拽数据（数组格式）
+    const dragDataArray = JSON.parse(dragDataStr)
+    console.log('拖拽数据:', dragDataArray)
+    
+    // 遍历数组中的每个数据项
+    dragDataArray.forEach((dragData: any) => {
+        // 根据拖拽类型处理
+        if (dragData.dragType === 'single-image') {
+            // 处理单个图片的拖拽
+            const imgSrc = dragData.imageSrc
+            const id = dragData.id || ''
+            if (!imgSrc) {
+                return
             }
             
-            // 如果图片高度超过舞台高度的80%，按比例缩小
-            if (height > stageHeight * 0.8) {
-                const ratio = (stageHeight * 0.8) / height
-                height = stageHeight * 0.8
-                width = width * ratio
-            }
+            // 创建图片对象并设置跨域属性
+            const imgObj = new Image()
+            imgObj.crossOrigin = 'anonymous'
+            imgObj.onload = () => {
+                // 获取舞台尺寸
+                const stageWidth = stage!.width()
+                const stageHeight = stage!.height()
+                
+                // 获取原始图片尺寸
+                let width = imgObj.width
+                let height = imgObj.height
+                
+                // 如果图片宽度超过200px，按比例缩小
+                if (width > 200) {
+                    const ratio = 200 / width
+                    width = 200
+                    height = height * ratio
+                }
+                
+                // 如果图片高度超过舞台高度的80%，按比例缩小
+                if (height > stageHeight * 0.8) {
+                    const ratio = (stageHeight * 0.8) / height
+                    height = stageHeight * 0.8
+                    width = width * ratio
+                }
 
+                // 获取放置位置（考虑画布的缩放和平移）
+                const dropPos = getDropPosition(e)
+                
+                // 创建Konva图片对象，以鼠标位置为中心
+                const konvaImage = new Konva.Image({
+                    image: imgObj,
+                    x: dropPos.x - width / 2,
+                    y: dropPos.y - height / 2,
+                    width: width,
+                    height: height,
+                    draggable: true,
+                    id: id
+                })
+
+                // 为图片添加点击事件，用于选中
+                konvaImage.on('click tap', (evt) => {
+                    handleNodeClick(evt, konvaImage)
+                })
+
+                // 将图片添加到图层
+                layer!.add(konvaImage)
+                // 选中刚添加的图片
+                selectedNodes = [konvaImage]
+                transformer!.nodes(selectedNodes)
+                // 将图片和变换器移到最上层
+                konvaImage.moveToTop()
+                transformer!.moveToTop()
+                
+                // 添加完图片后，自动切换回选择工具
+                currentTool.value = 'select'
+                // 更新节点的可拖拽状态
+                updateDraggableState()
+            }
+            
+            // 处理图片加载错误
+            imgObj.onerror = () => {
+                console.error('Failed to load image:', imgSrc)
+            }
+            
+            // 开始加载图片
+            imgObj.src = imgSrc
+        } 
+        // 处理文本的拖拽
+        else if (dragData.dragType === 'text') {
+            // 获取拖拽的文本内容
+            const textContent = dragData.textContent
+            const id = dragData.id || ''
+            if (!textContent) {
+                return
+            }
+            
             // 获取放置位置（考虑画布的缩放和平移）
             const dropPos = getDropPosition(e)
             
-            // 创建Konva图片对象，以鼠标位置为中心
-            const konvaImage = new Konva.Image({
-                image: imgObj,
-                x: dropPos.x - width / 2,
-                y: dropPos.y - height / 2,
-                width: width,
-                height: height,
+            // 创建Konva文本对象
+            const konvaText = new Konva.Text({
+                x: dropPos.x,
+                y: dropPos.y,
+                text: textContent,
+                fontSize: 24,
+                fontFamily: 'Arial',
+                fill: '#000000',
                 draggable: true,
                 id: id
             })
 
-            // 为图片添加点击事件，用于选中
-            konvaImage.on('click tap', (evt) => {
-                handleNodeClick(evt, konvaImage)
+            // 为文本添加点击事件，用于选中
+            konvaText.on('click tap', (evt) => {
+                handleNodeClick(evt, konvaText)
             })
 
-            // 将图片添加到图层
-            layer!.add(konvaImage)
-            // 选中刚添加的图片
-            selectedNodes = [konvaImage]
+            // 将文本添加到图层
+            layer!.add(konvaText)
+            // 选中刚添加的文本
+            selectedNodes = [konvaText]
             transformer!.nodes(selectedNodes)
-            // 将图片和变换器移到最上层
-            konvaImage.moveToTop()
+            // 将文本和变换器移到最上层
+            konvaText.moveToTop()
             transformer!.moveToTop()
             
-            // 添加完图片后，自动切换回选择工具
+            // 添加完文本后，自动切换回选择工具
             currentTool.value = 'select'
             // 更新节点的可拖拽状态
             updateDraggableState()
         }
-        
-        // 处理图片加载错误
-        imgObj.onerror = () => {
-            console.error('Failed to load image:', imgSrc)
-        }
-        
-        // 开始加载图片
-        imgObj.src = imgSrc
-    } 
-    // 处理文本的拖拽
-    else if (dragType === 'text') {
-        // 获取拖拽的文本内容
-        const textContent = e.dataTransfer!.getData('textContent')
-        const id = e.dataTransfer!.getData('id') || ''
-        if (!textContent) {
-            return
-        }
-        
-        // 获取放置位置（考虑画布的缩放和平移）
-        const dropPos = getDropPosition(e)
-        
-        // 创建Konva文本对象
-        const konvaText = new Konva.Text({
-            x: dropPos.x,
-            y: dropPos.y,
-            text: textContent,
-            fontSize: 24,
-            fontFamily: 'Arial',
-            fill: '#000000',
-            draggable: true,
-            id: id
-        })
-
-        // 为文本添加点击事件，用于选中
-        konvaText.on('click tap', (evt) => {
-            handleNodeClick(evt, konvaText)
-        })
-
-        // 将文本添加到图层
-        layer!.add(konvaText)
-        // 选中刚添加的文本
-        selectedNodes = [konvaText]
-        transformer!.nodes(selectedNodes)
-        // 将文本和变换器移到最上层
-        konvaText.moveToTop()
-        transformer!.moveToTop()
-        
-        // 添加完文本后，自动切换回选择工具
-        currentTool.value = 'select'
-        // 更新节点的可拖拽状态
-        updateDraggableState()
-    }
+    })
 }
 
 // 获取拖拽位置在舞台坐标系中的坐标

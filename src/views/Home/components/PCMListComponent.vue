@@ -11,8 +11,7 @@
         :key="index"
         class="card-item"
         :class="{ selected: item.selected }"
-        draggable="true"
-        @dragstart="handleCardDragStart($event, item)"
+        
         @click="handleItemClick($event, item)"
       >
         <button
@@ -41,8 +40,7 @@
             :alt="item.title"
             class="card-image"
             :style="getImageStyle(imgIndex)"
-            draggable="true"
-            @dragstart.stop="handleImageDragStart($event, img, item.title)"
+            
           />
         </div>
         <div class="card-footer">

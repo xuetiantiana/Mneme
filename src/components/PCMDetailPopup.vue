@@ -97,7 +97,6 @@
                       @dragstart="handleTextDragStart($event, interp.text, 'sensory', interp.id)"
                     >
                       {{ interp.text }}
-                      <span class="modality-tag" v-if="interp.modality">{{ interp.modality }}</span>
                     </span>
                   </div>
                 </div>
@@ -173,17 +172,24 @@ const getInterpretationStyle = (type, specificity) => {
 
 const handleImageDragStart = (event, imgSrc, title, id) => {
   event.dataTransfer.effectAllowed = "copy";
-  event.dataTransfer.setData("imageSrc", imgSrc);
-  event.dataTransfer.setData("imageTitle", title);
-  event.dataTransfer.setData("dragType", "single-image");
-  event.dataTransfer.setData("id", id || "");
+  const dragData = [{
+    imageSrc: imgSrc,
+    imageTitle: title,
+    dragType: "single-image",
+    id: id || "",
+
+  }];
+  event.dataTransfer.setData("dragData", JSON.stringify(dragData));
 }
 
 const handleTextDragStart = (event, text, id) => {
   event.dataTransfer.effectAllowed = "copy";
-  event.dataTransfer.setData("textContent", text);
-  event.dataTransfer.setData("dragType", "text");
-  event.dataTransfer.setData("id", id || "");
+  const dragData = [{
+    textContent: text,
+    dragType: "text",
+    id: id || ""
+  }];
+  event.dataTransfer.setData("dragData", JSON.stringify(dragData));
 }
 
 </script>
