@@ -1,9 +1,9 @@
 <template>
   <div class="pcm-list-container">
-    <div class="select-all-bar">
+    <!-- <div class="select-all-bar">
       <span>Select all memories</span>
       <input type="checkbox" v-model="selectAll" @change="handleSelectAll" />
-    </div>
+    </div> -->
 
     <ul class="cards-grid">
       <li
@@ -14,7 +14,7 @@
         
         @click="handleItemClick($event, item)"
       >
-        <button
+        <!-- <button
           class="add-btn"
           :class="{ active: item.selected }"
           @click.stop="toggleItem(item)"
@@ -31,7 +31,9 @@
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
           <span v-else>+</span>
-        </button>
+        </button> -->
+
+        <button @click.stop="handleShowCanvas($event, item)">展示PCM canvas</button>
         <div class="card-images">
           <img
             v-for="(img, imgIndex) in item.images"
@@ -55,17 +57,28 @@
       :position="popupPosition"
       @close="handleClosePopup"
     />
+    
+    <PCMCanvasPopup
+      :visible="canvasPopupVisible"
+      :position="canvasPopupPosition"
+      :item="currentCanvasItem"
+      @close="handleCloseCanvasPopup"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
+import PCMCanvasPopup from "@/components/PCMCanvasPopup.vue";
 
 const selectAll = ref(false);
 const popupVisible = ref(false);
 const currentItem = ref({});
 const popupPosition = ref({ top: 0, left: 0 });
+const canvasPopupVisible = ref(false);
+const canvasPopupPosition = ref({ top: 0, left: 0 });
+const currentCanvasItem = ref({});
 
 const getImageProxyUrl = (url) => {
   return url.replace("http://localhost:8000/api/images/data", "/data/PCM");
@@ -87,7 +100,8 @@ onMounted(async () => {
         createdAt: unit.created_at,
         text: unit.user_input?.text || '',
         timePlace: unit.user_input?.time_place || '',
-        segments: unit.segments || []
+        segments: unit.segments || [],
+        user_input: unit.user_input || {}
       }));
       
       console.log('已加载 PCM 数据:', memoryItems.value.length, '条记忆', memoryItems.value);
@@ -179,6 +193,48 @@ const handleItemClick = (event, item) => {
 const handleClosePopup = () => {
   popupVisible.value = false;
 };
+
+const handleShowCanvas = (event, item) => {
+  const buttonElement = event.currentTarget;
+  const rect = buttonElement.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  const popupWidth = 800;
+  const popupHeight = 600;
+  const margin = 8;
+  
+  let top = rect.bottom + margin;
+  let left = rect.left;
+  
+  if (top + popupHeight > viewportHeight) {
+    top = rect.top - popupHeight - margin;
+  }
+  
+  if (left + popupWidth > viewportWidth) {
+    left = viewportWidth - popupWidth - margin;
+  }
+  
+  if (left < margin) {
+    left = margin;
+  }
+  
+  if (top < margin) {
+    top = margin;
+  }
+  
+  canvasPopupPosition.value = {
+    top: top,
+    left: left
+  };
+  
+  currentCanvasItem.value = item;
+  canvasPopupVisible.value = true;
+};
+
+const handleCloseCanvasPopup = () => {
+  canvasPopupVisible.value = false;
+};
 </script>
 
 <style scoped lang="scss">
@@ -231,6 +287,25 @@ const handleClosePopup = () => {
 
       &:hover {
         // border-color: #999;
+      }
+
+      button {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 4px 12px;
+        font-size: 12px;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 10;
+
+        &:hover {
+          background: #f0f0f0;
+          border-color: #999;
+        }
       }
 
       .add-btn {

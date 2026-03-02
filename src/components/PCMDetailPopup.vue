@@ -19,9 +19,8 @@
       </div>
       <div class="popup-section">
         <h3 
-          class="popup-title draggable-item" 
+          class="popup-title" 
           draggable="true"
-          @dragstart="handleTextDragStart($event, item.title, item.id)"
         >
           {{ item.title }}
         </h3>
@@ -36,9 +35,8 @@
             <div class="segment-left">
               <div class="segment-header">
                 <span 
-                  class="segment-label draggable-item"
+                  class="segment-label"
                   draggable="true"
-                  @dragstart="handleTextDragStart($event, segment.label, segment.seg_id)"
                 >
                   {{ segment.label }}
                 </span>
@@ -49,7 +47,7 @@
                   :alt="segment.label"
                   class="segment-image-img draggable-item"
                   draggable="true"
-                  @dragstart="handleImageDragStart($event, getImageProxyUrl(segment.image_url), segment.label, segment.seg_id)"
+                  @dragstart="handleImageDragStart($event, getImageProxyUrl(segment.image_url), segment.label, segment.seg_id, segment.interpretations)"
                 />
               </div>
             </div>
@@ -62,9 +60,9 @@
                       v-for="interp in segment.interpretations.meaning" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="getInterpretationStyle('meaning', interp.specificity)"
+                      :style="{ backgroundColor: getInterpretationStyle('meaning', interp.specificity) }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'meaning', interp.id)"
+                      @dragstart="handleTextDragStart($event, interp.text, 'meaning', interp.specificity, interp.id)"
                     >
                       {{ interp.text }}
                     </span>
@@ -77,9 +75,9 @@
                       v-for="interp in segment.interpretations.emotion" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="getInterpretationStyle('emotion', interp.specificity)"
+                      :style="{ backgroundColor: getInterpretationStyle('emotion', interp.specificity) }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'emotion', interp.id)"
+                      @dragstart="handleTextDragStart($event, interp.text, 'emotion', interp.specificity, interp.id)"
                     >
                       {{ interp.text }}
                     </span>
@@ -92,9 +90,9 @@
                       v-for="interp in segment.interpretations.sensory" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="getInterpretationStyle('sensory', interp.specificity)"
+                      :style="{ backgroundColor: getInterpretationStyle('sensory', interp.specificity) }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'sensory', interp.id)"
+                      @dragstart="handleTextDragStart($event, interp.text, 'sensory', interp.specificity, interp.id)"
                     >
                       {{ interp.text }}
                     </span>
@@ -107,9 +105,9 @@
                       v-for="interp in segment.interpretations.aesthetic" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="getInterpretationStyle('aesthetic', interp.specificity)"
+                      :style="{ backgroundColor: getInterpretationStyle('aesthetic', interp.specificity) }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'aesthetic', interp.id)"
+                      @dragstart="handleTextDragStart($event, interp.text, 'aesthetic', interp.specificity, interp.id)"
                     >
                       {{ interp.text }}
                     </span>
@@ -165,32 +163,39 @@ const getInterpretationStyle = (type, specificity) => {
   const color = baseColors[type] || { r: 150, g: 150, b: 150 }
   const intensity = specificity / 5
   
-  return {
-    backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`
-  }
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`
 }
 
-const handleImageDragStart = (event, imgSrc, title, id) => {
+const handleImageDragStart = (event, imgSrc, title, id, interpretations) => {
   event.dataTransfer.effectAllowed = "copy";
+  
   const dragData = [{
     imageSrc: imgSrc,
-    imageTitle: title,
+    text: title,
     dragType: "single-image",
     id: id || "",
-
+    interpretations: interpretations
   }];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
 }
 
-const handleTextDragStart = (event, text, id) => {
+const handleTextDragStart = (event, text, type, specificity, id) => {
   event.dataTransfer.effectAllowed = "copy";
   const dragData = [{
     textContent: text,
     dragType: "text",
-    id: id || ""
+    type: type,
+    specificity: specificity,
+    id: id || "",
+    style: {
+      fill: "#333",
+      backgroundColor: getInterpretationStyle(type, specificity),
+      fontSize: 14
+    }
   }];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
 }
+
 
 </script>
 

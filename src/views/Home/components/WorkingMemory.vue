@@ -33,28 +33,15 @@ const memoryItems = ref([])
 const konvaRef = ref(null)
 const selectedNodesData = ref([])
 
-const handleGetSelectedNodes = () => {
-    if (konvaRef.value) {
-        const nodes = konvaRef.value.getSelectedNodesInfo()
-        if (nodes && nodes.length > 0) {
-            selectedNodesData.value = nodes;
-            console.log('获取到的选中节点信息:', selectedNodesData.value)
-        } else {
-            console.log('当前没有选中的节点')
-            selectedNodesData.value = []
-        }
-    }
-}
+
 
 const handleRenderNodes = (canvasIndex) => {
     // 先获取选中的节点信息
-    handleGetSelectedNodes()
-    
+    selectedNodesData.value = konvaRef.value.getSelectedNodes()
+    console.log("111",selectedNodesData.value)
     // 如果有选中的节点，则发送到主题画布
     if (selectedNodesData.value.length > 0) {
-        console.log('=== 发送节点数据到主题画布 ===')
-        console.log(`节点数量: ${selectedNodesData.value.length}`)
-        console.log(`目标画布索引: ${canvasIndex}`)
+       
         emit('renderNodesToTopic', {
             nodes: selectedNodesData.value,
             canvasIndex: canvasIndex

@@ -1,8 +1,19 @@
 <template>
     <div class="drawing-board">
+        <div class="toolbar-fixed">
+            <button :class="['tool-btn', { active: currentTool === 'select' }]" @click="setTool('select')" title="编辑画布">
+                <el-icon><Edit /></el-icon>
+            </button>
+            <button :class="['tool-btn', { active: currentTool === 'pan' }]" @click="setTool('pan')" title="移动整个视图">
+                <el-icon><Pointer /></el-icon>
+            </button>
+            <!-- <button class="tool-btn" @click="resetView">
+                重置视图
+                </button> -->
+        </div>
         <div class="toolbar" >
             <div class="tool-group">
-                <button :class="['tool-btn', { active: currentTool === 'select' }]" @click="setTool('select')" title="编辑画布">
+                <!-- <button :class="['tool-btn', { active: currentTool === 'select' }]" @click="setTool('select')" title="编辑画布">
                     编辑画布
                 </button>
                 <button :class="['tool-btn', { active: currentTool === 'pan' }]" @click="setTool('pan')" title="移动整个视图">
@@ -10,7 +21,7 @@
                 </button>
                 <button class="tool-btn" @click="resetView">
                     重置视图
-                </button>
+                </button> -->
                 <!-- <button :class="['tool-btn', { active: currentTool === 'brush' }]" @click="setTool('brush')">
                     画笔
                 </button>
@@ -69,7 +80,7 @@
                 <button class="send-nodes-btn" @click="sendSelectedNodesToParent">
                     将选中的节点发送给父元素
                 </button>
-                <button class="get-selected-btn" @click="getSelectedNodesInfo">
+                <button class="get-selected-btn" @click="getSelectedNodes">
                     获取选中节点
                 </button>
                 <button class="clear-btn" @click="clearCanvas">清除画布</button>
@@ -89,9 +100,10 @@
 
 <script setup lang="ts">
 // 导入 Vue 的响应式 API 和生命周期钩子
-import { ref, onMounted, onUnmounted } from 'vue'
-// 导入 Konva 库，用于 2D 画布操作
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import Konva from 'konva'
+import { Edit, Pointer } from '@element-plus/icons-vue'
+import { createImageAndTextNodes, createTextNode, createInterpretationTextNodes } from '@/utils/canvasPositionUtils'
 
 const emit = defineEmits(['sendSelectedNodes'])
 
@@ -122,6 +134,11 @@ const fontSize = ref(24) // 文字大小
 const scale = ref(1) // 当前缩放比例
 const minScale = 0.5 // 最小缩放比例
 const maxScale = 1.5 // 最大缩放比例
+
+const konvaData = reactive({
+    stage: null,
+    layer: null
+})
 
 onMounted(() => {
     stage = new Konva.Stage({
@@ -160,6 +177,9 @@ onMounted(() => {
 
     window.addEventListener('resize', handleResize)
     window.addEventListener('keydown', handleKeyDown)
+    konvaData.stage = stage
+    konvaData.layer = layer
+     
 })
 
 onUnmounted(() => {
@@ -472,6 +492,11 @@ const handleNodeClick = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>, nod
 
 // 为节点添加选中样式
 const addNodeSelectStyle = (node: Konva.Node) => {
+    // Konva.Group 不支持阴影样式，跳过
+    if (node instanceof Konva.Group) {
+        return
+    }
+    
     // 保存节点的原始样式
     if (!node.getAttr('_originalShadowColor')) {
         node.setAttr('_originalShadowColor', node.shadowColor())
@@ -481,10 +506,10 @@ const addNodeSelectStyle = (node: Konva.Node) => {
     }
     
     // 添加选中样式：蓝色阴影
-    node.shadowColor('red')
-    node.shadowBlur(15)
-    node.shadowOffset({ x: 0, y: 0 })
-    node.shadowOpacity(0.6)
+    // node.shadowColor('red')
+    // node.shadowBlur(15)
+    // node.shadowOffset({ x: 0, y: 0 })
+    // node.shadowOpacity(0.6)
     
     // 如果是文字，添加边框效果
     if (node instanceof Konva.Text) {
@@ -492,8 +517,8 @@ const addNodeSelectStyle = (node: Konva.Node) => {
             node.setAttr('_originalStroke', node.stroke())
             node.setAttr('_originalStrokeWidth', node.strokeWidth())
         }
-        node.stroke('#1890ff')
-        node.strokeWidth(2)
+        // node.stroke('#1890ff')
+        // node.strokeWidth(2)
     }
     
     // 如果是线条，改变颜色
@@ -510,6 +535,11 @@ const addNodeSelectStyle = (node: Konva.Node) => {
 
 // 移除节点的选中样式
 const removeNodeSelectStyle = (node: Konva.Node) => {
+    // Konva.Group 不支持阴影样式，跳过
+    if (node instanceof Konva.Group) {
+        return
+    }
+    
     // 恢复节点的原始样式
     node.shadowColor(node.getAttr('_originalShadowColor') || 'black')
     node.shadowBlur(node.getAttr('_originalShadowBlur') || 0)
@@ -880,23 +910,20 @@ const getNodeInfo = (node: Konva.Node, index: number) => {
 }
 
 // 获取当前选中的节点详细信息
-const getSelectedNodesInfo = () => {
+const getSelectedNodes = () => {
     if (selectedNodes.length === 0) {
         console.log('当前没有选中的节点')
         return []
     }
 
-    console.log('=== 当前选中的节点信息 ===')
-    console.log(`选中节点数量: ${selectedNodes.length}`)
-    console.log('')
 
-    const nodesData = selectedNodes.map((node, index) => {
-        const nodeInfo = getNodeInfo(node, index)
-        console.log(`选中节点 ${index + 1}:`, nodeInfo)
-        return nodeInfo
-    })
+    // const nodesData = selectedNodes.map((node, index) => {
+    //     const nodeInfo = getNodeInfo(node, index)
+    //     console.log(`选中节点 ${index + 1}:`, nodeInfo)
+    //     return nodeInfo
+    // })
 
-    return nodesData
+    return selectedNodes
 }
 
 // 将选中的节点发送给父元素
@@ -946,123 +973,108 @@ const handleDrop = (e: DragEvent) => {
     dragDataArray.forEach((dragData: any) => {
         // 根据拖拽类型处理
         if (dragData.dragType === 'single-image') {
-            // 处理单个图片的拖拽
             const imgSrc = dragData.imageSrc
             const id = dragData.id || ''
+            const text = dragData.text || ''
+            
             if (!imgSrc) {
                 return
             }
             
-            // 创建图片对象并设置跨域属性
-            const imgObj = new Image()
-            imgObj.crossOrigin = 'anonymous'
-            imgObj.onload = () => {
-                // 获取舞台尺寸
-                const stageWidth = stage!.width()
-                const stageHeight = stage!.height()
-                
-                // 获取原始图片尺寸
-                let width = imgObj.width
-                let height = imgObj.height
-                
-                // 如果图片宽度超过200px，按比例缩小
-                if (width > 200) {
-                    const ratio = 200 / width
-                    width = 200
-                    height = height * ratio
-                }
-                
-                // 如果图片高度超过舞台高度的80%，按比例缩小
-                if (height > stageHeight * 0.8) {
-                    const ratio = (stageHeight * 0.8) / height
-                    height = stageHeight * 0.8
-                    width = width * ratio
-                }
+            createImageAndTextNodes({ imageSrc: imgSrc, text, id })
+                .then((nodes) => {
+                    const dropPos = getDropPosition(e)
+                    
+                    nodes.forEach((node) => {
+                        if (node instanceof Konva.Image) {
+                            node.x(dropPos.x - node.width() / 2)
+                            node.y(dropPos.y - node.height() / 2)
+                        } else if (node instanceof Konva.Text) {
+                            const imageNode = nodes[0] as Konva.Image
+                            node.x(dropPos.x - imageNode.width() / 2)
+                            node.y(dropPos.y + imageNode.height() / 2 + 10)
+                        }
+                        
+                        node.on('click tap', (evt) => {
+                            handleNodeClick(evt, node)
+                        })
+                        
+                        layer!.add(node)
+                    })
+                    
+                    // 选中刚添加的图片
+                    selectedNodes = nodes
+                    // 将图片和变换器移到最上层
+                    transformer!.nodes(selectedNodes)
+                    nodes.forEach((node) => {
+                        node.moveToTop()
+                    })
+                    transformer!.moveToTop()
 
-                // 获取放置位置（考虑画布的缩放和平移）
-                const dropPos = getDropPosition(e)
-                
-                // 创建Konva图片对象，以鼠标位置为中心
-                const konvaImage = new Konva.Image({
-                    image: imgObj,
-                    x: dropPos.x - width / 2,
-                    y: dropPos.y - height / 2,
-                    width: width,
-                    height: height,
-                    draggable: true,
-                    id: id
+                    // 添加完图片后，自动切换回选择工具
+                    currentTool.value = 'select'
+                    // 更新节点的可拖拽状态
+                    updateDraggableState()
+
+                    // 判断是否有interpretations
+                    if (dragData.interpretations) {
+                        const imageNode = nodes[0] as Konva.Image
+                        const startX = dropPos.x - imageNode.width() / 2
+                        const startY = dropPos.y + imageNode.height() / 2 + 35
+                        
+                        createInterpretationTextNodes(dragData.interpretations, {
+                            startX,
+                            startY,
+                            fontSize: 12,
+                            fill: '#666666',
+                            width: imageNode.width()
+                        }).then((interpretationNodes) => {
+                            interpretationNodes.forEach((interpretationNode) => {
+                                interpretationNode.on('click tap', (evt) => {
+                                    handleNodeClick(evt, interpretationNode)
+                                })
+                                layer!.add(interpretationNode)
+                            })
+                        }).catch((error) => {
+                            console.error('Failed to create interpretation text nodes:', error)
+                        })
+                    }
                 })
-
-                // 为图片添加点击事件，用于选中
-                konvaImage.on('click tap', (evt) => {
-                    handleNodeClick(evt, konvaImage)
+                .catch((error) => {
+                    console.error('Failed to create image and text nodes:', error)
                 })
-
-                // 将图片添加到图层
-                layer!.add(konvaImage)
-                // 选中刚添加的图片
-                selectedNodes = [konvaImage]
-                transformer!.nodes(selectedNodes)
-                // 将图片和变换器移到最上层
-                konvaImage.moveToTop()
-                transformer!.moveToTop()
-                
-                // 添加完图片后，自动切换回选择工具
-                currentTool.value = 'select'
-                // 更新节点的可拖拽状态
-                updateDraggableState()
-            }
-            
-            // 处理图片加载错误
-            imgObj.onerror = () => {
-                console.error('Failed to load image:', imgSrc)
-            }
-            
-            // 开始加载图片
-            imgObj.src = imgSrc
         } 
-        // 处理文本的拖拽
         else if (dragData.dragType === 'text') {
-            // 获取拖拽的文本内容
             const textContent = dragData.textContent
             const id = dragData.id || ''
             if (!textContent) {
                 return
             }
             
-            // 获取放置位置（考虑画布的缩放和平移）
             const dropPos = getDropPosition(e)
             
-            // 创建Konva文本对象
-            const konvaText = new Konva.Text({
-                x: dropPos.x,
-                y: dropPos.y,
-                text: textContent,
-                fontSize: 24,
-                fontFamily: 'Arial',
-                fill: '#000000',
-                draggable: true,
-                id: id
-            })
+            createTextNode({ text: textContent, id }, { x: dropPos.x, y: dropPos.y, ...dragData.style, center: true })
+                .then((konvaText) => {
+                    konvaText.on('click tap', (evt) => {
+                        handleNodeClick(evt, konvaText)
+                    })
 
-            // 为文本添加点击事件，用于选中
-            konvaText.on('click tap', (evt) => {
-                handleNodeClick(evt, konvaText)
-            })
-
-            // 将文本添加到图层
-            layer!.add(konvaText)
-            // 选中刚添加的文本
-            selectedNodes = [konvaText]
-            transformer!.nodes(selectedNodes)
-            // 将文本和变换器移到最上层
-            konvaText.moveToTop()
-            transformer!.moveToTop()
-            
-            // 添加完文本后，自动切换回选择工具
-            currentTool.value = 'select'
-            // 更新节点的可拖拽状态
-            updateDraggableState()
+                    layer!.add(konvaText)
+                    // 选中刚添加的文本
+                    selectedNodes = [konvaText]
+                    // 将文本和变换器移到最上层
+                    transformer!.nodes(selectedNodes)
+                    konvaText.moveToTop()
+                    transformer!.moveToTop()
+                    
+                     // 添加完文本后，自动切换回选择工具
+                    currentTool.value = 'select'
+                    // 更新节点的可拖拽状态
+                    updateDraggableState()
+                })
+                .catch((error) => {
+                    console.error('Failed to create text node:', error)
+                })
         }
     })
 }
@@ -1098,26 +1110,41 @@ const renderNodes = (nodesData) => {
     }
 
     console.log('=== 开始渲染节点到画布 ===')
-    console.log(`节点数量: ${nodesData.length}`)
+    console.log(`节点数量: ${nodesData.length}`, nodesData)
 
-    // 计算所有节点的边界框
-    // 用于确定节点占据的区域，以便后续计算缩放和居中
+    const isKonvaNodes = nodesData.length > 0 && nodesData[0] instanceof Konva.Node
+    console.log('节点类型:', isKonvaNodes ? 'Konva 节点对象' : '数据对象')
+
     let minX = Infinity
     let minY = Infinity
     let maxX = -Infinity
     let maxY = -Infinity
 
-    nodesData.forEach((nodeData) => {
-        // 计算节点的右下角坐标（考虑缩放）
-        const nodeRight = nodeData.position.x + nodeData.size.width * nodeData.scale.x
-        const nodeBottom = nodeData.position.y + nodeData.size.height * nodeData.scale.y
+    if (isKonvaNodes) {
+        nodesData.forEach((node) => {
+            let nodeRight, nodeBottom, nodeX, nodeY
 
-        // 更新边界框的最小值和最大值
-        minX = Math.min(minX, nodeData.position.x)
-        minY = Math.min(minY, nodeData.position.y)
-        maxX = Math.max(maxX, nodeRight)
-        maxY = Math.max(maxY, nodeBottom)
-    })
+            if (node instanceof Konva.Group) {
+                const clientRect = node.getClientRect()
+                nodeX = clientRect.x
+                nodeY = clientRect.y
+                nodeRight = clientRect.x + clientRect.width
+                nodeBottom = clientRect.y + clientRect.height
+                console.log(`Group 节点边界:`, { x: nodeX, y: nodeY, width: clientRect.width, height: clientRect.height })
+            } else {
+                nodeX = node.x()
+                nodeY = node.y()
+                nodeRight = node.x() + node.width() * node.scaleX()
+                nodeBottom = node.y() + node.height() * node.scaleY()
+            }
+
+            minX = Math.min(minX, nodeX)
+            minY = Math.min(minY, nodeY)
+            maxX = Math.max(maxX, nodeRight)
+            maxY = Math.max(maxY, nodeBottom)
+        })
+    } else {
+    }
 
     // 计算节点内容的总宽度和高度
     const contentWidth = maxX - minX
@@ -1131,86 +1158,60 @@ const renderNodes = (nodesData) => {
     console.log('节点内容尺寸:', { contentWidth, contentHeight })
     console.log('画布尺寸:', { canvasWidth, canvasHeight })
 
-    // 计算缩放比例，确保所有节点都能放入画布中
-    // 留出 40px 的边距，避免节点贴边
     const padding = 40
     const scaleX = (canvasWidth - padding * 2) / contentWidth
     const scaleY = (canvasHeight - padding * 2) / contentHeight
-    // 取较小的缩放比例，确保宽度和高度都能放入
     let newScale = Math.min(scaleX, scaleY)
-    // 限制最大缩放比例为 1，避免节点过大
     newScale = Math.min(newScale, 1)
 
     console.log('计算出的缩放比例:', newScale)
 
-    // 计算居中偏移量
-    // 将节点内容居中显示在画布中央
-    // 公式：(画布尺寸 - 缩放后的内容尺寸) / 2 - 缩放后的最小坐标
     const offsetX = (canvasWidth - contentWidth * newScale) / 2 - minX * newScale
     const offsetY = (canvasHeight - contentHeight * newScale) / 2 - minY * newScale
 
-    console.log('=== 垂直居中调试信息 ===')
-    console.log('minY:', minY, 'maxY:', maxY)
-    console.log('contentHeight:', contentHeight)
-    console.log('canvasHeight:', canvasHeight)
-    console.log('newScale:', newScale)
-    console.log('offsetY 计算公式: (canvasHeight - contentHeight * newScale) / 2 - minY * newScale')
-    console.log('offsetY 计算过程:', `(${canvasHeight} - ${contentHeight} * ${newScale}) / 2 - ${minY} * ${newScale}`)
-    console.log('offsetY 计算结果:', (canvasHeight - contentHeight * newScale) / 2 - minY * newScale)
     console.log('居中偏移量:', { offsetX, offsetY })
-    console.log('验证居中计算:')
-    console.log('  水平中心:', (minX + maxX) / 2, '-> 缩放后:', (minX + maxX) / 2 * newScale + offsetX, '画布中心:', canvasWidth / 2)
-    console.log('  垂直中心:', (minY + maxY) / 2, '-> 缩放后:', (minY + maxY) / 2 * newScale + offsetY, '画布中心:', canvasHeight / 2)
 
-    // 调整所有节点的坐标和缩放比例
-    // 保持节点的原始scale，只调整位置
-    const adjustedNodesData = nodesData.map((nodeData) => {
-        return {
-            ...nodeData,
-            position: {
-                x: nodeData.position.x * newScale + offsetX,
-                y: nodeData.position.y * newScale + offsetY
-            },
-            scale: {
-                x: nodeData.scale.x * newScale,
-                y: nodeData.scale.y * newScale
+    if (isKonvaNodes) {
+        nodesData.forEach((node, index) => {
+            console.log(`克隆节点 ${index + 1}:`, node.className)
+
+            let clonedNode
+
+            if (node instanceof Konva.Group) {
+                const clientRect = node.getClientRect()
+                console.log(`Group 节点原始位置:`, { x: node.x(), y: node.y() })
+                console.log(`Group 节点边界框:`, { x: clientRect.x, y: clientRect.y, width: clientRect.width, height: clientRect.height })
+
+                clonedNode = node.clone({
+                    x: clientRect.x * newScale + offsetX,
+                    y: clientRect.y * newScale + offsetY,
+                    scaleX: node.scaleX() * newScale,
+                    scaleY: node.scaleY() * newScale,
+                    id: node.id() ? `${node.id()}_clone_${Date.now()}` : `clone_${Date.now()}_${index}`
+                })
+
+                console.log(`Group 节点克隆后位置:`, { x: clonedNode.x(), y: clonedNode.y() })
+            } else {
+                clonedNode = node.clone({
+                    x: node.x() * newScale + offsetX,
+                    y: node.y() * newScale + offsetY,
+                    scaleX: node.scaleX() * newScale,
+                    scaleY: node.scaleY() * newScale,
+                    id: node.id() ? `${node.id()}_clone_${Date.now()}` : `clone_${Date.now()}_${index}`
+                })
             }
-        }
-    })
 
-    // 不设置stage的缩放比例
-    // 保持stage.scale为1，让每个节点独立缩放
-    // stage.scale({ x: 1, y: 1 })
-    console.log('节点独立缩放，stage保持scale为1')
-
-    // 渲染调整后的节点
-    adjustedNodesData.forEach((nodeData, index) => {
-        console.log(`渲染节点 ${index + 1}:`, nodeData)
-        console.log(`  原始位置: (${nodeData.position.x}, ${nodeData.position.y})`)
-        console.log(`  调整后位置: (${nodeData.position.x}, ${nodeData.position.y})`)
-        console.log(`  原始尺寸: ${nodeData.size.width} x ${nodeData.size.height}`)
-        console.log(`  节点缩放: ${nodeData.scale.x} x ${nodeData.scale.y}`)
-        
-        let konvaNode = null
-
-        if (nodeData.type === 'Image') {
-            konvaNode = createKonvaImage(nodeData)
-        } else if (nodeData.type === 'Text') {
-            konvaNode = createKonvaText(nodeData)
-        } else if (nodeData.type === 'Line') {
-            konvaNode = createKonvaLine(nodeData)
-        } else if (nodeData.type === 'Rect') {
-            konvaNode = createKonvaRect(nodeData)
-        }
-
-        if (konvaNode) {
-            konvaNode.on('click tap', (evt) => {
-                handleNodeClick(evt, konvaNode)
+            clonedNode.on('click tap', (evt) => {
+                handleNodeClick(evt, clonedNode)
             })
-            layer.add(konvaNode)
-            console.log(`节点 ${index + 1} 已添加到画布，实际位置: (${konvaNode.x()}, ${konvaNode.y()})`, konvaNode)
-        }
-    })
+
+            layer.add(clonedNode)
+            console.log(`节点 ${index + 1} 已克隆并添加到画布，实际位置: (${clonedNode.x()}, ${clonedNode.y()})`)
+        })
+    } else {
+        console.log('renderNodes 只支持 Konva 节点对象')
+        return
+    }
 
     console.log('=== 所有节点已渲染到画布 ===')
 }
@@ -1294,9 +1295,12 @@ const createKonvaRect = (nodeData) => {
     })
 }
 
+
+
 defineExpose({
-    getSelectedNodesInfo,
-    renderNodes
+    getSelectedNodes,
+    renderNodes,
+    konvaData
 })
 </script>
 
@@ -1307,6 +1311,14 @@ defineExpose({
     height: 100%;
     width: 100%;
     position: relative;
+}
+
+.toolbar-fixed{
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
 }
 
 .toolbar {
@@ -1323,6 +1335,7 @@ defineExpose({
     left: 0;
     right: 0;
     z-index: 100;
+    display: none
 }
 
 .tool-group {
