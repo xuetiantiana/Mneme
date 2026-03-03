@@ -153,14 +153,15 @@ export const createTextNode = ({ text, id }, options = {}) => {
       if (backgroundColor) {
         const textWidth = konvaText.width()
         const textHeight = konvaText.height()
+        const size = Math.max(textWidth, textHeight) + padding * 2
 
         const background = new Konva.Rect({
           x: 0,
           y: 0,
-          width: textWidth + padding * 2,
-          height: textHeight + padding * 2,
+          width: size,
+          height: size,
           fill: backgroundColor,
-          cornerRadius,
+          cornerRadius: size / 2,
           draggable: false
         })
 
@@ -174,14 +175,18 @@ export const createTextNode = ({ text, id }, options = {}) => {
         group.add(background)
         group.add(konvaText)
 
-        konvaText.x(padding)
-        konvaText.y(padding)
+        konvaText.x((size - textWidth) / 2)
+        konvaText.y((size - textHeight) / 2)
 
         konvaText.on('textChange', () => {
           const newWidth = konvaText.width()
           const newHeight = konvaText.height()
-          background.width(newWidth + padding * 2)
-          background.height(newHeight + padding * 2)
+          const newSize = Math.max(newWidth, newHeight) + padding * 2
+          background.width(newSize)
+          background.height(newSize)
+          background.cornerRadius(newSize / 2)
+          konvaText.x((newSize - newWidth) / 2)
+          konvaText.y((newSize - newHeight) / 2)
         })
 
         if (center) {
@@ -222,7 +227,7 @@ export const createTextNode = ({ text, id }, options = {}) => {
  * @param {number} options.imageWidth - 图片宽度，默认 200
  * @param {number} options.imageHeight - 图片高度，默认 200
  * @param {number} options.horizontalGap - 图片与文本之间的水平间距，默认 15
- * @param {number} options.verticalGap - 文本节点之间的垂直间距，默认 40
+ * @param {number} options.verticalGap - 文本节点之间的垂直间距，默认 70
  * @param {number} options.fontSize - 字体大小，默认 12
  * @param {string} options.fontFamily - 字体，默认 'Arial'
  * @param {string} options.fill - 文本颜色，默认 '#666666'
@@ -239,7 +244,7 @@ export const createInterpretationTextNodes = (interpretations, options = {}) => 
     imageWidth = 200,
     imageHeight = 200,
     horizontalGap = 15,
-    verticalGap = 40,
+    verticalGap = 70,
     fontSize = 12,
     fontFamily = 'Arial',
     fill = 'green',

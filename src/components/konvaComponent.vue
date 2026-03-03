@@ -1019,15 +1019,20 @@ const handleDrop = (e: DragEvent) => {
                     // 判断是否有interpretations
                     if (dragData.interpretations) {
                         const imageNode = nodes[0] as Konva.Image
-                        const startX = dropPos.x - imageNode.width() / 2
-                        const startY = dropPos.y + imageNode.height() / 2 + 35
+                        const imageX = dropPos.x - imageNode.width() / 2
+                        const imageY = dropPos.y - imageNode.height() / 2
+                        const maxDimension = Math.max(imageNode.width(), imageNode.height())
                         
                         createInterpretationTextNodes(dragData.interpretations, {
-                            startX,
-                            startY,
-                            fontSize: 13,
-                            fill: '#333',
-                            width: imageNode.width()
+                            imageX,
+                            imageY,
+                            imageWidth: imageNode.width(),
+                            imageHeight: imageNode.height(),
+                            radius: maxDimension * 0.5 + 30,
+                            startAngle: -Math.PI / 8,
+                            endAngle: Math.PI / 8,
+                            fontSize: 12,
+                            fill: '#666666'
                         }).then((interpretationNodes) => {
                             interpretationNodes.forEach((interpretationNode) => {
                                 interpretationNode.on('click tap', (evt) => {

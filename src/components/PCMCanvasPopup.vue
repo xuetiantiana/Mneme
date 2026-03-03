@@ -18,6 +18,7 @@
 import { ref, watch } from 'vue'
 import KonvaComponent from '@/components/konvaComponent.vue'
 import { createImageAndTextNodes } from '@/utils/canvasPositionUtils'
+import { initMainImages, initSegmentsImages,initPCMBubbles } from '@/utils/initPCM'
 
 const props = defineProps({
   visible: {
@@ -55,19 +56,51 @@ const renderPCMContent = async () => {
     return
   }
   
-  try {
-    const nodes = await createImageAndTextNodes({
-      imageSrc: props.item.images[0],
-      text: props.item.title,
-      id: props.item.id
-    })
+  console.log(props.item)
+  
+  initMainImages(props.item).then((nodes) => {
     nodes.forEach(node => {
       console.log(node)
       konvaRef.value.konvaData.layer.add(node)
     })
-  } catch (error) {
+  }).catch((error) => {
     console.error('Failed to create PCM nodes:', error)
-  }
+  })
+
+
+
+    initSegmentsImages(props.item).then((nodes) => {
+    nodes.forEach(node => {
+      console.log(node)
+      konvaRef.value.konvaData.layer.add(node)
+    })
+  }).catch((error) => {
+    console.error('Failed to create PCM nodes:', error)
+  })
+
+  props.item.segments.forEach((segment, index) => {
+    initPCMBubbles(segment.layout.bubbles).then((nodes) => {
+      nodes.forEach(node => {
+        console.log(node)
+        konvaRef.value.konvaData.layer.add(node)
+      })
+    }).catch((error) => {
+      console.error('Failed to create PCM nodes:', error)
+    })
+  })
+  // try {
+  //   const nodes = await createImageAndTextNodes({
+  //     imageSrc: props.item.images[0],
+  //     text: props.item.title,
+  //     id: props.item.id
+  //   })
+  //   nodes.forEach(node => {
+  //     console.log(node)
+  //     konvaRef.value.konvaData.layer.add(node)
+  //   })
+  // } catch (error) {
+  //   console.error('Failed to create PCM nodes:', error)
+  // }
 }
 
 // 当弹窗可见时渲染PCM内容
@@ -126,8 +159,8 @@ watch(() => props.visible, (newVisible) => {
   }
   
   .popup-content {
-    width: 800px;
-    height: 600px;
+    width: 1800px;
+    height: 900px;
     padding: 0;
   }
 }

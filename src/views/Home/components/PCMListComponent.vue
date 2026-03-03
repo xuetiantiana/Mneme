@@ -81,28 +81,38 @@ const canvasPopupPosition = ref({ top: 0, left: 0 });
 const currentCanvasItem = ref({});
 
 const getImageProxyUrl = (url) => {
-  return url.replace("http://localhost:8000/api/images/data", "/data/PCM");
+  return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
 };
 
 const memoryItems = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch('/data/PCM/pcm_list_response.json');
+    const response = await fetch('/data/PCM2/pcm_list_response.json');
     const data = await response.json();
     
     if (data.units && Array.isArray(data.units)) {
-      memoryItems.value = data.units.map(unit => ({
-        id: unit.id,
-        title: unit.unit_summary || '未命名记忆',
-        selected: false,
-        images: unit.user_input?.images?.map(img => getImageProxyUrl(img)) || [],
-        createdAt: unit.created_at,
-        text: unit.user_input?.text || '',
-        timePlace: unit.user_input?.time_place || '',
-        segments: unit.segments || [],
-        user_input: unit.user_input || {}
-      }));
+      memoryItems.value = data.units.map(unit => {
+        const mainImages = unit.user_input?.images?.map((img, index) => ({
+          image_url: getImageProxyUrl(img),
+          id: unit.id,
+          layout: unit.layout?.main_cluster?.images?.[index] || {}
+        })) || [];
+        
+        return {
+          id: unit.id,
+          title: unit.unit_summary || '未命名记忆',
+          selected: false,
+          images: unit.user_input?.images?.map(img => getImageProxyUrl(img)) || [],
+          mainImages: mainImages,
+          createdAt: unit.created_at,
+          text: unit.user_input?.text || '',
+          timePlace: unit.user_input?.time_place || '',
+          segments: unit.segments || [],
+          user_input: unit.user_input || {},
+          layout: unit.layout || {}
+        };
+      });
       
       console.log('已加载 PCM 数据:', memoryItems.value.length, '条记忆', memoryItems.value);
     }

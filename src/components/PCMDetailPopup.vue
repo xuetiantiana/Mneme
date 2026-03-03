@@ -148,7 +148,7 @@ const handleClose = () => {
 }
 
 const getImageProxyUrl = (url) => {
-  return url.replace("http://localhost:8000/api/images/data", "/data/PCM");
+  return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
 }
 
 
