@@ -602,12 +602,94 @@ const handleDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const target = e.target
     // 检查双击的目标是否是文字节点
     if (target instanceof Konva.Text) {
-        // 弹出输入框让用户编辑文字
-        const newText = prompt('编辑文字:', target.text())
-        // 如果用户输入了有效文字，则更新文字内容
-        if (newText !== null && newText.trim()) {
-            target.text(newText)
+        const textNodeKonva = target
+        const stage = textNodeKonva.getStage()
+        const textPosition = textNodeKonva.absolutePosition()
+        const stageBox = stage!.container().getBoundingClientRect()
+
+        const areaPosition = {
+            x: stageBox.left + textPosition.x,
+            y: stageBox.top + textPosition.y,
         }
+
+        const textarea = document.createElement('textarea')
+        document.body.appendChild(textarea)
+
+        textarea.value = textNodeKonva.text()
+        textarea.style.position = 'absolute'
+        textarea.style.top = areaPosition.y + 'px'
+        textarea.style.left = areaPosition.x + 'px'
+        textarea.style.width = textNodeKonva.width() - textNodeKonva.padding() * 2 + 'px'
+        textarea.style.height = textNodeKonva.height() - textNodeKonva.padding() * 2 + 5 + 'px'
+        textarea.style.fontSize = textNodeKonva.fontSize() + 'px'
+        textarea.style.border = 'none'
+        textarea.style.padding = '0px'
+        textarea.style.margin = '0px'
+        textarea.style.overflow = 'hidden'
+        textarea.style.background = 'none'
+        textarea.style.outline = 'none'
+        textarea.style.resize = 'none'
+        textarea.style.lineHeight = textNodeKonva.lineHeight()
+        textarea.style.fontFamily = textNodeKonva.fontFamily()
+        textarea.style.transformOrigin = 'left top'
+        textarea.style.textAlign = textNodeKonva.align()
+        textarea.style.color = textNodeKonva.fill()
+        textarea.style.zIndex = '1001'
+
+        const rotation = textNodeKonva.rotation()
+        let transform = ''
+        if (rotation) {
+            transform += 'rotateZ(' + rotation + 'deg)'
+        }
+        textarea.style.transform = transform
+
+        textarea.style.height = 'auto'
+        textarea.style.height = textarea.scrollHeight + 3 + 'px'
+
+        textNodeKonva.visible(false)
+        textarea.focus()
+
+        function removeTextarea() {
+            textarea.parentNode.removeChild(textarea)
+            window.removeEventListener('click', handleOutsideClick)
+            window.removeEventListener('touchstart', handleOutsideClick)
+            textNodeKonva.visible(true)
+        }
+
+        function setTextareaWidth(newWidth) {
+            if (!newWidth) {
+                newWidth = textNodeKonva.placeholder?.length * textNodeKonva.fontSize()
+            }
+            textarea.style.width = newWidth + 'px'
+        }
+
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                textNodeKonva.text(textarea.value)
+                removeTextarea()
+            }
+            if (e.key === 'Escape') {
+                removeTextarea()
+            }
+        })
+
+        textarea.addEventListener('input', function () {
+            const scale = textNodeKonva.getAbsoluteScale().x
+            setTextareaWidth(textNodeKonva.width() * scale)
+            textarea.style.height = 'auto'
+            textarea.style.height = textarea.scrollHeight + textNodeKonva.fontSize() + 'px'
+        })
+
+        function handleOutsideClick(e) {
+            if (e.target !== textarea) {
+                textNodeKonva.text(textarea.value)
+                removeTextarea()
+            }
+        }
+        setTimeout(() => {
+            window.addEventListener('click', handleOutsideClick)
+            window.addEventListener('touchstart', handleOutsideClick)
+        })
     }
 }
 
