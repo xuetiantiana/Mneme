@@ -1025,8 +1025,8 @@ const handleDrop = (e: DragEvent) => {
                         createInterpretationTextNodes(dragData.interpretations, {
                             startX,
                             startY,
-                            fontSize: 12,
-                            fill: '#666666',
+                            fontSize: 13,
+                            fill: '#333',
                             width: imageNode.width()
                         }).then((interpretationNodes) => {
                             interpretationNodes.forEach((interpretationNode) => {
@@ -1053,7 +1053,7 @@ const handleDrop = (e: DragEvent) => {
             
             const dropPos = getDropPosition(e)
             
-            createTextNode({ text: textContent, id }, { x: dropPos.x, y: dropPos.y, ...dragData.style, center: true })
+            createTextNode({ text: textContent, id }, { startX: dropPos.x, startY: dropPos.y, ...dragData.style, center: true })
                 .then((konvaText) => {
                     konvaText.on('click tap', (evt) => {
                         handleNodeClick(evt, konvaText)

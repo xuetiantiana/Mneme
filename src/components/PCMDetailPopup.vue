@@ -60,7 +60,7 @@
                       v-for="interp in segment.interpretations.meaning" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationStyle('meaning', interp.specificity) }"
+                      :style="{ backgroundColor: getInterpretationColor('meaning', interp.specificity) }"
                       draggable="true"
                       @dragstart="handleTextDragStart($event, interp.text, 'meaning', interp.specificity, interp.id)"
                     >
@@ -75,7 +75,7 @@
                       v-for="interp in segment.interpretations.emotion" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationStyle('emotion', interp.specificity) }"
+                      :style="{ backgroundColor: getInterpretationColor('emotion', interp.specificity) }"
                       draggable="true"
                       @dragstart="handleTextDragStart($event, interp.text, 'emotion', interp.specificity, interp.id)"
                     >
@@ -90,7 +90,7 @@
                       v-for="interp in segment.interpretations.sensory" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationStyle('sensory', interp.specificity) }"
+                      :style="{ backgroundColor: getInterpretationColor('sensory', interp.specificity) }"
                       draggable="true"
                       @dragstart="handleTextDragStart($event, interp.text, 'sensory', interp.specificity, interp.id)"
                     >
@@ -105,7 +105,7 @@
                       v-for="interp in segment.interpretations.aesthetic" 
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationStyle('aesthetic', interp.specificity) }"
+                      :style="{ backgroundColor: getInterpretationColor('aesthetic', interp.specificity) }"
                       draggable="true"
                       @dragstart="handleTextDragStart($event, interp.text, 'aesthetic', interp.specificity, interp.id)"
                     >
@@ -124,6 +124,7 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue'
+import { getInterpretationColor } from '@/utils/canvasPositionUtils'
 
 const props = defineProps({
   visible: {
@@ -152,19 +153,6 @@ const getImageProxyUrl = (url) => {
 
 
 
-const getInterpretationStyle = (type, specificity) => {
-  const baseColors = {
-    meaning: { r: 24, g: 144, b: 255 },
-    emotion: { r: 255, g: 77, b: 79 },
-    sensory: { r: 82, g: 196, b: 26 },
-    aesthetic: { r: 114, g: 46, b: 209 }
-  }
-  
-  const color = baseColors[type] || { r: 150, g: 150, b: 150 }
-  const intensity = specificity / 5
-  
-  return `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`
-}
 
 const handleImageDragStart = (event, imgSrc, title, id, interpretations) => {
   event.dataTransfer.effectAllowed = "copy";
@@ -189,7 +177,7 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
     id: id || "",
     style: {
       fill: "#333",
-      backgroundColor: getInterpretationStyle(type, specificity),
+      backgroundColor: getInterpretationColor(type, specificity),
       fontSize: 14
     }
   }];
