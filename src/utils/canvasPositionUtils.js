@@ -3,15 +3,14 @@ export const getInterpretationColor = (type, specificity) => {
     meaning: { r: 24, g: 144, b: 255 },
     emotion: { r: 255, g: 77, b: 79 },
     sensory: { r: 82, g: 196, b: 26 },
-    aesthetic: { r: 114, g: 46, b: 209 }
-  }
-  
-  const color = baseColors[type] || { r: 150, g: 150, b: 150 }
-  const intensity = specificity / 5
-  
-  return `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`
-}
+    aesthetic: { r: 114, g: 46, b: 209 },
+  };
 
+  const color = baseColors[type] || { r: 150, g: 150, b: 150 };
+  const intensity = specificity / 5;
+
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+};
 
 /**
  * 创建包含图片和文本的 Konva 节点数组
@@ -34,7 +33,10 @@ export const getInterpretationColor = (type, specificity) => {
  * @param {number} options.cornerRadius - 背景圆角，默认 4
  * @returns {Promise<Array<Konva.Node>>} 返回 Promise，解析为包含 Konva.Image 和（可选的）Konva.Text 或 Konva.Group 的数组
  */
-export const createImageAndTextNodes = ({ imageSrc, text, id }, options = {}) => {
+export const createImageAndTextNodes = (
+  { imageSrc, text, id },
+  options = {}
+) => {
   const {
     startX = 0,
     startY = 0,
@@ -42,30 +44,33 @@ export const createImageAndTextNodes = ({ imageSrc, text, id }, options = {}) =>
     mainImageHeight = 200,
     titleGap = 20,
     fontSize = 14,
-    fontFamily = 'Arial',
-    fill = 'green',
+    fontFamily = "Arial",
+    fill = "#333",
     backgroundColor,
     padding = 5,
-    cornerRadius = 4
-  } = options
+    cornerRadius = 4,
+  } = options;
 
   return new Promise((resolve, reject) => {
     if (!imageSrc) {
-      reject(new Error('imageSrc is required'))
-      return
+      reject(new Error("imageSrc is required"));
+      return;
     }
 
-    const imgObj = new Image()
-    imgObj.crossOrigin = 'anonymous'
+    const imgObj = new Image();
+    imgObj.crossOrigin = "anonymous";
     imgObj.onerror = (error) => {
-      console.error('Image load error:', error)
-      reject(error)
-    }
+      console.error("Image load error:", error);
+      reject(error);
+    };
     imgObj.onload = () => {
       try {
-        const ratio = Math.min(mainImageWidth / imgObj.width, mainImageHeight / imgObj.height)
-        const width = imgObj.width * ratio
-        const height = imgObj.height * ratio
+        const ratio = Math.min(
+          mainImageWidth / imgObj.width,
+          mainImageHeight / imgObj.height
+        );
+        const width = imgObj.width * ratio;
+        const height = imgObj.height * ratio;
 
         const konvaImage = new Konva.Image({
           image: imgObj,
@@ -74,38 +79,44 @@ export const createImageAndTextNodes = ({ imageSrc, text, id }, options = {}) =>
           width,
           height,
           draggable: true,
-          id: id || ''
-        })
+          id: id || "",
+          cornerRadius: 10,
+        });
 
         if (text) {
-          createTextNode({ text, id }, {
-            startX,
-            startY: startY + height + 10,
-            fontSize,
-            fontFamily,
-            fill,
-            backgroundColor,
-            padding,
-            cornerRadius,
-            width
-          }).then((konvaText) => {
-            resolve([konvaImage, konvaText])
-          }).catch((error) => {
-            reject(error)
-          })
+          createBubbleNode(
+            { text, id },
+            {
+              startX,
+              startY: startY + height + 10,
+              fontSize,
+              fontFamily,
+              fill,
+              backgroundColor,
+              padding,
+              cornerRadius,
+              width,
+            }
+          )
+            .then((konvaText) => {
+              resolve([konvaImage, konvaText]);
+            })
+            .catch((error) => {
+              reject(error);
+            });
         } else {
-          resolve([konvaImage])
+          resolve([konvaImage]);
         }
       } catch (error) {
-        reject(error)
+        reject(error);
       }
-    }
-    imgObj.src = imageSrc
-  })
-}
+    };
+    imgObj.src = imageSrc;
+  });
+};
 
 /**
- * 创建纯文本 Konva 节点
+ * 创建气泡 Konva 节点
  * @param {Object} params - 参数对象
  * @param {string} params.text - 文本内容
  * @param {string} params.id - 节点 ID
@@ -121,39 +132,39 @@ export const createImageAndTextNodes = ({ imageSrc, text, id }, options = {}) =>
  * @param {boolean} options.center - 是否以 (startX, startY) 为中心点，默认 false
  * @returns {Promise<Konva.Node>} 返回 Promise，解析为 Konva.Text 或 Konva.Group 对象
  */
-export const createTextNode = ({ text, id }, options = {}) => {
+export const createBubbleNode = ({ text, id }, options = {}) => {
   const {
     startX = 0,
     startY = 0,
     fontSize = 13,
-    fontFamily = 'Arial',
-    fill = 'green',
+    fontFamily = "Arial",
+    fill = "#333",
     backgroundColor,
     padding = 5,
     cornerRadius = 4,
     width,
-    center = false
-  } = options
+    center = false,
+  } = options;
 
   return new Promise((resolve, reject) => {
     try {
       const konvaText = new Konva.Text({
         x: 0,
         y: 0,
-        text: text || '',
+        text: text || "",
         fontSize,
         fontFamily,
         fill,
         draggable: false,
-        id: id || '',
+        id: id || "",
         width: width || undefined,
-        lineHeight: 1.4
-      })
+        lineHeight: 1.4,
+      });
 
       if (backgroundColor) {
-        const textWidth = konvaText.width()
-        const textHeight = konvaText.height()
-        const size = Math.max(textWidth, textHeight) + padding * 2
+        const textWidth = konvaText.width();
+        const textHeight = konvaText.height();
+        const size = Math.max(textWidth, textHeight) + padding * 2;
 
         const background = new Konva.Rect({
           x: 0,
@@ -162,60 +173,60 @@ export const createTextNode = ({ text, id }, options = {}) => {
           height: size,
           fill: backgroundColor,
           cornerRadius: size / 2,
-          draggable: false
-        })
+          draggable: false,
+        });
 
         const group = new Konva.Group({
           x: startX,
           y: startY,
           draggable: true,
-          id: id || ''
-        })
+          id: id || "",
+        });
 
-        group.add(background)
-        group.add(konvaText)
+        group.add(background);
+        group.add(konvaText);
 
-        konvaText.x((size - textWidth) / 2)
-        konvaText.y((size - textHeight) / 2)
+        konvaText.x((size - textWidth) / 2);
+        konvaText.y((size - textHeight) / 2);
 
-        konvaText.on('textChange', () => {
-          const newWidth = konvaText.width()
-          const newHeight = konvaText.height()
-          const newSize = Math.max(newWidth, newHeight) + padding * 2
-          background.width(newSize)
-          background.height(newSize)
-          background.cornerRadius(newSize / 2)
-          konvaText.x((newSize - newWidth) / 2)
-          konvaText.y((newSize - newHeight) / 2)
-        })
+        konvaText.on("textChange", () => {
+          const newWidth = konvaText.width();
+          const newHeight = konvaText.height();
+          const newSize = Math.max(newWidth, newHeight) + padding * 2;
+          background.width(newSize);
+          background.height(newSize);
+          background.cornerRadius(newSize / 2);
+          konvaText.x((newSize - newWidth) / 2);
+          konvaText.y((newSize - newHeight) / 2);
+        });
 
         if (center) {
-          const groupWidth = background.width()
-          const groupHeight = background.height()
-          group.x(startX - groupWidth / 2)
-          group.y(startY - groupHeight / 2)
+          const groupWidth = background.width();
+          const groupHeight = background.height();
+          group.x(startX - groupWidth / 2);
+          group.y(startY - groupHeight / 2);
         }
 
-        resolve(group)
+        resolve(group);
       } else {
-        konvaText.x(startX)
-        konvaText.y(startY)
-        konvaText.draggable(true)
-        
+        konvaText.x(startX);
+        konvaText.y(startY);
+        konvaText.draggable(true);
+
         if (center) {
-          const textWidth = konvaText.width()
-          const textHeight = konvaText.height()
-          konvaText.x(startX - textWidth / 2)
-          konvaText.y(startY - textHeight / 2)
+          const textWidth = konvaText.width();
+          const textHeight = konvaText.height();
+          konvaText.x(startX - textWidth / 2);
+          konvaText.y(startY - textHeight / 2);
         }
-        
-        resolve(konvaText)
+
+        resolve(konvaText);
       }
     } catch (error) {
-      reject(error)
+      reject(error);
     }
-  })
-}
+  });
+};
 
 /**
  * 创建 interpretations 文本节点数组
@@ -237,7 +248,10 @@ export const createTextNode = ({ text, id }, options = {}) => {
  * @param {number} options.width - 文本宽度，可选
  * @returns {Promise<Array<Konva.Node>>} 返回 Promise，解析为包含所有文本节点的数组
  */
-export const createInterpretationTextNodes = (interpretations, options = {}) => {
+export const createInterpretationTextNodes = (
+  interpretations,
+  options = {}
+) => {
   const {
     imageX = 0,
     imageY = 0,
@@ -246,77 +260,78 @@ export const createInterpretationTextNodes = (interpretations, options = {}) => 
     horizontalGap = 15,
     verticalGap = 70,
     fontSize = 12,
-    fontFamily = 'Arial',
-    fill = 'green',
+    fontFamily = "Arial",
+    fill = "#333",
     backgroundColor,
     padding = 5,
     cornerRadius = 4,
-    width
-  } = options
+    width,
+  } = options;
 
   return new Promise((resolve, reject) => {
-    if (!interpretations || typeof interpretations !== 'object') {
-      reject(new Error('interpretations must be an object'))
-      return
+    if (!interpretations || typeof interpretations !== "object") {
+      reject(new Error("interpretations must be an object"));
+      return;
     }
 
     try {
-      const interpretationArray = []
-      
+      const interpretationArray = [];
+
       Object.keys(interpretations).forEach((type) => {
-        const items = interpretations[type]
+        const items = interpretations[type];
         if (Array.isArray(items)) {
           items.forEach((item) => {
             interpretationArray.push({
               ...item,
-              type
-            })
-          })
+              type,
+            });
+          });
         }
-      })
+      });
 
       if (interpretationArray.length === 0) {
-        resolve([])
-        return
+        resolve([]);
+        return;
       }
 
-      const textNodes = []
-      const startX = imageX + imageWidth + horizontalGap
-      const totalTextHeight = interpretationArray.length * verticalGap
-      let currentY = imageY + (imageHeight - totalTextHeight) / 2
+      const textNodes = [];
+      const startX = imageX + imageWidth + horizontalGap;
+      const totalTextHeight = interpretationArray.length * verticalGap;
+      let currentY = imageY + (imageHeight - totalTextHeight) / 2;
 
       interpretationArray.forEach((interpretation) => {
-        const { id, text, specificity, type } = interpretation
-        
-        const textContent = specificity ? `${text}` : text
-        
-        createTextNode({ text: textContent, id }, {
-          startX,
-          startY: currentY,
-          fontSize,
-          fontFamily,
-          fill,
-          backgroundColor: getInterpretationColor(type, specificity),
-          padding,
-          cornerRadius,
-          
-        }).then((konvaText) => {
-          textNodes.push(konvaText)
-          
-          if (textNodes.length === interpretationArray.length) {
-            resolve(textNodes)
+        const { id, text, specificity, type } = interpretation;
+
+        const textContent = specificity ? `${text}` : text;
+
+        createBubbleNode(
+          { text: textContent, id },
+          {
+            startX,
+            startY: currentY,
+            fontSize,
+            fontFamily,
+            fill,
+            backgroundColor: getInterpretationColor(type, specificity),
+            padding,
+            cornerRadius,
           }
-        }).catch((error) => {
-          reject(error)
-        })
+        )
+          .then((konvaText) => {
+            textNodes.push(konvaText);
 
-        currentY += verticalGap
-      })
+            if (textNodes.length === interpretationArray.length) {
+              resolve(textNodes);
+            }
+          })
+          .catch((error) => {
+            reject(error);
+          });
+
+        currentY += verticalGap;
+      });
     } catch (error) {
-      reject(error)
+      reject(error);
     }
-  })
-}
-
-
-
+  });
+};

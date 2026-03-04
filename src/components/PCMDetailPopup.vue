@@ -208,8 +208,8 @@ const handlePCMDragStart = (event, item) => {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 300px;
-  max-width: 400px;
+  min-width: 350px;
+  max-width: 350px;
   animation: fadeIn 0.2s ease;
   max-height: 500px;
   display: flex;

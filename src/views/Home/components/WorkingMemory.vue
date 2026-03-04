@@ -1,6 +1,6 @@
 <template >
     <div style="width: 100%;height: 100%;display: flex;flex-direction: column;">
-        <div style="padding: 16px;display: flex;gap: 16px;flex-wrap: wrap;">
+        <div style="height:40px;display: flex;gap: 16px;flex-wrap: wrap;">
             <button 
                 v-for="(topic, index) in topicContainers" 
                 :key="index"
@@ -10,7 +10,7 @@
             </button>
         </div>
         
-        <div style="flex: 1;margin-top: 2em;">
+        <div style="height: calc(100% - 40px);">
             <KonvaComponent ref="konvaRef" />
         </div>
     </div>

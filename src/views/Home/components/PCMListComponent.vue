@@ -33,7 +33,7 @@
           <span v-else>+</span>
         </button> -->
 
-        <button @click.stop="handleShowCanvas($event, item)">展示PCM canvas</button>
+        <!-- <button @click.stop="handleShowCanvas($event, item)">展示PCM canvas</button> -->
         <div class="card-images">
           <img
             v-for="(img, imgIndex) in item.images"
@@ -193,7 +193,8 @@ const handleItemClick = (event, item) => {
   
   popupPosition.value = {
     top: top,
-    left: left
+    // left: left
+    left: 18
   };
   
   currentItem.value = item;

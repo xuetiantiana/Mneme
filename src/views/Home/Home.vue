@@ -15,13 +15,13 @@
     </div>
     <button
       class="toggle-btn fixed-btn"
-      style="position: fixed; left: 20px; top: 10px"
+      style="position: fixed; left: 20px; top: 30px"
       v-show="!showLeft"
       @click="showLeft = true"
+      title="Toggle Left Panel"
     >
       <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
     </button>
-
 
     <!-- main-panel -->
     <div class="main-panel">
@@ -31,10 +31,11 @@
         <div class="header-right"></div>
       </div>
       <div class="main-content">
-        <WorkingMemory 
-          ref="workingMemoryRef" 
+        <WorkingMemory
+          ref="workingMemoryRef"
           :topicContainers="getTopicContainers()"
-          @renderNodesToTopic="handleRenderNodesToTopic">
+          @renderNodesToTopic="handleRenderNodesToTopic"
+        >
         </WorkingMemory>
       </div>
     </div>
@@ -48,15 +49,15 @@
         </button>
       </div>
       <div class="panel-content">
-
         <TopicContainerList ref="topicContainerListRef"></TopicContainerList>
       </div>
     </div>
     <button
       class="toggle-btn"
-      style="position: fixed; right: 20px; top: 10px"
+      style="position: fixed; right: 20px; top: 30px"
       v-show="!showRight"
       @click="showRight = true"
+      title="Toggle Right Panel"
     >
       <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
     </button>
@@ -83,10 +84,10 @@ const getTopicContainers = () => {
 };
 
 const handleRenderNodesToTopic = (nodesData) => {
-    console.log('Home接收到要渲染的节点数据:', nodesData);
-    if (topicContainerListRef.value) {
-        topicContainerListRef.value.renderNodesToFirstCanvas(nodesData);
-    }
+  console.log("Home接收到要渲染的节点数据:", nodesData);
+  if (topicContainerListRef.value) {
+    topicContainerListRef.value.renderNodesToFirstCanvas(nodesData);
+  }
 };
 </script>
 
@@ -100,16 +101,33 @@ const handleRenderNodesToTopic = (nodesData) => {
   padding: 16px;
   gap: 14px;
 
-  .left-panel,
-  .right-panel {
+  .left-panel {
     width: 350px;
+    min-width: 350px;
+    max-width: 350px;
     background-color: #ffff;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
     border-radius: 20px;
+    flex-shrink: 0;
 
-    
+    .panel-content {
+      flex: 1;
+      overflow: hidden;
+    }
+  }
+
+  .right-panel {
+    width: 350px;
+    min-width: 350px;
+    max-width: 350px;
+    background-color: #ffff;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    flex-shrink: 0;
+    border-right: none;
+    border-left: 1px solid #ddd;
 
     .panel-content {
       flex: 1;
@@ -117,45 +135,37 @@ const handleRenderNodesToTopic = (nodesData) => {
     }
   }
 
-  .right-panel {
-    width: 30%;
-    min-width: 400px;
-    border-right: none;
-    border-left: 1px solid #ddd;
-  }
-
   .panel-header {
-    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0 0.5rem;
+    padding: 0.8rem;
+    border-bottom: 1px solid #e2e2e2;
+
+    span {
+      font-weight: 600;
+      font-size: 1.125em;
+    }
+    .toggle-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .close-btn {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 0 .5rem;
-      padding: .8rem;
-      border-bottom: 1px solid #E2E2E2;
-       
-        span{
-             font-weight: 600;
-             font-size: 1.125em;
-        }
-      .toggle-icon {
-        width: 16px;
-        height: 16px;
-      }
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 8px;
+      color: #666;
 
-      .close-btn {
-        display: flex;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        padding: 0 8px;
-        color: #666;
-
-        &:hover {
-          color: #333;
-        }
+      &:hover {
+        color: #333;
       }
     }
+  }
 
   .main-panel {
     flex: 1;
@@ -163,10 +173,7 @@ const handleRenderNodesToTopic = (nodesData) => {
     flex-direction: column;
     background-color: #fff;
     border-radius: 20px;
-    
-
-
-
+    overflow: hidden;
 
     .main-content {
       flex: 1;
