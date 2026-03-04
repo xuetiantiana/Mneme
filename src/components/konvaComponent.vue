@@ -1166,41 +1166,43 @@ const handleDrop = (e: DragEvent) => {
         }else if (dragData.dragType === 'PCM') {
             const item = dragData.data
             if (!item) {
-               retnrn
+               return
             }
             const dropPos = getDropPosition(e)
             initMainImages(item, {
                 offsetX: dropPos.x - item.layout.main_cluster.cx,
                 offsetY: dropPos.y - item.layout.main_cluster.cy,
                 stage: stage!,
-                onButtonClick: (data) => {
-                    console.log('Image button clicked, data:', data)
+                onButtonClick: (data, node) => {
+                    console.log('Image button clicked, data:', data, node)
+                    
+                    // 根据当前 node 的中心点位置计算 offsetX 和 offsetY
+                    const currentOffsetX = node.x() + node.width()/2 - item.layout.main_cluster.cx
+                    const currentOffsetY = node.y() + node.height()/2 - item.layout.main_cluster.cy
+                    
+                    initSegmentsImages(data, {
+                        offsetX: currentOffsetX,
+                        offsetY: currentOffsetY,
+                    }).then((nodes) => {
+                        nodes.forEach(node => {
+                            layer!.add(node)
+                        })
 
-                         initSegmentsImages(data,{
-                            offsetX: dropPos.x - item.layout.main_cluster.cx,
-                offsetY: dropPos.y - item.layout.main_cluster.cy,
-                         }).then((nodes) => {
-    nodes.forEach(node => {
-                    layer!.add(node)
-                })
-
-                  data.segments.forEach((segment, index) => {    initPCMBubbles(segment.layout.bubbles, {
-      offsetX: dropPos.x - item.layout.main_cluster.cx,
-      offsetY: dropPos.y - item.layout.main_cluster.cy,
-    }).then((nodes) => {
-
-      nodes.forEach(node => {
-                    layer!.add(node)
-                })
-    }).catch((error) => {
-      console.error('Failed to create PCM nodes:', error)
-    })
-  })
-  }).catch((error) => {
-    console.error('Failed to create PCM nodes:', error)
-  })
-
-
+                        data.segments.forEach((segment, index) => {
+                            initPCMBubbles(segment.layout.bubbles, {
+                                offsetX: currentOffsetX,
+                                offsetY: currentOffsetY,
+                            }).then((nodes) => {
+                                nodes.forEach(node => {
+                                    layer!.add(node)
+                                })
+                            }).catch((error) => {
+                                console.error('Failed to create PCM nodes:', error)
+                            })
+                        })
+                    }).catch((error) => {
+                        console.error('Failed to create PCM nodes:', error)
+                    })
                 }
             }).then((nodes) => {
                 console.log(nodes)

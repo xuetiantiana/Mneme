@@ -54,7 +54,7 @@ const createHoverButton = () => {
  * @param {Konva.Stage} stage - Konva 舞台实例，用于获取容器位置
  * @param {Konva.Image} konvaImage - 当前 hover 的图片节点
  * @param {Object} data - initMainImages 传入的原始数据，点击按钮时传递给回调
- * @param {Function} onButtonClick - 点击按钮时的回调函数
+ * @param {Function} onButtonClick - 点击按钮时的回调函数，接收 (data, node) 两个参数
  */
 const showHoverButton = (stage, konvaImage, data, onButtonClick) => {
   // 检查图片是否已扩展，已扩展则不显示按钮
@@ -85,12 +85,12 @@ const showHoverButton = (stage, konvaImage, data, onButtonClick) => {
   button.style.top = `${buttonY}px`
   button.style.display = 'block'
 
-  // 绑定点击事件，点击时调用传入的回调函数并传递 data 参数
+  // 绑定点击事件，点击时调用传入的回调函数并传递 data 和 node 参数
   button.onclick = () => {
     if (onButtonClick && typeof onButtonClick === 'function') {
       // 标记图片为已扩展
       konvaImage.setAttr('isExpanded', true)
-      onButtonClick(data)
+      onButtonClick(data, konvaImage)
       // 点击后隐藏按钮
       hideHoverButton()
     }
@@ -115,7 +115,7 @@ const hideHoverButton = () => {
  * @param {number} options.offsetX - X 轴偏移量，默认为 0
  * @param {number} options.offsetY - Y 轴偏移量，默认为 0
  * @param {Konva.Stage} options.stage - Konva 舞台实例，用于添加鼠标交互事件
- * @param {Function} options.onButtonClick - 悬浮按钮点击回调函数，接收 data 参数
+ * @param {Function} options.onButtonClick - 悬浮按钮点击回调函数，接收 (data, node) 两个参数
  * @returns {Promise<Konva.Image[]>} 返回创建的图片节点数组
  */
 export const initMainImages = (data, options = {}) => {
