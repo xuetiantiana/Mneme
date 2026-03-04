@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCM UNIT — PCM-20260302184031-42404d</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: #f5f5f0;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ── 顶部信息栏 ── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+}
+.header .meta {
+  font-size: 13px;
+  color: #888;
+}
+.header .summary {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── 画布容器 ── */
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  overflow: auto;
+}
+.canvas {
+  position: relative;
+  background: #fafaf6;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: visible;
+}
+
+/* ── 连接线 ── */
+.connection {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.connection line {
+  stroke: #ccc;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+/* ── 主图群 ── */
+.main-image {
+  position: absolute;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid #fff;
+}
+.main-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── 主图标签 ── */
+.main-label {
+  position: absolute;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* ── Segment 卡片 ── */
+.segment {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid #e0ddd8;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.segment:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  z-index: 20;
+}
+.segment .seg-img {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.segment .seg-label {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.segment .seg-type {
+  font-size: 8px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+/* ── Bubble ── */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
+  cursor: default;
+  z-index: 15;
+  transition: transform 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.bubble:hover {
+  transform: scale(1.15);
+  z-index: 30;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+/* ── AOI 裁剪框叠加层 ── */
+.aoi-overlay {
+  position: absolute;
+  border: 2px dashed #ff6b35;
+  background: rgba(255, 107, 53, 0.08);
+  pointer-events: none;
+  z-index: 40;
+  border-radius: 3px;
+}
+.aoi-label {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  font-size: 9px;
+  color: #ff6b35;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.9);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  display: none;
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  max-width: 320px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  pointer-events: none;
+}
+.tooltip.show { display: block; }
+.tooltip h4 { font-size: 14px; margin-bottom: 6px; color: #333; }
+.tooltip .interp-list { list-style: none; padding: 0; }
+.tooltip .interp-list li {
+  padding: 3px 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip .interp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── 底部面板 ── */
+.info-panel {
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.info-panel .info-block {
+  min-width: 200px;
+}
+.info-panel .info-block h3 {
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🧠 PCM-20260302184031-42404d</h1>
+  <div class="summary">在深圳楼下的疯狂动物城快闪活动中，特别的场景吸引了注意。</div>
+  <div class="meta">
+    2025.11 · 深圳楼下路边
+  </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-wrap">
+  <div class="canvas" id="canvas" style="width:1288px; height:534px;">
+
+    <!-- SVG 连接线 -->
+    <svg class="connection" width="1288" height="534" style="position:absolute;top:0;left:0;width:100%;height:100%;">
+      <line x1="660" y1="276" x2="289" y2="301" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="660" y1="276" x2="1031" y2="276" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="660" y1="276" x2="256" y2="251" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+    </svg>
+
+    <div class="main-image" style="left:529px; top:101px; width:262px; height:350px; z-index:1; transform:rotate(0deg);">
+      <img src="uploads/643903af_2-1.png" alt="主图 0">
+      <div class="aoi-overlay" style="left:0px; top:0px; width:262px; height:350px;"><span class="aoi-label">S_image_F3 (LLM)</span></div>
+      <div class="aoi-overlay" style="left:0px; top:0px; width:262px; height:350px;"><span class="aoi-label">S_overlap_F1 (LLM)</span></div>
+      <div class="aoi-overlay" style="left:52px; top:155px; width:154px; height:103px;"><span class="aoi-label">S_overlap_F2 (LLM)</span></div>
+    </div>
+    <div class="main-label" style="left:660px; top:469px;">在深圳楼下的疯狂动物城快闪活动中，特别的场景吸引了注意。</div>
+
+    <div class="segment" data-seg-id="S_overlap_F1" style="left:199px; top:193px; width:180px; height:217px; border-color:#e8d8c8;">
+      <img class="seg-img" src="crops/S_overlap_F1.png" alt="疯狂动物城快闪活动现场" style="height:180px;">
+      <div class="seg-label">疯狂动物城快闪活动现场</div>
+      <div class="seg-type">text image overlap</div>
+    </div>
+    <div class="segment" data-seg-id="S_overlap_F2" style="left:941px; top:201px; width:180px; height:150px; border-color:#e8d8c8;">
+      <img class="seg-img" src="crops/S_overlap_F2.png" alt="小老鼠雕塑的独特呈现" style="height:113px;">
+      <div class="seg-label">小老鼠雕塑的独特呈现</div>
+      <div class="seg-type">text image overlap</div>
+    </div>
+    <div class="bubble" data-kind="meaning" style="left:1076px; top:130px; width:64px; height:64px; background:#F2D4CC; font-size:11px;" title="meaning: 怀旧">怀旧</div>
+    <div class="bubble" data-kind="meaning" style="left:1119px; top:174px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 惊喜呈现">惊喜呈现</div>
+    <div class="segment" data-seg-id="S_image_F3" style="left:163px; top:143px; width:186px; height:217px; border-color:#c8d8e8;">
+      <img class="seg-img" src="crops/S_image_F3.png" alt="快闪活动的整体氛围" style="height:180px;">
+      <div class="seg-label">快闪活动的整体氛围</div>
+      <div class="seg-type">image has text missing</div>
+    </div>
+    <div class="bubble" data-kind="meaning" style="left:171px; top:350px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 节庆氛围">节庆氛围</div>
+    <div class="bubble" data-kind="meaning" style="left:113px; top:311px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 互动体验">互动体验</div>
+    <div class="bubble" data-kind="emotion" style="left:80px; top:250px; width:72px; height:72px; background:#F5C6C6; font-size:11px;" title="emotion: 欢乐氛围">欢乐氛围</div>
+
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Info Panel -->
+<div class="info-panel">
+  <div class="info-block">
+    <h3>用户输入</h3>
+    <p>一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。</p>
+    <p style="color:#aaa; margin-top:4px;">2025.11，深圳楼下路边的疯狂动物城快闪</p>
+  </div>
+  <div class="info-block">
+    <h3>分组</h3>
+    <p><strong>G1</strong> 快闪活动体验 → left [S_overlap_F1, S_image_F3]</p>
+    <p><strong>G2</strong> 雕塑艺术 → right [S_overlap_F2]</p>
+  </div>
+  <div class="info-block">
+    <h3>布局</h3>
+    <p>画布: 1288 × 534 px</p>
+    <p>规划耗时: 32360.45 ms</p>
+  </div>
+  <div class="info-block">
+    <h3>AOI / 检测</h3>
+    <p>OmDet: 12 个检测 (cow, hat, horse, lamp, person, shoe, umbrella)</p>
+    <p><strong>S_image_F3</strong> crop: [0,0]-[254,339] 来源=llm 匹配=无</p>
+    <p><strong>S_overlap_F1</strong> crop: [0,0]-[254,339] 来源=llm 匹配=无</p>
+    <p><strong>S_overlap_F2</strong> crop: [50,150]-[200,250] 来源=llm 匹配=无</p>
+  </div>
+</div>
+
+<!-- Segment Tooltip 交互 -->
+<script>
+const PCM_DATA = {"id": "PCM-20260302184031-42404d", "created_at": "2026-03-02T18:41:53.823216", "unit_summary": "在深圳楼下的疯狂动物城快闪活动中，特别的场景吸引了注意。", "context": {"time_anchor": "2025.11", "place_anchor": "深圳楼下路边"}, "user_input": {"images": ["http://localhost:8000/api/images/data/PCM-20260302184031-42404d/uploads/643903af_2-1.png"], "text": "一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。", "time_place": "2025.11，深圳楼下路边的疯狂动物城快闪", "received_at": "2026-03-02T18:40:31.394264"}, "segments": [{"signifier_id": "F1", "seg_id": "S_overlap_F1", "label": "疯狂动物城快闪活动现场", "type": "text_image_overlap", "source": ["author_text", "image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184031-42404d/crops/S_overlap_F1.png", "interpretations": {"meaning": [{"id": "I_F1_M_03", "text": "怀旧重现", "kind": "meaning", "t": 3, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F1_E_01", "text": "惊喜发现", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F1_E_02", "text": "怀旧感动", "kind": "emotion", "t": 3, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "sensory": [], "aesthetic": []}, "image_index": 0, "layout": {"x": 289, "y": 301, "w": 180, "h": 110, "group_id": "G1", "bubbles": []}}, {"signifier_id": "F2", "seg_id": "S_overlap_F2", "label": "小老鼠雕塑的独特呈现", "type": "text_image_overlap", "source": ["author_text", "image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184031-42404d/crops/S_overlap_F2.png", "interpretations": {"meaning": [{"id": "I_F2_M_01", "text": "怀旧", "kind": "meaning", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}, {"id": "I_F2_M_02", "text": "惊喜呈现", "kind": "meaning", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}, {"id": "I_F2_M_03", "text": "动画重现", "kind": "meaning", "t": 3, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "emotion": [], "sensory": [], "aesthetic": []}, "image_index": 0, "layout": {"x": 1031, "y": 276, "w": 180, "h": 110, "group_id": "G2", "bubbles": [{"interpretation_id": "I_F2_M_01", "text": "怀旧", "kind": "meaning", "x": 1108, "y": 162, "r": 32, "color": "#F2D4CC"}, {"interpretation_id": "I_F2_M_02", "text": "惊喜呈现", "kind": "meaning", "x": 1155, "y": 210, "r": 36, "color": "#F2D4CC"}]}}, {"signifier_id": "F3", "seg_id": "S_image_F3", "label": "快闪活动的整体氛围", "type": "image_has_text_missing", "source": ["image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184031-42404d/crops/S_image_F3.png", "interpretations": {"meaning": [{"id": "I_F3_M_AI_01", "text": "节庆氛围", "kind": "meaning", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}, {"id": "I_F3_M_AI_02", "text": "互动体验", "kind": "meaning", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}], "emotion": [{"id": "I_F3_E_AI_01", "text": "欢乐氛围", "kind": "emotion", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}], "sensory": [], "aesthetic": []}, "image_index": 0, "layout": {"x": 256, "y": 251, "w": 186, "h": 110, "group_id": "G1", "bubbles": [{"interpretation_id": "I_F3_M_AI_01", "text": "节庆氛围", "kind": "meaning", "x": 207, "y": 386, "r": 36, "color": "#F2D4CC"}, {"interpretation_id": "I_F3_M_AI_02", "text": "互动体验", "kind": "meaning", "x": 149, "y": 347, "r": 36, "color": "#F2D4CC"}, {"interpretation_id": "I_F3_E_AI_01", "text": "欢乐氛围", "kind": "emotion", "x": 116, "y": 286, "r": 36, "color": "#F5C6C6"}]}}], "layout": {"canvas": {"w": 1288, "h": 534}, "main_cluster": {"cx": 660, "cy": 276, "label": "在深圳楼下的疯狂动物城快闪活动中，特别的场景吸引了注意。", "images": [{"index": 0, "x": 660, "y": 276, "w": 262, "h": 350, "rotation": 0, "z_index": 1}]}, "groups": [{"group_id": "G1", "label": "快闪活动体验", "concept": "主题与视觉体验", "placement": "left", "segment_ids": ["S_overlap_F1", "S_image_F3"]}, {"group_id": "G2", "label": "雕塑艺术", "concept": "雕塑与细节美感", "placement": "right", "segment_ids": ["S_overlap_F2"]}], "connections": [{"from": "main", "to": "S_overlap_F1"}, {"from": "main", "to": "S_image_F3"}, {"from": "main", "to": "S_overlap_F2"}], "planning_elapsed_ms": 32360.45}};
+
+const tooltip = document.getElementById('tooltip');
+const kindLabels = { meaning: '含义', emotion: '情感', sensory: '感官', aesthetic: '审美' };
+
+document.querySelectorAll('.segment').forEach(el => {
+  el.addEventListener('mouseenter', (e) => {
+    const segId = el.dataset.segId;
+    const seg = PCM_DATA.segments.find(s => s.seg_id === segId);
+    if (!seg) return;
+
+    let html = `<h4>${seg.label}</h4><ul class="interp-list">`;
+    for (const [kind, items] of Object.entries(seg.interpretations)) {
+      const color = { meaning: '#F2D4CC', emotion: '#F5C6C6', sensory: '#C8D8E8', aesthetic: '#E6DBC8' }[kind] || '#ddd';
+      for (const it of items) {
+        html += `<li><span class="interp-dot" style="background:${color}"></span>${kindLabels[kind] || kind}: ${it.text} <span style="color:#aaa">(s=${it.specificity})</span></li>`;
+      }
+    }
+    html += '</ul>';
+    tooltip.innerHTML = html;
+    tooltip.classList.add('show');
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+  });
+
+  el.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,361 @@
+{
+  "id": "PCM-20260302184458-54dc7f",
+  "created_at": "2026-03-02T18:46:44.161833",
+  "unit_summary": "在上海的一个文创园中漫步，欣赏雕塑和自然景观，感受即将下雨的凉爽天气。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260302184458-54dc7f/uploads/4ec19b60_4-1.png"
+    ],
+    "text": "随便走走，当时快要下雨了，天气比较舒服\n很喜欢这张照片整体的意境\n凉爽、灵性",
+    "time_place": "2025.6，上海的一个文创园",
+    "received_at": "2026-03-02T18:44:58.550032"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "河边雕塑与石墙",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260302184458-54dc7f/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [],
+        "emotion": [
+          {
+            "id": "I_F1_E_02",
+            "text": "灵性",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_01",
+            "text": "舒适",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "意境优美",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ]
+      },
+      "image_index": 0,
+      "layout": {
+        "x": 274,
+        "y": 258,
+        "w": 186,
+        "h": 110,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "舒适",
+            "kind": "emotion",
+            "x": 138,
+            "y": 292,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "灵性",
+            "kind": "emotion",
+            "x": 138,
+            "y": 224,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_A_01",
+            "text": "意境优美",
+            "kind": "aesthetic",
+            "x": 225,
+            "y": 123,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F3",
+      "seg_id": "S_text_F3",
+      "label": "即将下雨的天气",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260302184458-54dc7f/generated/S_text_F3.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F3_M_01",
+            "text": "期待降雨",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F3_E_01",
+            "text": "舒适",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F3_A_01",
+            "text": "天气意境",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ]
+      },
+      "layout": {
+        "x": 1154,
+        "y": 233,
+        "w": 174,
+        "h": 110,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "期待降雨",
+            "kind": "meaning",
+            "x": 1257,
+            "y": 141,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F3_E_01",
+            "text": "舒适",
+            "kind": "emotion",
+            "x": 1284,
+            "y": 201,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F3_A_01",
+            "text": "天气意境",
+            "kind": "aesthetic",
+            "x": 1257,
+            "y": 325,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_image_F2",
+      "label": "树木环绕的河流",
+      "type": "image_has_text_missing",
+      "source": [
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260302184458-54dc7f/crops/S_image_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_AI_01",
+            "text": "自然和谐",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 3
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_AI_01",
+            "text": "宁静",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 3
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_AI_01",
+            "text": "绿意盎然",
+            "kind": "sensory",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": "visual",
+            "ai_confidence": 3
+          }
+        ],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "layout": {
+        "x": 250,
+        "y": 208,
+        "w": 174,
+        "h": 110,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_AI_01",
+            "text": "自然和谐",
+            "kind": "meaning",
+            "x": 147,
+            "y": 300,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_E_AI_01",
+            "text": "宁静",
+            "kind": "emotion",
+            "x": 120,
+            "y": 240,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F2_S_AI_01",
+            "text": "绿意盎然",
+            "kind": "sensory",
+            "x": 116,
+            "y": 175,
+            "r": 36,
+            "color": "#C8D8E8"
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 1396,
+      "h": 509
+    },
+    "main_cluster": {
+      "cx": 717,
+      "cy": 233,
+      "label": "在上海的一个文创园中漫步，欣赏雕塑和自然景观，感受即将下雨的凉爽天气。",
+      "images": [
+        {
+          "index": 0,
+          "x": 717,
+          "y": 233,
+          "w": 400,
+          "h": 299,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "艺术与自然",
+        "concept": "艺术与自然的和谐",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1",
+          "S_image_F2"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "天气变化",
+        "concept": "即将降雨的天气",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F3"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_image_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F3"
+      }
+    ],
+    "planning_elapsed_ms": 10839.03
+  }
+}

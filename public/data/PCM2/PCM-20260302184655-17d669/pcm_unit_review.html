@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCM UNIT — PCM-20260302184655-17d669</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: #f5f5f0;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ── 顶部信息栏 ── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+}
+.header .meta {
+  font-size: 13px;
+  color: #888;
+}
+.header .summary {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── 画布容器 ── */
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  overflow: auto;
+}
+.canvas {
+  position: relative;
+  background: #fafaf6;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: visible;
+}
+
+/* ── 连接线 ── */
+.connection {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.connection line {
+  stroke: #ccc;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+/* ── 主图群 ── */
+.main-image {
+  position: absolute;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid #fff;
+}
+.main-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── 主图标签 ── */
+.main-label {
+  position: absolute;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* ── Segment 卡片 ── */
+.segment {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid #e0ddd8;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.segment:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  z-index: 20;
+}
+.segment .seg-img {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.segment .seg-label {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.segment .seg-type {
+  font-size: 8px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+/* ── Bubble ── */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
+  cursor: default;
+  z-index: 15;
+  transition: transform 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.bubble:hover {
+  transform: scale(1.15);
+  z-index: 30;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+/* ── AOI 裁剪框叠加层 ── */
+.aoi-overlay {
+  position: absolute;
+  border: 2px dashed #ff6b35;
+  background: rgba(255, 107, 53, 0.08);
+  pointer-events: none;
+  z-index: 40;
+  border-radius: 3px;
+}
+.aoi-label {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  font-size: 9px;
+  color: #ff6b35;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.9);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  display: none;
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  max-width: 320px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  pointer-events: none;
+}
+.tooltip.show { display: block; }
+.tooltip h4 { font-size: 14px; margin-bottom: 6px; color: #333; }
+.tooltip .interp-list { list-style: none; padding: 0; }
+.tooltip .interp-list li {
+  padding: 3px 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip .interp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── 底部面板 ── */
+.info-panel {
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.info-panel .info-block {
+  min-width: 200px;
+}
+.info-panel .info-block h3 {
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🧠 PCM-20260302184655-17d669</h1>
+  <div class="summary">在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。</div>
+  <div class="meta">
+    2025.6 · 上海的一个文创园
+  </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-wrap">
+  <div class="canvas" id="canvas" style="width:1259px; height:804px;">
+
+    <!-- SVG 连接线 -->
+    <svg class="connection" width="1259" height="804" style="position:absolute;top:0;left:0;width:100%;height:100%;">
+      <line x1="636" y1="264" x2="255" y2="264" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="636" y1="264" x2="1011" y2="264" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="636" y1="264" x2="337" y2="563" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+    </svg>
+
+    <div class="main-image" style="left:504px; top:89px; width:264px; height:350px; z-index:1; transform:rotate(0deg);">
+      <img src="uploads/734b73a4_5-1.png" alt="主图 0">
+      <div class="aoi-overlay" style="left:94px; top:208px; width:72px; height:142px;"><span class="aoi-label">S_image_F3 (LLM)</span></div>
+      <div class="aoi-overlay" style="left:52px; top:104px; width:156px; height:156px;"><span class="aoi-label">S_overlap_F1 (LLM)</span></div>
+      <div class="aoi-overlay" style="left:0px; top:0px; width:264px; height:156px;"><span class="aoi-label">S_overlap_F2 (LLM)</span></div>
+    </div>
+    <div class="main-label" style="left:636px; top:457px;">在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。</div>
+
+    <div class="segment" data-seg-id="S_overlap_F1" style="left:156px; top:156px; width:198px; height:217px; border-color:#e8d8c8;">
+      <img class="seg-img" src="crops/S_overlap_F1.png" alt="环形建筑与彩色画作的视觉体验" style="height:180px;">
+      <div class="seg-label">环形建筑与彩色画作的视觉体验</div>
+      <div class="seg-type">text image overlap</div>
+    </div>
+    <div class="bubble" data-kind="meaning" style="left:195px; top:376px; width:68px; height:68px; background:#F2D4CC; font-size:11px;" title="meaning: 仪式感">仪式感</div>
+    <div class="bubble" data-kind="emotion" style="left:102px; top:314px; width:64px; height:64px; background:#F5C6C6; font-size:11px;" title="emotion: 灵性">灵性</div>
+    <div class="bubble" data-kind="sensory" style="left:95px; top:144px; width:72px; height:72px; background:#C8D8E8; font-size:11px;" title="sensory: 视觉冲击">视觉冲击</div>
+    <div class="bubble" data-kind="aesthetic" style="left:138px; top:102px; width:72px; height:72px; background:#E6DBC8; font-size:11px;" title="aesthetic: 环形结构">环形结构</div>
+    <div class="bubble" data-kind="aesthetic" style="left:193px; top:80px; width:72px; height:72px; background:#E6DBC8; font-size:11px;" title="aesthetic: 色彩和谐">色彩和谐</div>
+    <div class="segment" data-seg-id="S_overlap_F2" style="left:918px; top:194px; width:186px; height:141px; border-color:#e8d8c8;">
+      <img class="seg-img" src="crops/S_overlap_F2.png" alt="树木与阳光带来的清爽感" style="height:104px;">
+      <div class="seg-label">树木与阳光带来的清爽感</div>
+      <div class="seg-type">text image overlap</div>
+    </div>
+    <div class="bubble" data-kind="meaning" style="left:1024px; top:93px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 自然宁静">自然宁静</div>
+    <div class="bubble" data-kind="meaning" style="left:1082px; top:132px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 凉爽体验">凉爽体验</div>
+    <div class="bubble" data-kind="emotion" style="left:1115px; top:198px; width:64px; height:64px; background:#F5C6C6; font-size:11px;" title="emotion: 清爽">清爽</div>
+    <div class="bubble" data-kind="emotion" style="left:1115px; top:266px; width:64px; height:64px; background:#F5C6C6; font-size:11px;" title="emotion: 宁静">宁静</div>
+    <div class="bubble" data-kind="sensory" style="left:1082px; top:324px; width:72px; height:72px; background:#C8D8E8; font-size:11px;" title="sensory: 凉爽微风">凉爽微风</div>
+    <div class="bubble" data-kind="aesthetic" style="left:1024px; top:363px; width:72px; height:72px; background:#E6DBC8; font-size:11px;" title="aesthetic: 自然光影">自然光影</div>
+    <div class="segment" data-seg-id="S_image_F3" style="left:244px; top:455px; width:186px; height:217px; border-color:#c8d8e8;">
+      <img class="seg-img" src="crops/S_image_F3.png" alt="石板路与水池的静谧空间" style="height:180px;">
+      <div class="seg-label">石板路与水池的静谧空间</div>
+      <div class="seg-type">image has text missing</div>
+    </div>
+    <div class="bubble" data-kind="meaning" style="left:355px; top:644px; width:72px; height:72px; background:#F2D4CC; font-size:11px;" title="meaning: 静谧空间">静谧空间</div>
+    <div class="bubble" data-kind="meaning" style="left:296px; top:656px; width:68px; height:68px; background:#F2D4CC; font-size:11px;" title="meaning: 平衡感">平衡感</div>
+    <div class="bubble" data-kind="emotion" style="left:241px; top:638px; width:64px; height:64px; background:#F5C6C6; font-size:11px;" title="emotion: 宁静">宁静</div>
+
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Info Panel -->
+<div class="info-panel">
+  <div class="info-block">
+    <h3>用户输入</h3>
+    <p>灵性、干净、清爽
+整体的环形给人一种仪式感
+虽然是夏天但是很凉爽的感觉
+有点像观夏的线下店的调性</p>
+    <p style="color:#aaa; margin-top:4px;">2025.6，上海的一个文创园</p>
+  </div>
+  <div class="info-block">
+    <h3>分组</h3>
+    <p><strong>G1</strong> 艺术与建筑 → left [S_overlap_F1]</p>
+    <p><strong>G2</strong> 自然与清爽 → right [S_overlap_F2]</p>
+    <p><strong>G3</strong> 静谧空间 → bottom-left [S_image_F3]</p>
+  </div>
+  <div class="info-block">
+    <h3>布局</h3>
+    <p>画布: 1259 × 804 px</p>
+    <p>规划耗时: 30676.13 ms</p>
+  </div>
+  <div class="info-block">
+    <h3>AOI / 检测</h3>
+    <p>OmDet: 5 个检测 (bench, desk, table, truck, umbrella)</p>
+    <p><strong>S_image_F3</strong> crop: [90,200]-[160,337] 来源=llm 匹配=无</p>
+    <p><strong>S_overlap_F1</strong> crop: [50,100]-[200,250] 来源=llm 匹配=无</p>
+    <p><strong>S_overlap_F2</strong> crop: [0,0]-[254,150] 来源=llm 匹配=无</p>
+  </div>
+</div>
+
+<!-- Segment Tooltip 交互 -->
+<script>
+const PCM_DATA = {"id": "PCM-20260302184655-17d669", "created_at": "2026-03-02T18:48:19.808027", "unit_summary": "在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。", "context": {"time_anchor": "2025.6", "place_anchor": "上海的一个文创园"}, "user_input": {"images": ["http://localhost:8000/api/images/data/PCM-20260302184655-17d669/uploads/734b73a4_5-1.png"], "text": "灵性、干净、清爽\n整体的环形给人一种仪式感\n虽然是夏天但是很凉爽的感觉\n有点像观夏的线下店的调性", "time_place": "2025.6，上海的一个文创园", "received_at": "2026-03-02T18:46:55.034829"}, "segments": [{"signifier_id": "F1", "seg_id": "S_overlap_F1", "label": "环形建筑与彩色画作的视觉体验", "type": "text_image_overlap", "source": ["author_text", "image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184655-17d669/crops/S_overlap_F1.png", "interpretations": {"meaning": [{"id": "I_F1_M_01", "text": "仪式感", "kind": "meaning", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F1_E_01", "text": "灵性", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "sensory": [{"id": "I_F1_S_01", "text": "视觉冲击", "kind": "sensory", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": "visual", "ai_confidence": 3}], "aesthetic": [{"id": "I_F1_A_01", "text": "环形结构", "kind": "aesthetic", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F1_A_02", "text": "色彩和谐", "kind": "aesthetic", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}]}, "image_index": 0, "layout": {"x": 255, "y": 264, "w": 198, "h": 110, "group_id": "G1", "bubbles": [{"interpretation_id": "I_F1_M_01", "text": "仪式感", "kind": "meaning", "x": 229, "y": 410, "r": 34, "color": "#F2D4CC"}, {"interpretation_id": "I_F1_E_01", "text": "灵性", "kind": "emotion", "x": 134, "y": 346, "r": 32, "color": "#F5C6C6"}, {"interpretation_id": "I_F1_S_01", "text": "视觉冲击", "kind": "sensory", "x": 131, "y": 180, "r": 36, "color": "#C8D8E8"}, {"interpretation_id": "I_F1_A_01", "text": "环形结构", "kind": "aesthetic", "x": 174, "y": 138, "r": 36, "color": "#E6DBC8"}, {"interpretation_id": "I_F1_A_02", "text": "色彩和谐", "kind": "aesthetic", "x": 229, "y": 116, "r": 36, "color": "#E6DBC8"}]}}, {"signifier_id": "F2", "seg_id": "S_overlap_F2", "label": "树木与阳光带来的清爽感", "type": "text_image_overlap", "source": ["author_text", "image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184655-17d669/crops/S_overlap_F2.png", "interpretations": {"meaning": [{"id": "I_F2_M_01", "text": "自然宁静", "kind": "meaning", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}, {"id": "I_F2_M_02", "text": "凉爽体验", "kind": "meaning", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F2_E_01", "text": "清爽", "kind": "emotion", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F2_E_02", "text": "宁静", "kind": "emotion", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}], "sensory": [{"id": "I_F2_S_01", "text": "凉爽微风", "kind": "sensory", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": "bodily", "ai_confidence": 3}], "aesthetic": [{"id": "I_F2_A_01", "text": "自然光影", "kind": "aesthetic", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}]}, "image_index": 0, "layout": {"x": 1011, "y": 264, "w": 186, "h": 110, "group_id": "G2", "bubbles": [{"interpretation_id": "I_F2_M_01", "text": "自然宁静", "kind": "meaning", "x": 1060, "y": 129, "r": 36, "color": "#F2D4CC"}, {"interpretation_id": "I_F2_M_02", "text": "凉爽体验", "kind": "meaning", "x": 1118, "y": 168, "r": 36, "color": "#F2D4CC"}, {"interpretation_id": "I_F2_E_01", "text": "清爽", "kind": "emotion", "x": 1147, "y": 230, "r": 32, "color": "#F5C6C6"}, {"interpretation_id": "I_F2_E_02", "text": "宁静", "kind": "emotion", "x": 1147, "y": 298, "r": 32, "color": "#F5C6C6"}, {"interpretation_id": "I_F2_S_01", "text": "凉爽微风", "kind": "sensory", "x": 1118, "y": 360, "r": 36, "color": "#C8D8E8"}, {"interpretation_id": "I_F2_A_01", "text": "自然光影", "kind": "aesthetic", "x": 1060, "y": 399, "r": 36, "color": "#E6DBC8"}]}}, {"signifier_id": "F3", "seg_id": "S_image_F3", "label": "石板路与水池的静谧空间", "type": "image_has_text_missing", "source": ["image"], "image_url": "http://localhost:8000/api/images/data/PCM-20260302184655-17d669/crops/S_image_F3.png", "interpretations": {"meaning": [{"id": "I_F3_M_01", "text": "静谧空间", "kind": "meaning", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}, {"id": "I_F3_M_02", "text": "平衡感", "kind": "meaning", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}], "emotion": [{"id": "I_F3_E_01", "text": "宁静", "kind": "emotion", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 3}], "sensory": [], "aesthetic": []}, "image_index": 0, "layout": {"x": 337, "y": 563, "w": 186, "h": 110, "group_id": "G3", "bubbles": [{"interpretation_id": "I_F3_M_01", "text": "静谧空间", "kind": "meaning", "x": 391, "y": 680, "r": 36, "color": "#F2D4CC"}, {"interpretation_id": "I_F3_M_02", "text": "平衡感", "kind": "meaning", "x": 330, "y": 690, "r": 34, "color": "#F2D4CC"}, {"interpretation_id": "I_F3_E_01", "text": "宁静", "kind": "emotion", "x": 273, "y": 670, "r": 32, "color": "#F5C6C6"}]}}], "layout": {"canvas": {"w": 1259, "h": 804}, "main_cluster": {"cx": 636, "cy": 264, "label": "在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。", "images": [{"index": 0, "x": 636, "y": 264, "w": 264, "h": 350, "rotation": 0, "z_index": 1}]}, "groups": [{"group_id": "G1", "label": "艺术与建筑", "concept": "环形建筑与艺术氛围", "placement": "left", "segment_ids": ["S_overlap_F1"]}, {"group_id": "G2", "label": "自然与清爽", "concept": "树木与阳光的自然宁静", "placement": "right", "segment_ids": ["S_overlap_F2"]}, {"group_id": "G3", "label": "静谧空间", "concept": "石板路与水池的平衡静谧", "placement": "bottom-left", "segment_ids": ["S_image_F3"]}], "connections": [{"from": "main", "to": "S_overlap_F1"}, {"from": "main", "to": "S_overlap_F2"}, {"from": "main", "to": "S_image_F3"}], "planning_elapsed_ms": 30676.13}};
+
+const tooltip = document.getElementById('tooltip');
+const kindLabels = { meaning: '含义', emotion: '情感', sensory: '感官', aesthetic: '审美' };
+
+document.querySelectorAll('.segment').forEach(el => {
+  el.addEventListener('mouseenter', (e) => {
+    const segId = el.dataset.segId;
+    const seg = PCM_DATA.segments.find(s => s.seg_id === segId);
+    if (!seg) return;
+
+    let html = `<h4>${seg.label}</h4><ul class="interp-list">`;
+    for (const [kind, items] of Object.entries(seg.interpretations)) {
+      const color = { meaning: '#F2D4CC', emotion: '#F5C6C6', sensory: '#C8D8E8', aesthetic: '#E6DBC8' }[kind] || '#ddd';
+      for (const it of items) {
+        html += `<li><span class="interp-dot" style="background:${color}"></span>${kindLabels[kind] || kind}: ${it.text} <span style="color:#aaa">(s=${it.specificity})</span></li>`;
+      }
+    }
+    html += '</ul>';
+    tooltip.innerHTML = html;
+    tooltip.classList.add('show');
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+  });
+
+  el.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+  });
+});
+</script>
+
+</body>
+</html>

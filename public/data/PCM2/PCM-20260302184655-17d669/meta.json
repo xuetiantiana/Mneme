@@ -1,0 +1,817 @@
+{
+  "id": "PCM-20260302184655-17d669",
+  "created_at": "2026-03-02T18:48:19.808027",
+  "unit_summary": "在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260302184655-17d669/uploads/734b73a4_5-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260302184655-17d669/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "环形建筑与彩色画作的视觉体验",
+      "entities": [
+        "环形建筑",
+        "彩色画作"
+      ],
+      "abstract_concepts": [
+        "仪式感",
+        "艺术氛围"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "树木与阳光带来的清爽感",
+      "entities": [
+        "树木",
+        "阳光"
+      ],
+      "abstract_concepts": [
+        "凉爽",
+        "自然宁静"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F2"
+    },
+    {
+      "signifier_id": "F3",
+      "label": "石板路与水池的静谧空间",
+      "entities": [
+        "石板路",
+        "水池"
+      ],
+      "abstract_concepts": [
+        "静谧",
+        "平衡"
+      ],
+      "source": [
+        "image"
+      ],
+      "seg_id": "S_image_F3"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "仪式感",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "艺术氛围",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "灵性",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "清爽",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_E_03",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "干净",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "视觉冲击",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "visual",
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": "auditory",
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "环形结构",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "色彩和谐",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F2_M_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "自然宁静",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_M_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "凉爽体验",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_E_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "清爽",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_E_02",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "宁静",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": "凉爽微风",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "bodily",
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F2_S_02",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": "auditory",
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_A_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "自然光影",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_M_01",
+      "signifier_id": "F3",
+      "kind": "meaning",
+      "text": "静谧空间",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_M_02",
+      "signifier_id": "F3",
+      "kind": "meaning",
+      "text": "平衡感",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_E_01",
+      "signifier_id": "F3",
+      "kind": "emotion",
+      "text": "宁静",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_E_02",
+      "signifier_id": "F3",
+      "kind": "emotion",
+      "text": "平和",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_S_01",
+      "signifier_id": "F3",
+      "kind": "sensory",
+      "text": "石板触感",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "tactile",
+      "ai_confidence": 3
+    },
+    {
+      "interpretation_id": "I_F3_S_02",
+      "signifier_id": "F3",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "image"
+      ],
+      "modality": "auditory",
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F3_A_01",
+      "signifier_id": "F3",
+      "kind": "aesthetic",
+      "text": "空间留白",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 3
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [
+      {
+        "signifier_id": "F3",
+        "seg_id": "S_image_F3",
+        "label": "石板路与水池的静谧空间",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 90,
+          "y1": 200,
+          "x2": 160,
+          "y2": 337
+        },
+        "crop_path": "data/PCM-20260302184655-17d669/crops/S_image_F3.png",
+        "interpretations": [
+          "I_F3_M_01",
+          "I_F3_M_02",
+          "I_F3_E_01",
+          "I_F3_E_02",
+          "I_F3_S_01",
+          "I_F3_A_01"
+        ],
+        "crop_meta": {
+          "source": "llm",
+          "omdet_score_max": null,
+          "omdet_score_avg": null,
+          "matched_detections": [],
+          "crop_elapsed_ms": 5.09
+        }
+      }
+    ],
+    "text_has_image_missing": [],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 50,
+          "y1": 100,
+          "x2": 200,
+          "y2": 250
+        },
+        "crop_path": "data/PCM-20260302184655-17d669/crops/S_overlap_F1.png",
+        "interpretations": [
+          "I_F1_M_01",
+          "I_F1_M_02",
+          "I_F1_E_01",
+          "I_F1_E_02",
+          "I_F1_E_03",
+          "I_F1_S_01",
+          "I_F1_A_01",
+          "I_F1_A_02"
+        ],
+        "crop_meta": {
+          "source": "llm",
+          "omdet_score_max": null,
+          "omdet_score_avg": null,
+          "matched_detections": [],
+          "crop_elapsed_ms": 8.07
+        }
+      },
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_overlap_F2",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 254,
+          "y2": 150
+        },
+        "crop_path": "data/PCM-20260302184655-17d669/crops/S_overlap_F2.png",
+        "interpretations": [
+          "I_F2_M_01",
+          "I_F2_M_02",
+          "I_F2_E_01",
+          "I_F2_E_02",
+          "I_F2_S_01",
+          "I_F2_A_01"
+        ],
+        "crop_meta": {
+          "source": "llm",
+          "omdet_score_max": null,
+          "omdet_score_avg": null,
+          "matched_detections": [],
+          "crop_elapsed_ms": 10.23
+        }
+      }
+    ]
+  },
+  "layout": {
+    "canvas": {
+      "w": 1259,
+      "h": 804
+    },
+    "main_cluster": {
+      "cx": 636,
+      "cy": 264,
+      "label": "在上海的一个文创园中，环形建筑与彩色画作营造出清爽的氛围。",
+      "images": [
+        {
+          "index": 0,
+          "x": 636,
+          "y": 264,
+          "w": 264,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "艺术与建筑",
+        "concept": "环形建筑与艺术氛围",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "自然与清爽",
+        "concept": "树木与阳光的自然宁静",
+        "placement": "right",
+        "segment_ids": [
+          "S_overlap_F2"
+        ]
+      },
+      {
+        "group_id": "G3",
+        "label": "静谧空间",
+        "concept": "石板路与水池的平衡静谧",
+        "placement": "bottom-left",
+        "segment_ids": [
+          "S_image_F3"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "seg_id": "S_overlap_F1",
+        "signifier_id": "F1",
+        "label": "环形建筑与彩色画作的视觉体验",
+        "type": "overlap",
+        "group_id": "G1",
+        "x": 255,
+        "y": 264,
+        "w": 198,
+        "h": 110,
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "仪式感",
+            "kind": "meaning",
+            "x": 229,
+            "y": 410,
+            "r": 34,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F1_M_02",
+            "text": "艺术氛围",
+            "kind": "meaning",
+            "x": 174,
+            "y": 390,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "灵性",
+            "kind": "emotion",
+            "x": 134,
+            "y": 346,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "清爽",
+            "kind": "emotion",
+            "x": 112,
+            "y": 293,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_E_03",
+            "text": "干净",
+            "kind": "emotion",
+            "x": 112,
+            "y": 235,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_S_01",
+            "text": "视觉冲击",
+            "kind": "sensory",
+            "x": 131,
+            "y": 180,
+            "r": 36,
+            "color": "#C8D8E8"
+          },
+          {
+            "interpretation_id": "I_F1_A_01",
+            "text": "环形结构",
+            "kind": "aesthetic",
+            "x": 174,
+            "y": 138,
+            "r": 36,
+            "color": "#E6DBC8"
+          },
+          {
+            "interpretation_id": "I_F1_A_02",
+            "text": "色彩和谐",
+            "kind": "aesthetic",
+            "x": 229,
+            "y": 116,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      },
+      {
+        "seg_id": "S_overlap_F2",
+        "signifier_id": "F2",
+        "label": "树木与阳光带来的清爽感",
+        "type": "overlap",
+        "group_id": "G2",
+        "x": 1011,
+        "y": 264,
+        "w": 186,
+        "h": 110,
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "自然宁静",
+            "kind": "meaning",
+            "x": 1060,
+            "y": 129,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "凉爽体验",
+            "kind": "meaning",
+            "x": 1118,
+            "y": 168,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "清爽",
+            "kind": "emotion",
+            "x": 1147,
+            "y": 230,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F2_E_02",
+            "text": "宁静",
+            "kind": "emotion",
+            "x": 1147,
+            "y": 298,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F2_S_01",
+            "text": "凉爽微风",
+            "kind": "sensory",
+            "x": 1118,
+            "y": 360,
+            "r": 36,
+            "color": "#C8D8E8"
+          },
+          {
+            "interpretation_id": "I_F2_A_01",
+            "text": "自然光影",
+            "kind": "aesthetic",
+            "x": 1060,
+            "y": 399,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      },
+      {
+        "seg_id": "S_image_F3",
+        "signifier_id": "F3",
+        "label": "石板路与水池的静谧空间",
+        "type": "image_only",
+        "group_id": "G3",
+        "x": 337,
+        "y": 563,
+        "w": 186,
+        "h": 110,
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "静谧空间",
+            "kind": "meaning",
+            "x": 391,
+            "y": 680,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F3_M_02",
+            "text": "平衡感",
+            "kind": "meaning",
+            "x": 330,
+            "y": 690,
+            "r": 34,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F3_E_01",
+            "text": "宁静",
+            "kind": "emotion",
+            "x": 273,
+            "y": 670,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F3_E_02",
+            "text": "平和",
+            "kind": "emotion",
+            "x": 230,
+            "y": 627,
+            "r": 32,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F3_S_01",
+            "text": "石板触感",
+            "kind": "sensory",
+            "x": 208,
+            "y": 570,
+            "r": 36,
+            "color": "#C8D8E8"
+          },
+          {
+            "interpretation_id": "I_F3_A_01",
+            "text": "空间留白",
+            "kind": "aesthetic",
+            "x": 220,
+            "y": 509,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_overlap_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_image_F3"
+      }
+    ],
+    "planning_elapsed_ms": 30676.13
+  },
+  "processing_meta": {
+    "pipeline_started_at": "2026-03-02T18:46:55.036700",
+    "pipeline_finished_at": "2026-03-02T18:48:51.440770",
+    "timings_ms": {
+      "pre_omdet": 3493.94,
+      "stage1": 9408.48,
+      "post_stage1_omdet": 5883.04,
+      "stage2": 31816.82,
+      "stage3": 31223.96,
+      "postprocess": 23.85,
+      "layout": 30676.29,
+      "total": 112528.73
+    },
+    "omdet": {
+      "total_detection_count": 5,
+      "image_count": 1,
+      "per_image": {
+        "0": {
+          "detection_count": 5,
+          "matched_labels": [
+            "bench",
+            "desk",
+            "table",
+            "truck",
+            "umbrella"
+          ]
+        }
+      }
+    }
+  }
+}

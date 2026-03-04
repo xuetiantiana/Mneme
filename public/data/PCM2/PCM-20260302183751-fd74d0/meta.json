@@ -1,0 +1,578 @@
+{
+  "id": "PCM-20260302183751-fd74d0",
+  "created_at": "2026-03-02T18:40:31.312447",
+  "unit_summary": "在深圳宠物店看小狗放松的时刻",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳宠物店"
+  },
+  "media": [
+    {
+      "media_id": "M_img_01",
+      "media_type": "image",
+      "source": [
+        "image"
+      ],
+      "uri_or_ref": "data/PCM-20260302183751-fd74d0/uploads/baca6c13_1-1.png"
+    },
+    {
+      "media_id": "M_txt_01",
+      "media_type": "text",
+      "source": [
+        "author_text"
+      ],
+      "uri_or_ref": "data/PCM-20260302183751-fd74d0/user_input.json"
+    }
+  ],
+  "signifiers": [
+    {
+      "signifier_id": "F1",
+      "label": "宠物店玻璃柜中的小狗",
+      "entities": [
+        "小狗",
+        "玻璃柜"
+      ],
+      "abstract_concepts": [
+        "放松",
+        "温馨"
+      ],
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "seg_id": "S_overlap_F1"
+    },
+    {
+      "signifier_id": "F2",
+      "label": "深圳商场的日常",
+      "entities": [],
+      "abstract_concepts": [
+        "日常生活",
+        "城市节奏"
+      ],
+      "source": [
+        "author_text"
+      ],
+      "seg_id": "S_text_F2"
+    }
+  ],
+  "interpretations": [
+    {
+      "interpretation_id": "I_F1_M_01",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "温馨陪伴",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_M_02",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "放松时光",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_M_03",
+      "signifier_id": "F1",
+      "kind": "meaning",
+      "text": "温馨记忆",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_E_01",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "轻松愉悦",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_E_02",
+      "signifier_id": "F1",
+      "kind": "emotion",
+      "text": "怀念温馨",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_S_01",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": "毛绒触感",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": "tactile",
+      "ai_confidence": 2
+    },
+    {
+      "interpretation_id": "I_F1_S_02",
+      "signifier_id": "F1",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "auditory",
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F1_A_01",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "暖色氛围",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 2
+    },
+    {
+      "interpretation_id": "I_F1_A_02",
+      "signifier_id": "F1",
+      "kind": "aesthetic",
+      "text": "柔软质感",
+      "t": 0,
+      "specificity": 2,
+      "status": "ai_recommended",
+      "source": [
+        "image"
+      ],
+      "modality": null,
+      "ai_confidence": 2
+    },
+    {
+      "interpretation_id": "I_F2_M_01",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "城市节奏",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_M_02",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "日常习惯",
+      "t": 0,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_M_03",
+      "signifier_id": "F2",
+      "kind": "meaning",
+      "text": "生活片段",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_E_01",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "舒适安逸",
+      "t": 0,
+      "specificity": 3,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_E_02",
+      "signifier_id": "F2",
+      "kind": "emotion",
+      "text": "怀旧温馨",
+      "t": 3,
+      "specificity": 4,
+      "status": "user_provided",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_S_01",
+      "signifier_id": "F2",
+      "kind": "sensory",
+      "text": null,
+      "t": 0,
+      "specificity": null,
+      "status": "user_empty",
+      "source": [
+        "author_text"
+      ],
+      "modality": "visual",
+      "ai_confidence": null
+    },
+    {
+      "interpretation_id": "I_F2_A_01",
+      "signifier_id": "F2",
+      "kind": "aesthetic",
+      "text": "都市节奏",
+      "t": 0,
+      "specificity": 3,
+      "status": "ai_recommended",
+      "source": [
+        "author_text"
+      ],
+      "modality": null,
+      "ai_confidence": 2
+    }
+  ],
+  "segment_output": {
+    "image_has_text_missing": [],
+    "text_has_image_missing": [
+      {
+        "signifier_id": "F2",
+        "seg_id": "S_text_F2",
+        "generation_prompt": "手绘绘本风格，深圳商场的日常；日常生活和城市节奏氛围，舒适安逸和怀旧温馨的情感，png",
+        "generated_image_path": "data/PCM-20260302183751-fd74d0/generated/S_text_F2.png",
+        "interpretations": [
+          "I_F2_M_01",
+          "I_F2_M_02",
+          "I_F2_M_03",
+          "I_F2_E_01",
+          "I_F2_E_02",
+          "I_F2_S_01",
+          "I_F2_A_01"
+        ],
+        "generation_meta": {
+          "generation_elapsed_ms": 46195.78,
+          "generated": true,
+          "error": null
+        }
+      }
+    ],
+    "text_image_overlap": [
+      {
+        "signifier_id": "F1",
+        "seg_id": "S_overlap_F1",
+        "image_index": 0,
+        "crop_guidance": {
+          "x1": 50,
+          "y1": 50,
+          "x2": 200,
+          "y2": 300
+        },
+        "crop_path": "data/PCM-20260302183751-fd74d0/crops/S_overlap_F1.png",
+        "interpretations": [
+          "I_F1_M_01",
+          "I_F1_M_02",
+          "I_F1_M_03",
+          "I_F1_E_01",
+          "I_F1_E_02",
+          "I_F1_S_01",
+          "I_F1_S_02",
+          "I_F1_A_01",
+          "I_F1_A_02"
+        ],
+        "crop_meta": {
+          "source": "llm",
+          "omdet_score_max": null,
+          "omdet_score_avg": null,
+          "matched_detections": [],
+          "crop_elapsed_ms": 21.99
+        }
+      }
+    ]
+  },
+  "layout": {
+    "canvas": {
+      "w": 1275,
+      "h": 528
+    },
+    "main_cluster": {
+      "cx": 644,
+      "cy": 264,
+      "label": "在深圳宠物店看小狗放松的时刻",
+      "images": [
+        {
+          "index": 0,
+          "x": 644,
+          "y": 264,
+          "w": 264,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "宠物店玻璃柜中的",
+        "concept": "",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "深圳商场的日常",
+        "concept": "",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "seg_id": "S_overlap_F1",
+        "signifier_id": "F1",
+        "label": "宠物店玻璃柜中的小狗",
+        "type": "overlap",
+        "group_id": "G1",
+        "x": 263,
+        "y": 264,
+        "w": 198,
+        "h": 110,
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "温馨陪伴",
+            "kind": "meaning",
+            "x": 237,
+            "y": 412,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F1_M_02",
+            "text": "放松时光",
+            "kind": "meaning",
+            "x": 182,
+            "y": 390,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F1_M_03",
+            "text": "温馨记忆",
+            "kind": "meaning",
+            "x": 139,
+            "y": 348,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "轻松愉悦",
+            "kind": "emotion",
+            "x": 116,
+            "y": 294,
+            "r": 36,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "怀念温馨",
+            "kind": "emotion",
+            "x": 116,
+            "y": 234,
+            "r": 36,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F1_S_01",
+            "text": "毛绒触感",
+            "kind": "sensory",
+            "x": 139,
+            "y": 180,
+            "r": 36,
+            "color": "#C8D8E8"
+          },
+          {
+            "interpretation_id": "I_F1_A_01",
+            "text": "暖色氛围",
+            "kind": "aesthetic",
+            "x": 182,
+            "y": 138,
+            "r": 36,
+            "color": "#E6DBC8"
+          },
+          {
+            "interpretation_id": "I_F1_A_02",
+            "text": "柔软质感",
+            "kind": "aesthetic",
+            "x": 237,
+            "y": 116,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      },
+      {
+        "seg_id": "S_text_F2",
+        "signifier_id": "F2",
+        "label": "深圳商场的日常",
+        "type": "text_only",
+        "group_id": "G2",
+        "x": 1019,
+        "y": 264,
+        "w": 186,
+        "h": 110,
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "城市节奏",
+            "kind": "meaning",
+            "x": 1068,
+            "y": 129,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "日常习惯",
+            "kind": "meaning",
+            "x": 1126,
+            "y": 168,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_M_03",
+            "text": "生活片段",
+            "kind": "meaning",
+            "x": 1159,
+            "y": 229,
+            "r": 36,
+            "color": "#F2D4CC"
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "舒适安逸",
+            "kind": "emotion",
+            "x": 1159,
+            "y": 299,
+            "r": 36,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F2_E_02",
+            "text": "怀旧温馨",
+            "kind": "emotion",
+            "x": 1126,
+            "y": 360,
+            "r": 36,
+            "color": "#F5C6C6"
+          },
+          {
+            "interpretation_id": "I_F2_A_01",
+            "text": "都市节奏",
+            "kind": "aesthetic",
+            "x": 1068,
+            "y": 399,
+            "r": 36,
+            "color": "#E6DBC8"
+          }
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      }
+    ],
+    "planning_elapsed_ms": 1.29
+  },
+  "processing_meta": {
+    "pipeline_started_at": "2026-03-02T18:37:51.221076",
+    "pipeline_finished_at": "2026-03-02T18:40:31.317974",
+    "timings_ms": {
+      "pre_omdet": 32521.16,
+      "stage1": 10836.27,
+      "post_stage1_omdet": 5030.88,
+      "stage2": 19441.51,
+      "stage3": 41377.53,
+      "postprocess": 46219.51,
+      "layout": 4.31,
+      "total": 155434.15
+    },
+    "omdet": {
+      "total_detection_count": 3,
+      "image_count": 1,
+      "per_image": {
+        "0": {
+          "detection_count": 3,
+          "matched_labels": [
+            "bear",
+            "desk",
+            "dog"
+          ]
+        }
+      }
+    }
+  }
+}
