@@ -21,15 +21,16 @@
         <PCMListComponent></PCMListComponent>
       </div>
     </div>
-    <button
-      class="toggle-btn fixed-btn"
-      style="position: fixed; left: 20px; top: 30px"
-      v-show="!showLeft"
-      @click="showLeft = true"
-      title="Toggle Left Panel"
-    >
-      <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
-    </button>
+    <el-tooltip content="显示 Memory Gallery" placement="right">
+      <button
+        class="toggle-btn fixed-btn"
+        style="position: fixed; left: 30px; top: 70px"
+        v-show="!showLeft"
+        @click="showLeft = true"
+      >
+        <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
+      </button>
+    </el-tooltip>
 
     <!-- main-panel -->
     <div class="main-panel">
@@ -60,15 +61,16 @@
         <TopicContainerList ref="topicContainerListRef" @createSuccess="handleCreateSuccess"></TopicContainerList>
       </div>
     </div>
-    <button
-      class="toggle-btn"
-      style="position: fixed; right: 20px; top: 30px"
-      v-show="!showRight"
-      @click="showRight = true"
-      title="Toggle Right Panel"
-    >
-      <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
-    </button>
+    <el-tooltip content="显示 My Story" placement="left">
+      <button
+        class="toggle-btn"
+        style="position: fixed; right: 30px; top: 70px"
+        v-show="!showRight"
+        @click="showRight = true"
+      >
+        <svg-icon name="toggle-icon" class="toggle-icon"></svg-icon>
+      </button>
+    </el-tooltip>
   </div>
 </template>
 
@@ -114,7 +116,7 @@ const handleRenderNodesToTopic = (nodesData) => {
   width: 100%;
   overflow: hidden;
   background: #eee;
-  padding: 16px;
+  padding: 56px 16px 16px;
   gap: 14px;
 
   .left-panel {
