@@ -277,7 +277,6 @@ const handleCloseCanvasPopup = () => {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5em;
-    background-color: #f1f1f1;
     padding: 0.5em;
     border-radius: 12px;
     overflow-y: auto;
@@ -289,7 +288,7 @@ const handleCloseCanvasPopup = () => {
       padding: 1.5em 0.9em 0.9em;
       cursor: pointer;
       transition: all 0.2s ease;
-      background-color: #ddd;
+      background-color: #f1f1f1;
 
       &.selected {
         border-color: #333;

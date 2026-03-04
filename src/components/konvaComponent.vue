@@ -104,6 +104,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import Konva from 'konva'
 import { Edit, Pointer } from '@element-plus/icons-vue'
 import { createImageAndTextNodes, createTextNode, createInterpretationTextNodes } from '@/utils/canvasPositionUtils'
+import { initMainImages, initSegmentsImages, initPCMBubbles } from '@/utils/initPCM'
 
 const emit = defineEmits(['sendSelectedNodes'])
 
@@ -1162,6 +1163,51 @@ const handleDrop = (e: DragEvent) => {
                 .catch((error) => {
                     console.error('Failed to create text node:', error)
                 })
+        }else if (dragData.dragType === 'PCM') {
+            const item = dragData.data
+            if (!item) {
+               retnrn
+            }
+            const dropPos = getDropPosition(e)
+            initMainImages(item, {
+                offsetX: dropPos.x - item.layout.main_cluster.cx,
+                offsetY: dropPos.y - item.layout.main_cluster.cy,
+                stage: stage!,
+                onButtonClick: (data) => {
+                    console.log('Image button clicked, data:', data)
+
+                         initSegmentsImages(data,{
+                            offsetX: dropPos.x - item.layout.main_cluster.cx,
+                offsetY: dropPos.y - item.layout.main_cluster.cy,
+                         }).then((nodes) => {
+    nodes.forEach(node => {
+                    layer!.add(node)
+                })
+
+                  data.segments.forEach((segment, index) => {    initPCMBubbles(segment.layout.bubbles, {
+      offsetX: dropPos.x - item.layout.main_cluster.cx,
+      offsetY: dropPos.y - item.layout.main_cluster.cy,
+    }).then((nodes) => {
+
+      nodes.forEach(node => {
+                    layer!.add(node)
+                })
+    }).catch((error) => {
+      console.error('Failed to create PCM nodes:', error)
+    })
+  })
+  }).catch((error) => {
+    console.error('Failed to create PCM nodes:', error)
+  })
+
+
+                }
+            }).then((nodes) => {
+                console.log(nodes)
+                nodes.forEach(node => {
+                    layer!.add(node)
+                })
+            })
         }
     })
 }

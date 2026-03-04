@@ -5,26 +5,30 @@
     :style="{ top: position.top + 'px', left: position.left + 'px' }"
   >
     <div class="popup-header">
+      <h3 class="popup-title">
+        {{ item.title }}
+      </h3>
       <button class="close-btn" @click="handleClose">×</button>
     </div>
     <div class="popup-content">
-      <div class="popup-section main-image-section" v-if="item.images && item.images.length > 0">
-        <img
-          :src="item.images[0]"
+      <div class="popup-section main-image-section" v-if="item.mainImages && item.mainImages.length > 0">
+        <img v-for="(image, index) in item.mainImages"
+        style="width: 200px;height: 200px;"
+          :key="index"
+          :src="image.image_url"
           :alt="item.title"
           class="main-image draggable-item"
           draggable="true"
-          @dragstart="handleImageDragStart($event, item.images[0], item.title, item.id)"
+          @dragstart="handlePCMDragStart($event, item)"
         />
       </div>
-      <div class="popup-section">
+      <!-- <div class="popup-section">
         <h3 
           class="popup-title" 
-          draggable="true"
         >
           {{ item.title }}
         </h3>
-      </div>
+      </div> -->
       <div class="popup-section interpretations-section" v-if="item.segments && item.segments.length > 0">
         <div class="interpretations-list">
           <div 
@@ -54,7 +58,7 @@
             <div class="segment-right">
               <div class="interpretations-content" v-if="segment.interpretations">
                 <div class="interpretation-group" v-if="segment.interpretations.meaning && segment.interpretations.meaning.length > 0">
-                  <span class="interpretation-type-label">含义：</span>
+                  <!-- <span class="interpretation-type-label">meaning：</span> -->
                   <div class="interpretation-items">
                     <span 
                       v-for="interp in segment.interpretations.meaning" 
@@ -69,7 +73,7 @@
                   </div>
                 </div>
                 <div class="interpretation-group" v-if="segment.interpretations.emotion && segment.interpretations.emotion.length > 0">
-                  <span class="interpretation-type-label">情感：</span>
+                  <!-- <span class="interpretation-type-label">emotion：</span> -->
                   <div class="interpretation-items">
                     <span 
                       v-for="interp in segment.interpretations.emotion" 
@@ -84,7 +88,7 @@
                   </div>
                 </div>
                 <div class="interpretation-group" v-if="segment.interpretations.sensory && segment.interpretations.sensory.length > 0">
-                  <span class="interpretation-type-label">感官：</span>
+                  <!-- <span class="interpretation-type-label">sensory：</span> -->
                   <div class="interpretation-items">
                     <span 
                       v-for="interp in segment.interpretations.sensory" 
@@ -99,7 +103,7 @@
                   </div>
                 </div>
                 <div class="interpretation-group" v-if="segment.interpretations.aesthetic && segment.interpretations.aesthetic.length > 0">
-                  <span class="interpretation-type-label">美学：</span>
+                  <!-- <span class="interpretation-type-label">aesthetic：</span> -->
                   <div class="interpretation-items">
                     <span 
                       v-for="interp in segment.interpretations.aesthetic" 
@@ -184,6 +188,16 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
 }
 
+const handlePCMDragStart = (event, item) => {
+  event.dataTransfer.effectAllowed = "copy";
+  const dragData = [{
+    dragType: "PCM",
+    data: item
+  }];
+  event.dataTransfer.setData("dragData", JSON.stringify(dragData));
+}
+
+
 
 </script>
 
@@ -198,16 +212,21 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
   max-width: 400px;
   animation: fadeIn 0.2s ease;
   max-height: 500px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   .popup-header {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 12px 16px;
+    align-items: flex-start;
+    padding: .6em 1em;
     border-bottom: 1px solid #e8e8e8;
     background: #fff;
-
+    h3{
+      font-size: 1em;
+    }
     .close-btn {
+      position: absolute;
+      top: 6px;
+      right: 16px;
       width: 28px;
       height: 28px;
       border: none;
@@ -231,7 +250,8 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
 
   .popup-content {
     padding: 16px;
-
+    flex: 1;
+    overflow-y: auto;
     .draggable-item {
       cursor: move;
     }
@@ -260,20 +280,23 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
 
       .popup-title {
         font-size: 1em;
-        font-weight: 400;
+        font-weight: 600;
         color: #333;
         margin: 0;
         line-height: 1.4;
+        text-align: center;
       }
 
       &.main-image-section {
         text-align: center;
         padding: 0;
         margin-bottom: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
 
         .main-image {
-          width: 100px;
-          height: 100px;
           background: #f1f1f1;
           object-fit: contain;
           border-radius: 8px;
@@ -281,7 +304,7 @@ const handleTextDragStart = (event, text, type, specificity, id) => {
 
           &:hover {
             box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-            transform: scale(1.02);
+            filter: brightness(1.05);
           }
 
           &:active {

@@ -43,22 +43,29 @@ const handleClose = () => {
   emit('close')
 }
 
+const handleImageButtonClick = (data) => {
+  console.log('Image button clicked, data:', data)
+}
+
 const renderPCMContent = async () => {
   console.log(konvaRef.value, props.item)
   if (!konvaRef.value || !props.item ) {
     return
   }
-  
+
   if (!konvaRef.value.konvaData.stage || !konvaRef.value.konvaData.stage) {
     setTimeout(() => {
       renderPCMContent()
     }, 200)
     return
   }
-  
+
   console.log(props.item)
-  
-  initMainImages(props.item).then((nodes) => {
+
+  await initMainImages(props.item, {
+    stage: konvaRef.value.konvaData.stage,
+    onButtonClick: handleImageButtonClick
+  }).then((nodes) => {
     nodes.forEach(node => {
       console.log(node)
       konvaRef.value.konvaData.layer.add(node)
@@ -69,7 +76,7 @@ const renderPCMContent = async () => {
 
 
 
-    initSegmentsImages(props.item).then((nodes) => {
+    await initSegmentsImages(props.item).then((nodes) => {
     nodes.forEach(node => {
       console.log(node)
       konvaRef.value.konvaData.layer.add(node)
