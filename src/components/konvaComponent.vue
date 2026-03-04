@@ -18,6 +18,9 @@
       <!-- <button class="tool-btn" @click="resetView">
                 重置视图
                 </button> -->
+                 <button :class="['tool-btn', { active: currentTool === 'text' }]" @click="setTool('text')">
+                    文字
+                </button>
     </div>
     <div class="toolbar">
       <div class="tool-group">
@@ -115,6 +118,7 @@ import {
   createImageAndTextNodes,
   createTextNode,
   createInterpretationTextNodes,
+  createConnection,
 } from "@/utils/canvasPositionUtils";
 import {
   initMainImages,
@@ -150,7 +154,7 @@ const currentTool = ref<
 >("select"); // 当前工具类型
 const brushColor = ref("#000000"); // 画笔颜色
 const lineWidth = ref(5); // 线条粗细
-const fontSize = ref(24); // 文字大小
+const fontSize = ref(14); // 文字大小
 const scale = ref(1); // 当前缩放比例
 const minScale = 0.5; // 最小缩放比例
 const maxScale = 1.5; // 最大缩放比例
@@ -430,6 +434,7 @@ const handleMouseMove = (
 // - 框选：完成选择，选中与选择框相交的图形
 // - 绘制：结束绘制状态
 const handleMouseUp = () => {
+  console.log("鼠标释放事件");
   if (isPanning.value) {
     isPanning.value = false;
     return;
@@ -467,10 +472,11 @@ const handleMouseUp = () => {
   isDrawing.value = false;
   lastLine = null;
 
-  // 画完线后，自动切换回选择工具
-  currentTool.value = "select";
-  // 更新节点的可拖拽状态
-  updateDraggableState();
+  // 只有在画笔或橡皮擦模式下，画完后才自动切换回选择工具
+  if (currentTool.value === "brush" || currentTool.value === "eraser") {
+    currentTool.value = "select";
+    updateDraggableState();
+  }
 };
 
 // 判断两个矩形是否相交
@@ -616,34 +622,39 @@ const handleTextClick = (
 ) => {
   // 获取点击位置在舞台坐标系中的坐标
   const pos = getPointerPos(e);
-  // 弹出输入框让用户输入文字
-  const text = prompt("请输入文字:", "文字");
+  
+  // 直接创建文本节点，使用默认文字
+  const defaultText = "双击编辑文字";
+  const textNode = new Konva.Text({
+    x: pos.x,
+    y: pos.y,
+    text: defaultText,
+    fontSize: fontSize.value,
+    fontFamily: "Arial",
+    fill: brushColor.value,
+    draggable: true,
+    width: 150, // 设置文本宽度，超出自动换行
+    wrap: "word", // 按单词换行
+  });
 
-  // 如果用户输入了有效文字，则创建文字节点
-  if (text && text.trim()) {
-    const textNode = new Konva.Text({
-      x: pos.x,
-      y: pos.y,
-      text: text,
-      fontSize: fontSize.value,
-      fontFamily: "Arial",
-      fill: brushColor.value,
-      draggable: true,
-    });
+  // 为文字节点添加点击事件，用于选中
+  textNode.on("click tap", (evt) => {
+    handleNodeClick(evt, textNode);
+  });
 
-    // 为文字节点添加点击事件，用于选中
-    textNode.on("click tap", (evt) => {
-      handleNodeClick(evt, textNode);
-    });
+  // 将文字节点添加到图层
+  layer!.add(textNode);
+  currentTool.value = "select";
+  
+  // 选中新创建的文字节点
+  selectedNodes = [textNode];
+  transformer!.nodes(selectedNodes);
+  textNode.moveToTop();
+  transformer!.moveToTop();
+  addNodeSelectStyle(textNode);
 
-    // 将文字节点添加到图层
-    layer!.add(textNode);
-
-    // 添加完文字后，自动切换回选择工具
-    currentTool.value = "select";
-    // 更新节点的可拖拽状态
-    updateDraggableState();
-  }
+  // 保持文字工具模式，方便继续添加文字
+  // 不自动切换回选择工具
 };
 
 // 处理双击事件
@@ -1247,6 +1258,7 @@ const handleDrop = (e: DragEvent) => {
         offsetY: dropPos.y - item.layout.main_cluster.cy,
         stage: stage!,
         onButtonClick: (data, node) => {
+          const mainNode = node;
           console.log("Image button clicked, data:", data, node);
 
           // 根据当前 node 的中心点位置计算 offsetX 和 offsetY
@@ -1265,8 +1277,29 @@ const handleDrop = (e: DragEvent) => {
                   handleNodeClick(evt, node);
                 });
                 layer!.add(node);
+                if( node.className === 'Image'){
+                  // 创建从 mainNode 到当前节点的连接线
+                  const connectionLine = createConnection(mainNode, node, {
+                    strokeWidth: 2,
+                    arrow: true,
+                    dashed: true,
+                    onDragMove: (line, source, target) => {
+                      const getNodeCenter = (n) => ({
+                        x: n.x() + (n.width() || 0) * n.scaleX() / 2,
+                        y: n.y() + (n.height() || 0) * n.scaleY() / 2,
+                      });
+                      const sourcePos = getNodeCenter(source);
+                      const targetPos = getNodeCenter(target);
+                      line.points([sourcePos.x, sourcePos.y, targetPos.x, targetPos.y]);
+                    },
+                  });
+                  if (connectionLine) {
+                    layer!.add(connectionLine);
+                    connectionLine.moveToBottom();
+                  }
+                }
+                
               });
-
               data.segments.forEach((segment, index) => {
                 initPCMBubbles(segment.layout.bubbles, {
                   offsetX: currentOffsetX,
@@ -1443,6 +1476,10 @@ const renderNodes = (nodesData) => {
         });
       }
 
+      // 移除克隆节点上的所有事件监听器，避免引用原始组件的状态
+      clonedNode.off();
+      
+      // 重新绑定事件监听器到当前组件的作用域
       clonedNode.on("click tap", (evt) => {
         handleNodeClick(evt, clonedNode);
       });
@@ -1545,6 +1582,7 @@ defineExpose({
   konvaData,
   exportCanvas,
   exportElementInfo,
+  setTool,
 });
 </script>
 

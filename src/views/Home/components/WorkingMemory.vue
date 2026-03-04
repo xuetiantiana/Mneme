@@ -15,14 +15,14 @@
     <!-- 左下角按钮列表 -->
     <ul class="bottom-btn-list">
       <li>
-        <el-tooltip content="添加文本" placement="right">
-          <el-button circle size="medium">
+        <el-tooltip content="添加文本" placement="right" effect="light">
+          <el-button circle size="medium" @click="handleAddText">
             <el-icon><Edit /></el-icon>
           </el-button>
         </el-tooltip>
       </li>
       <li>
-        <el-tooltip content="添加图片" placement="right">
+        <el-tooltip content="添加图片" placement="right" effect="light">
           <el-button circle size="medium">
             <el-icon><Picture /></el-icon>
           </el-button>
@@ -68,6 +68,12 @@ const emit = defineEmits(["renderNodesToTopic"]);
 const memoryItems = ref([]);
 const konvaRef = ref(null);
 const selectedNodesData = ref([]);
+
+const handleAddText = () => {
+  if (konvaRef.value && konvaRef.value.setTool) {
+    konvaRef.value.setTool("text");
+  }
+};
 
 const handleRenderNodes = (canvasIndex) => {
   // 先获取选中的节点信息

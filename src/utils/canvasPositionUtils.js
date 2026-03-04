@@ -1,3 +1,5 @@
+import Konva from "konva";
+
 /**
  * 获取气泡颜色，根据类型和个人特异性数值返回渐变颜色
  * @param {string} type - 类型：aesthetic（审美）, emotion（情感）, sensory（感官）, value（价值&个人意义）
@@ -379,4 +381,107 @@ export const createInterpretationTextNodes = (
       reject(error);
     }
   });
+};
+
+/**
+ * 创建两个节点之间的连线
+ * @param {Object} sourceNode - 源节点 (Konva Node)
+ * @param {Object} targetNode - 目标节点 (Konva Node)
+ * @param {Object} options - 配置选项
+ * @param {string} options.stroke - 线条颜色，默认 '#666'
+ * @param {number} options.strokeWidth - 线条宽度，默认 2
+ * @param {boolean} options.arrow - 是否显示箭头，默认 true
+ * @param {number} options.pointerLength - 箭头长度，默认 10
+ * @param {number} options.pointerWidth - 箭头宽度，默认 10
+ * @param {boolean} options.dashed - 是否虚线，默认 false
+ * @param {Function} options.onDragMove - 节点拖拽时更新连线的回调函数
+ * @returns {Object} 返回 Konva.Arrow 或 Konva.Line 对象
+ */
+export const createConnectionLine = (sourceNode, targetNode, options = {}) => {
+  const {
+    stroke = '#ccc',
+    strokeWidth = 2,
+    arrow = true,
+    pointerLength = 10,
+    pointerWidth = 10,
+    dashed = false,
+  } = options;
+
+  // 获取节点中心点坐标
+  const getNodeCenter = (node) => {
+    const x = node.x();
+    const y = node.y();
+    const width = node.width() * node.scaleX();
+    const height = node.height() * node.scaleY();
+    return {
+      x: x + width / 2,
+      y: y + height / 2,
+    };
+  };
+
+  const sourcePos = getNodeCenter(sourceNode);
+  const targetPos = getNodeCenter(targetNode);
+
+  // 创建箭头连线
+  const connectionLine = new Konva.Arrow({
+    points: [sourcePos.x, sourcePos.y, targetPos.x, targetPos.y],
+    stroke,
+    strokeWidth,
+    pointerLength,
+    pointerWidth,
+    pointerAtBeginning: false,
+    pointerAtEnding: true,
+    fill: stroke,
+    dash: dashed ? [10, 5] : [],
+    lineCap: 'round',
+    lineJoin: 'round',
+  });
+
+  // 存储源节点和目标节点的引用，用于后续更新
+  connectionLine.setAttr('sourceNode', sourceNode);
+  connectionLine.setAttr('targetNode', targetNode);
+
+  // 监听节点拖拽事件，更新连线位置
+  if (options.onDragMove) {
+    sourceNode.on('dragmove', () => options.onDragMove(connectionLine, sourceNode, targetNode));
+    targetNode.on('dragmove', () => options.onDragMove(connectionLine, sourceNode, targetNode));
+  }
+
+  return connectionLine;
+};
+
+/**
+ * 创建单个连线
+ * @param {Object} sourceNode - 源节点
+ * @param {Object} targetNode - 目标节点
+ * @param {Object} options - 配置选项
+ * @returns {Object} 返回连线对象
+ */
+export const createConnection = (sourceNode, targetNode, options = {}) => {
+  return createConnectionLine(sourceNode, targetNode, options);
+};
+
+
+/**
+ * 更新连线位置（当节点拖拽时调用）
+ * @param {Object} connectionLine - 连线对象
+ * @param {Object} sourceNode - 源节点
+ * @param {Object} targetNode - 目标节点
+ */
+export const updateConnectionPosition = (connectionLine, sourceNode, targetNode) => {
+  const getNodeCenter = (node) => {
+    const x = node.x();
+    const y = node.y();
+    const width = node.width() * node.scaleX();
+    const height = node.height() * node.scaleY();
+    return {
+      x: x + width / 2,
+      y: y + height / 2,
+    };
+  };
+
+  const sourcePos = getNodeCenter(sourceNode);
+  const targetPos = getNodeCenter(targetNode);
+
+  connectionLine.points([sourcePos.x, sourcePos.y, targetPos.x, targetPos.y]);
 };
