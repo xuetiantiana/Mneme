@@ -1,0 +1,267 @@
+{
+  "id": "PCM-20260304150104-4e1676",
+  "created_at": "2026-03-04T15:02:34.508143",
+  "unit_summary": "在阿那亚买手店中，白色的陶瓷物品展示出日式风格。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "阿那亚买手店"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260304150104-4e1676/uploads/4f9fcd8f_10-1.png"
+    ],
+    "text": "整个店装修和物品都是白色的，很有日式风格",
+    "time_place": "2025.6，阿那亚买手店",
+    "received_at": "2026-03-04T15:01:04.686552"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "白色陶瓷物品展示",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304150104-4e1676/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "纯净简约",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "宁静舒适",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "清新愉悦",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 349,
+      "image_height": 357,
+      "layout": {
+        "x": 264,
+        "y": 416,
+        "w": 192,
+        "h": 217,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "纯净简约",
+            "kind": "meaning",
+            "x": 291,
+            "y": 568,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "宁静舒适",
+            "kind": "emotion",
+            "x": 135,
+            "y": 501,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "清新愉悦",
+            "kind": "emotion",
+            "x": 110,
+            "y": 416,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "日式风格的感受",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304150104-4e1676/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "日式简约",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "文化氛围",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "平和宁静",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 1072,
+        "y": 416,
+        "w": 180,
+        "h": 202,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "日式简约",
+            "kind": "meaning",
+            "x": 1087,
+            "y": 269,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "文化氛围",
+            "kind": "meaning",
+            "x": 1182,
+            "y": 317,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "平和宁静",
+            "kind": "emotion",
+            "x": 1220,
+            "y": 416,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 1330,
+      "h": 831
+    },
+    "main_cluster": {
+      "cx": 671,
+      "cy": 416,
+      "label": "在阿那亚买手店中，白色的陶瓷物品展示出日式风格。",
+      "images": [
+        {
+          "index": 0,
+          "x": 671,
+          "y": 416,
+          "w": 263,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "白色陶瓷物品展示",
+        "concept": "",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "日式风格的感受",
+        "concept": "",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      }
+    ],
+    "planning_elapsed_ms": 0.68
+  }
+}

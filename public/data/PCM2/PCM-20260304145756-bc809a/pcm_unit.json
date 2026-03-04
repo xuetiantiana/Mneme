@@ -1,0 +1,267 @@
+{
+  "id": "PCM-20260304145756-bc809a",
+  "created_at": "2026-03-04T14:59:18.978462",
+  "unit_summary": "在上海文创园中，爬墙虎覆盖的建筑带来自然的感觉。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260304145756-bc809a/uploads/0d1689db_8-1.png"
+    ],
+    "text": "爬墙虎\n自然的感觉。",
+    "time_place": "2025.6，上海的一个文创园",
+    "received_at": "2026-03-04T14:57:56.156242"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "爬墙虎覆盖的建筑",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304145756-bc809a/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "自然融合",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "宁静舒适",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "怀旧温暖",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 71,
+      "image_height": 62,
+      "layout": {
+        "x": 264,
+        "y": 420,
+        "w": 192,
+        "h": 191,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "自然融合",
+            "kind": "meaning",
+            "x": 291,
+            "y": 572,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "宁静舒适",
+            "kind": "emotion",
+            "x": 135,
+            "y": 505,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "怀旧温暖",
+            "kind": "emotion",
+            "x": 110,
+            "y": 420,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "自然的感觉",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304145756-bc809a/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "自然宁静",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "生态平衡",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "放松愉悦",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 1078,
+        "y": 420,
+        "w": 192,
+        "h": 214,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "自然宁静",
+            "kind": "meaning",
+            "x": 1051,
+            "y": 268,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "生态平衡",
+            "kind": "meaning",
+            "x": 1139,
+            "y": 279,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "放松愉悦",
+            "kind": "emotion",
+            "x": 1207,
+            "y": 335,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 1342,
+      "h": 839
+    },
+    "main_cluster": {
+      "cx": 671,
+      "cy": 420,
+      "label": "在上海文创园中，爬墙虎覆盖的建筑带来自然的感觉。",
+      "images": [
+        {
+          "index": 0,
+          "x": 671,
+          "y": 420,
+          "w": 262,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "爬墙虎覆盖的建筑",
+        "concept": "",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "自然的感觉",
+        "concept": "",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      }
+    ],
+    "planning_elapsed_ms": 0.39
+  }
+}

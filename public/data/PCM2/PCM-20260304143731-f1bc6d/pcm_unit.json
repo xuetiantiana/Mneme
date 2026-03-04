@@ -1,0 +1,265 @@
+{
+  "id": "PCM-20260304143731-f1bc6d",
+  "created_at": "2026-03-04T14:38:59.363084",
+  "unit_summary": "楼下的《疯狂动物城》快闪活动中，小老鼠雕塑让人印象深刻。",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳楼下路边"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/PCM-20260304143731-f1bc6d/uploads/99703316_2-1.png"
+    ],
+    "text": "一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。",
+    "time_place": "2025.11，深圳楼下路边的疯狂动物城快闪",
+    "received_at": "2026-03-04T14:37:31.551151"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "《疯狂动物城》快闪活动中的小老鼠雕塑",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304143731-f1bc6d/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "动画再现",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "惊喜发现",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "怀旧快乐",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 196,
+      "image_height": 320,
+      "layout": {
+        "x": 264,
+        "y": 414,
+        "w": 192,
+        "h": 217,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "动画再现",
+            "kind": "meaning",
+            "x": 291,
+            "y": 566,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "惊喜发现",
+            "kind": "emotion",
+            "x": 135,
+            "y": 499,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "怀旧快乐",
+            "kind": "emotion",
+            "x": 110,
+            "y": 414,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "观看感受与动画片的不同",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/PCM-20260304143731-f1bc6d/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "现场体验",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "视觉冲击",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "新鲜感",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 1072,
+        "y": 414,
+        "w": 180,
+        "h": 202,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "现场体验",
+            "kind": "meaning",
+            "x": 1087,
+            "y": 267,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "视觉冲击",
+            "kind": "meaning",
+            "x": 1182,
+            "y": 315,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "新鲜感",
+            "kind": "emotion",
+            "x": 1218,
+            "y": 414,
+            "r": 28,
+            "specificity": 3
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 1326,
+      "h": 829
+    },
+    "main_cluster": {
+      "cx": 671,
+      "cy": 414,
+      "label": "楼下的《疯狂动物城》快闪活动中，小老鼠雕塑让人印象深刻。",
+      "images": [
+        {
+          "index": 0,
+          "x": 671,
+          "y": 414,
+          "w": 262,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "《疯狂动物城》快",
+        "concept": "",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "观看感受与动画片",
+        "concept": "",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      }
+    ],
+    "planning_elapsed_ms": 1.31
+  }
+}
