@@ -31,6 +31,7 @@ export const getInterpretationColor = (type, specificity) => {
  * @param {string} options.backgroundColor - 文本背景颜色，可选
  * @param {number} options.padding - 背景内边距，默认 5
  * @param {number} options.cornerRadius - 背景圆角，默认 4
+ * @param {boolean} options.center - 是否以 (startX, startY) 为中心点，默认 false
  * @returns {Promise<Array<Konva.Node>>} 返回 Promise，解析为包含 Konva.Image 和（可选的）Konva.Text 或 Konva.Group 的数组
  */
 export const createImageAndTextNodes = (
@@ -42,13 +43,14 @@ export const createImageAndTextNodes = (
     startY = 0,
     mainImageWidth = 200,
     mainImageHeight = 200,
-    titleGap = 20,
+    titleGap = 10,
     fontSize = 14,
     fontFamily = "Arial",
     fill = "#333",
     backgroundColor,
     padding = 5,
     cornerRadius = 4,
+    center = false,
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -66,16 +68,23 @@ export const createImageAndTextNodes = (
     imgObj.onload = () => {
       try {
         const ratio = Math.min(
-          mainImageWidth / imgObj.width,
-          mainImageHeight / imgObj.height
+          mainImageWidth / imgObj.width
+          // mainImageHeight / imgObj.height
         );
         const width = imgObj.width * ratio;
         const height = imgObj.height * ratio;
 
+        let imageX = startX;
+        let imageY = startY;
+        if (center) {
+          imageX = startX - width / 2;
+          imageY = startY - height / 2;
+        }
+
         const konvaImage = new Konva.Image({
           image: imgObj,
-          x: startX,
-          y: startY,
+          x: imageX,
+          y: imageY,
           width,
           height,
           draggable: true,
@@ -84,11 +93,11 @@ export const createImageAndTextNodes = (
         });
 
         if (text) {
-          createBubbleNode(
+          createTextNode(
             { text, id },
             {
-              startX,
-              startY: startY + height + 10,
+              startX: imageX,
+              startY: imageY + height + titleGap,
               fontSize,
               fontFamily,
               fill,
@@ -96,6 +105,7 @@ export const createImageAndTextNodes = (
               padding,
               cornerRadius,
               width,
+              align: "center",
             }
           )
             .then((konvaText) => {
@@ -130,9 +140,10 @@ export const createImageAndTextNodes = (
  * @param {number} options.padding - 背景内边距，默认 5
  * @param {number} options.cornerRadius - 背景圆角，默认 4
  * @param {boolean} options.center - 是否以 (startX, startY) 为中心点，默认 false
+ * @param {boolean} options.isBubble - 是否为气泡样式，true 时显示圆形气泡带阴影，false 时显示普通矩形背景或纯文本，默认 false
  * @returns {Promise<Konva.Node>} 返回 Promise，解析为 Konva.Text 或 Konva.Group 对象
  */
-export const createBubbleNode = ({ text, id }, options = {}) => {
+export const createTextNode = ({ text, id }, options = {}) => {
   const {
     startX = 0,
     startY = 0,
@@ -143,7 +154,9 @@ export const createBubbleNode = ({ text, id }, options = {}) => {
     padding = 5,
     cornerRadius = 4,
     width,
+    align = "left",
     center = false,
+    isBubble = false,
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -159,20 +172,22 @@ export const createBubbleNode = ({ text, id }, options = {}) => {
         id: id || "",
         width: width || undefined,
         lineHeight: 1.4,
+        align,
       });
 
       if (backgroundColor) {
         const textWidth = konvaText.width();
         const textHeight = konvaText.height();
         const size = Math.max(textWidth, textHeight) + padding * 2;
-
+        const setWidth = isBubble ? size : textWidth + padding * 2;
+        const setHeight = isBubble ? size : textHeight + padding * 2;
         const background = new Konva.Rect({
           x: 0,
           y: 0,
-          width: size,
-          height: size,
+          width: setWidth,
+          height: setHeight,
           fill: backgroundColor,
-          cornerRadius: size / 2,
+          cornerRadius: isBubble ? size / 2 : cornerRadius,
           draggable: false,
         });
 
@@ -186,8 +201,8 @@ export const createBubbleNode = ({ text, id }, options = {}) => {
         group.add(background);
         group.add(konvaText);
 
-        konvaText.x((size - textWidth) / 2);
-        konvaText.y((size - textHeight) / 2);
+        konvaText.x((setWidth - textWidth) / 2);
+        konvaText.y((setHeight - textHeight) / 2);
 
         konvaText.on("textChange", () => {
           const newWidth = konvaText.width();
@@ -304,17 +319,17 @@ export const createInterpretationTextNodes = (
 
         const textContent = specificity ? `${text}` : text;
 
-        createBubbleNode(
+        createTextNode(
           { text: textContent, id },
           {
             startX,
             startY: currentY,
-            fontSize,
-            fontFamily,
-            fill,
             backgroundColor: getInterpretationColor(type, specificity),
             padding,
             cornerRadius,
+            isBubble: true,
+            align: "center",
+            width: 60,
           }
         )
           .then((konvaText) => {

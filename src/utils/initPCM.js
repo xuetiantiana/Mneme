@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { createBubbleNode } from "./canvasPositionUtils";
+import { createImageAndTextNodes, createTextNode } from "./canvasPositionUtils";
 
 const getImageProxyUrl = (url) => {
   return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
@@ -171,7 +171,7 @@ export const initMainImages = (data, options = {}) => {
                 height: calculatedHeight,
                 rotation,
                 draggable: true,
-                id: `main_image_${index}`,
+                id: `main_image_${data.id}_${index}`,
                 zIndex: z_index,
                 stroke: "#f1f1f1",
                 strokeWidth: 8,
@@ -340,6 +340,7 @@ export const initSegmentsImages = (data, options = {}) => {
 
         const nodes = [];
         const bubblePromises = [];
+        const imagePromises = [];
 
         segments.forEach((segment, index) => {
           if (!segment.image_url) {
@@ -354,69 +355,37 @@ export const initSegmentsImages = (data, options = {}) => {
           const rotation = layoutData.rotation || 0;
           const z_index = layoutData.z_index || index + 1;
 
-          const imgObj = new Image();
-          imgObj.crossOrigin = "anonymous";
-          imgObj.onerror = (error) => {
-            console.error("Segment image load error:", error);
-            loadedCount++;
-            if (loadedCount === totalImages) {
-              Promise.all(bubblePromises)
-                .then((bubbleNodesArrays) => {
-                  const allBubbleNodes = bubbleNodesArrays.flat();
-                  resolve([...nodes, ...allBubbleNodes]);
-                })
-                .catch(() => {
-                  resolve(nodes);
-                });
+          const imagePromise = createImageAndTextNodes(
+            {
+              imageSrc: getImageProxyUrl(segment.image_url),
+              text: segment.label || "",
+              id: `segment_image_${segment.signifier_id}`,
+            },
+            {
+              startX: x + offsetX,
+              startY: y + offsetY,
+              mainImageWidth: w,
+              mainImageHeight: h,
+              rotation,
+              fontSize: 14,
+              fontFamily: "Arial",
+              fill: "#333",
+              center: true,
             }
-          };
-          imgObj.onload = () => {
-            try {
-              const ratio = imgObj.height / imgObj.width;
-              const calculatedHeight = w * ratio;
-
-              const konvaImage = new Konva.Image({
-                image: imgObj,
-                x: x - w / 2 + offsetX,
-                y: y - calculatedHeight / 2 + offsetY,
-                width: w,
-                height: calculatedHeight,
-                rotation,
-                draggable: true,
-                id: `segment_image_${segment.seg_id}`,
-                zIndex: z_index,
-                cornerRadius: 10,
-              });
-
+          )
+            .then(([konvaImage, konvaText]) => {
+              konvaImage.rotation(rotation);
+              konvaImage.zIndex(z_index);
               nodes.push(konvaImage);
-
-              loadedCount++;
-              if (loadedCount === totalImages) {
-                Promise.all(bubblePromises)
-                  .then((bubbleNodesArrays) => {
-                    const allBubbleNodes = bubbleNodesArrays.flat();
-                    resolve([...nodes, ...allBubbleNodes]);
-                  })
-                  .catch(() => {
-                    resolve(nodes);
-                  });
+              if (konvaText) {
+                nodes.push(konvaText);
               }
-            } catch (error) {
+            })
+            .catch((error) => {
               console.error("Failed to create segment Konva image:", error);
-              loadedCount++;
-              if (loadedCount === totalImages) {
-                Promise.all(bubblePromises)
-                  .then((bubbleNodesArrays) => {
-                    const allBubbleNodes = bubbleNodesArrays.flat();
-                    resolve([...nodes, ...allBubbleNodes]);
-                  })
-                  .catch(() => {
-                    resolve(nodes);
-                  });
-              }
-            }
-          };
-          imgObj.src = getImageProxyUrl(segment.image_url);
+            });
+
+          imagePromises.push(imagePromise);
 
           if (segment.bubbles && Array.isArray(segment.bubbles)) {
             bubblePromises.push(
@@ -424,6 +393,28 @@ export const initSegmentsImages = (data, options = {}) => {
             );
           }
         });
+
+        Promise.all(imagePromises)
+          .then(() => {
+            Promise.all(bubblePromises)
+              .then((bubbleNodesArrays) => {
+                const allBubbleNodes = bubbleNodesArrays.flat();
+                resolve([...nodes, ...allBubbleNodes]);
+              })
+              .catch(() => {
+                resolve(nodes);
+              });
+          })
+          .catch(() => {
+            Promise.all(bubblePromises)
+              .then((bubbleNodesArrays) => {
+                const allBubbleNodes = bubbleNodesArrays.flat();
+                resolve([...nodes, ...allBubbleNodes]);
+              })
+              .catch(() => {
+                resolve(nodes);
+              });
+          });
       } else {
         resolve([]);
       }
@@ -471,19 +462,24 @@ export const initPCMBubbles = (bubbles, options = {}) => {
         // nodes.push(konvaCircle)
 
         if (bubble.text) {
-          createBubbleNode(
-            { text: bubble.text, id: `bubble_text_${bubbleIndex}` },
+          createTextNode(
+            {
+              text: bubble.text,
+              id: `bubble_text_${bubble.interpretation_id}`,
+            },
             {
               startX: x,
               startY: y,
               fontSize: bubble.fontSize || 14,
               fontFamily: bubble.fontFamily || "Arial",
-              fill: bubble.textColor || "#333",
               backgroundColor: bubble.textBackgroundColor,
               padding: bubble.textPadding || 5,
               cornerRadius: bubble.textCornerRadius || 4,
               center: true,
               backgroundColor: bubble.color,
+              isBubble: true,
+              align: "center",
+              width: 60,
             }
           )
             .then((textNode) => {

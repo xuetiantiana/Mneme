@@ -113,7 +113,7 @@ import Konva from "konva";
 import { Edit, Pointer } from "@element-plus/icons-vue";
 import {
   createImageAndTextNodes,
-  createBubbleNode,
+  createTextNode,
   createInterpretationTextNodes,
 } from "@/utils/canvasPositionUtils";
 import {
@@ -1117,19 +1117,16 @@ const handleDrop = (e: DragEvent) => {
       if (!imgSrc) {
         return;
       }
-
-      createImageAndTextNodes({ imageSrc: imgSrc, text, id })
+      const dropPos = getDropPosition(e);
+      createImageAndTextNodes(
+        { imageSrc: imgSrc, text, id },
+        { startX: dropPos.x, startY: dropPos.y, center: true }
+      )
         .then((nodes) => {
-          const dropPos = getDropPosition(e);
-
           nodes.forEach((node) => {
             if (node instanceof Konva.Image) {
-              node.x(dropPos.x - node.width() / 2);
-              node.y(dropPos.y - node.height() / 2);
             } else if (node instanceof Konva.Text) {
               const imageNode = nodes[0] as Konva.Image;
-              node.x(dropPos.x - imageNode.width() / 2);
-              node.y(dropPos.y + imageNode.height() / 2 + 10);
             }
 
             node.on("click tap", (evt) => {
@@ -1202,13 +1199,16 @@ const handleDrop = (e: DragEvent) => {
 
       const dropPos = getDropPosition(e);
 
-      createBubbleNode(
+      createTextNode(
         { text: textContent, id },
         {
           startX: dropPos.x,
           startY: dropPos.y,
           ...dragData.style,
           center: true,
+          isBubble: true,
+          align: "center",
+          width: 60,
         }
       )
         .then((konvaText) => {
