@@ -1,5 +1,13 @@
 <template>
   <div class="layout-container">
+    <el-button
+      style="position: absolute; right: 10px; top: 10px"
+      @click="showStoryListDialog = true"
+      >Generated outline</el-button
+    >
+
+    <!-- 故事列表弹窗 -->
+    <StoryListDialog v-model="showStoryListDialog" :defaultIndex="currentStoryIndex"></StoryListDialog>
     <!-- left-panel -->
     <div class="left-panel" v-show="showLeft">
       <div class="panel-header">
@@ -49,7 +57,7 @@
         </button>
       </div>
       <div class="panel-content">
-        <TopicContainerList ref="topicContainerListRef"></TopicContainerList>
+        <TopicContainerList ref="topicContainerListRef" @createSuccess="handleCreateSuccess"></TopicContainerList>
       </div>
     </div>
     <button
@@ -68,13 +76,21 @@
 import { ref } from "vue";
 import PCMListComponent from "@/views/Home/components/PCMListComponent.vue";
 import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
+import StoryListDialog from "@/views/Home/components/StoryListDialog.vue";
 
 import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 
 const showLeft = ref(true);
 const showRight = ref(true);
+const showStoryListDialog = ref(false);
+const currentStoryIndex = ref(0);
 const topicContainerListRef = ref(null);
 const workingMemoryRef = ref(null);
+
+const handleCreateSuccess = (index) => {
+  currentStoryIndex.value = index;
+  showStoryListDialog.value = true;
+};
 
 const getTopicContainers = () => {
   if (topicContainerListRef.value) {

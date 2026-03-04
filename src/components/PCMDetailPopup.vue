@@ -1,6 +1,6 @@
 <template>
-  <div 
-    v-if="visible" 
+  <div
+    v-if="visible"
     class="pcm-detail-popup"
     :style="{ top: position.top + 'px', left: position.left + 'px' }"
   >
@@ -11,9 +11,13 @@
       <button class="close-btn" @click="handleClose">×</button>
     </div>
     <div class="popup-content">
-      <div class="popup-section main-image-section" v-if="item.mainImages && item.mainImages.length > 0">
-        <img v-for="(image, index) in item.mainImages"
-        style="width: 200px;height: 200px;"
+      <div
+        class="popup-section main-image-section"
+        v-if="item.mainImages && item.mainImages.length > 0"
+      >
+        <img
+          v-for="(image, index) in item.mainImages"
+          style="width: 200px; height: 200px"
           :key="index"
           :src="image.image_url"
           :alt="item.title"
@@ -29,19 +33,19 @@
           {{ item.title }}
         </h3>
       </div> -->
-      <div class="popup-section interpretations-section" v-if="item.segments && item.segments.length > 0">
+      <div
+        class="popup-section interpretations-section"
+        v-if="item.segments && item.segments.length > 0"
+      >
         <div class="interpretations-list">
-          <div 
-            v-for="segment in item.segments" 
+          <div
+            v-for="segment in item.segments"
             :key="segment.seg_id"
             class="segment-item"
           >
             <div class="segment-left">
               <div class="segment-header">
-                <span 
-                  class="segment-label"
-                  draggable="true"
-                >
+                <span class="segment-label" draggable="true">
                   {{ segment.label }}
                 </span>
               </div>
@@ -51,67 +55,154 @@
                   :alt="segment.label"
                   class="segment-image-img draggable-item"
                   draggable="true"
-                  @dragstart="handleImageDragStart($event, getImageProxyUrl(segment.image_url), segment.label, segment.seg_id, segment.interpretations)"
+                  @dragstart="
+                    handleImageDragStart(
+                      $event,
+                      getImageProxyUrl(segment.image_url),
+                      segment.label,
+                      segment.seg_id,
+                      segment.interpretations
+                    )
+                  "
                 />
               </div>
             </div>
             <div class="segment-right">
-              <div class="interpretations-content" v-if="segment.interpretations">
-                <div class="interpretation-group" v-if="segment.interpretations.meaning && segment.interpretations.meaning.length > 0">
+              <div
+                class="interpretations-content"
+                v-if="segment.interpretations"
+              >
+                <div
+                  class="interpretation-group"
+                  v-if="
+                    segment.interpretations.meaning &&
+                    segment.interpretations.meaning.length > 0
+                  "
+                >
                   <!-- <span class="interpretation-type-label">meaning：</span> -->
                   <div class="interpretation-items">
-                    <span 
-                      v-for="interp in segment.interpretations.meaning" 
+                    <span
+                      v-for="interp in segment.interpretations.meaning"
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationColor('meaning', interp.specificity) }"
+                      :style="{
+                        backgroundColor: getBubbleColor(
+                          'meaning',
+                          interp.specificity
+                        ),
+                      }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'meaning', interp.specificity, interp.id)"
+                      @dragstart="
+                        handleTextDragStart(
+                          $event,
+                          interp.text,
+                          'meaning',
+                          interp.specificity,
+                          interp.id
+                        )
+                      "
                     >
                       {{ interp.text }}
                     </span>
                   </div>
                 </div>
-                <div class="interpretation-group" v-if="segment.interpretations.emotion && segment.interpretations.emotion.length > 0">
+                <div
+                  class="interpretation-group"
+                  v-if="
+                    segment.interpretations.emotion &&
+                    segment.interpretations.emotion.length > 0
+                  "
+                >
                   <!-- <span class="interpretation-type-label">emotion：</span> -->
                   <div class="interpretation-items">
-                    <span 
-                      v-for="interp in segment.interpretations.emotion" 
+                    <span
+                      v-for="interp in segment.interpretations.emotion"
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationColor('emotion', interp.specificity) }"
+                      :style="{
+                        backgroundColor: getBubbleColor(
+                          'emotion',
+                          interp.specificity
+                        ),
+                      }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'emotion', interp.specificity, interp.id)"
+                      @dragstart="
+                        handleTextDragStart(
+                          $event,
+                          interp.text,
+                          'emotion',
+                          interp.specificity,
+                          interp.id
+                        )
+                      "
                     >
                       {{ interp.text }}
                     </span>
                   </div>
                 </div>
-                <div class="interpretation-group" v-if="segment.interpretations.sensory && segment.interpretations.sensory.length > 0">
+                <div
+                  class="interpretation-group"
+                  v-if="
+                    segment.interpretations.sensory &&
+                    segment.interpretations.sensory.length > 0
+                  "
+                >
                   <!-- <span class="interpretation-type-label">sensory：</span> -->
                   <div class="interpretation-items">
-                    <span 
-                      v-for="interp in segment.interpretations.sensory" 
+                    <span
+                      v-for="interp in segment.interpretations.sensory"
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationColor('sensory', interp.specificity) }"
+                      :style="{
+                        backgroundColor: getBubbleColor(
+                          'sensory',
+                          interp.specificity
+                        ),
+                      }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'sensory', interp.specificity, interp.id)"
+                      @dragstart="
+                        handleTextDragStart(
+                          $event,
+                          interp.text,
+                          'sensory',
+                          interp.specificity,
+                          interp.id
+                        )
+                      "
                     >
                       {{ interp.text }}
                     </span>
                   </div>
                 </div>
-                <div class="interpretation-group" v-if="segment.interpretations.aesthetic && segment.interpretations.aesthetic.length > 0">
+                <div
+                  class="interpretation-group"
+                  v-if="
+                    segment.interpretations.aesthetic &&
+                    segment.interpretations.aesthetic.length > 0
+                  "
+                >
                   <!-- <span class="interpretation-type-label">aesthetic：</span> -->
                   <div class="interpretation-items">
-                    <span 
-                      v-for="interp in segment.interpretations.aesthetic" 
+                    <span
+                      v-for="interp in segment.interpretations.aesthetic"
                       :key="interp.id"
                       class="interpretation-item draggable-item"
-                      :style="{ backgroundColor: getInterpretationColor('aesthetic', interp.specificity) }"
+                      :style="{
+                        backgroundColor: getBubbleColor(
+                          'aesthetic',
+                          interp.specificity
+                        ),
+                      }"
                       draggable="true"
-                      @dragstart="handleTextDragStart($event, interp.text, 'aesthetic', interp.specificity, interp.id)"
+                      @dragstart="
+                        handleTextDragStart(
+                          $event,
+                          interp.text,
+                          'aesthetic',
+                          interp.specificity,
+                          interp.id
+                        )
+                      "
                     >
                       {{ interp.text }}
                     </span>
@@ -127,78 +218,78 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
-import { getInterpretationColor } from '@/utils/canvasPositionUtils'
+import { defineProps, defineEmits } from "vue";
+import { getBubbleColor } from "@/utils/canvasPositionUtils";
 
 const props = defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   item: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   position: {
     type: Object,
-    default: () => ({ top: 0, left: 0 })
-  }
-})
+    default: () => ({ top: 0, left: 0 }),
+  },
+});
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(["close"]);
 
 const handleClose = () => {
-  emit('close')
-}
+  emit("close");
+};
 
 const getImageProxyUrl = (url) => {
   return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
-}
-
-
-
+};
 
 const handleImageDragStart = (event, imgSrc, title, id, interpretations) => {
   event.dataTransfer.effectAllowed = "copy";
-  
-  const dragData = [{
-    imageSrc: imgSrc,
-    text: title,
-    dragType: "single-image",
-    id: id || "",
-    interpretations: interpretations
-  }];
+
+  const dragData = [
+    {
+      imageSrc: imgSrc,
+      text: title,
+      dragType: "single-image",
+      id: id || "",
+      interpretations: interpretations,
+    },
+  ];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
-}
+};
 
 const handleTextDragStart = (event, text, type, specificity, id) => {
   event.dataTransfer.effectAllowed = "copy";
-  const dragData = [{
-    textContent: text,
-    dragType: "text",
-    type: type,
-    specificity: specificity,
-    id: id || "",
-    style: {
-      fill: "#333",
-      backgroundColor: getInterpretationColor(type, specificity),
-      fontSize: 14
-    }
-  }];
+  const dragData = [
+    {
+      textContent: text,
+      dragType: "text",
+      type: type,
+      specificity: specificity,
+      id: id || "",
+      style: {
+        fill: "#333",
+        backgroundColor: getBubbleColor(type, specificity),
+        fontSize: 14,
+      },
+    },
+  ];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
-}
+};
 
 const handlePCMDragStart = (event, item) => {
   event.dataTransfer.effectAllowed = "copy";
-  const dragData = [{
-    dragType: "PCM",
-    data: item
-  }];
+  const dragData = [
+    {
+      dragType: "PCM",
+      data: item,
+    },
+  ];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));
-}
-
-
-
+};
 </script>
 
 <style scoped lang="scss">
@@ -217,10 +308,10 @@ const handlePCMDragStart = (event, item) => {
   .popup-header {
     display: flex;
     align-items: flex-start;
-    padding: .6em 1em;
+    padding: 0.6em 1em;
     border-bottom: 1px solid #e8e8e8;
     background: #fff;
-    h3{
+    h3 {
       font-size: 1em;
     }
     .close-btn {

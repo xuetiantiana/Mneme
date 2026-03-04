@@ -947,6 +947,8 @@ const exportCanvas = () => {
   stage!.width(oldWidth);
   stage!.height(oldHeight);
 
+  return dataURL;
+
   // 创建下载链接并触发下载
   const link = document.createElement("a");
   link.download = `canvas_${Date.now()}.png`;
@@ -970,23 +972,25 @@ const exportElementInfo = () => {
   }
 
   const nodes = children.filter((n) => n !== transformer && n !== selectionBox);
-  if (nodes.length === 0) {
-    console.log("画布中没有图形元素");
-    return;
-  }
+  // if (nodes.length === 0) {
+  //   console.log("画布中没有图形元素");
+  //   return;
+  // }
 
-  console.log("=== 画布元素详细信息 ===");
-  console.log(`总元素数量: ${nodes.length}`, nodes);
-  console.log("");
+  // console.log("=== 画布元素详细信息 ===");
+  // console.log(`总元素数量: ${nodes.length}`, nodes);
+  // console.log("");
 
-  nodes.forEach((node, index) => {
-    const elementInfo = getNodeInfo(node, index);
-    console.log(`元素 ${index + 1}:`, elementInfo);
-  });
+  // nodes.forEach((node, index) => {
+  //   const elementInfo = getNodeInfo(node, index);
+  //   console.log(`元素 ${index + 1}:`, elementInfo);
+  // });
 
-  console.log("");
-  console.log("=== 完整 JSON 数据 ===");
-  console.log(stage.toJSON());
+  // console.log("");
+  // console.log("=== 完整 JSON 数据 ===");
+  // console.log(stage.toJSON());
+
+  return nodes;
 };
 
 // 获取节点的详细信息
@@ -1539,6 +1543,8 @@ defineExpose({
   getSelectedNodes,
   renderNodes,
   konvaData,
+  exportCanvas,
+  exportElementInfo,
 });
 </script>
 

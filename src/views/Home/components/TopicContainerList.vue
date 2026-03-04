@@ -1,6 +1,8 @@
 <template>
   <div class="topic-container-list">
-    <el-button class="add-topic-btn" style="width: 10em;" @click="addNewTopic">新建主题容器</el-button>
+    <el-button class="add-topic-btn" style="width: 10em" @click="addNewTopic"
+      >新建主题容器</el-button
+    >
     <div class="topic-list-scroll">
       <div
         v-for="(topic, index) in topicContainers"
@@ -40,23 +42,39 @@
           </div>
 
           <div style="height: 300px">
-            <konvaComponent 
-              :ref="(el) => setKonvaRef(el, index)" 
-              @sendSelectedNodes="handleSelectedNodes">
+            <konvaComponent
+              :ref="(el) => setKonvaRef(el, index)"
+              @sendSelectedNodes="handleSelectedNodes"
+            >
             </konvaComponent>
           </div>
         </div>
       </div>
     </div>
     <div class="bottom-action">
-      <el-button class="action-btn" type="primary" :disabled="selectedCount === 0">Generate</el-button>
+      <el-tooltip :disabled="selectedCount > 0" content="请先选择主题容器" placement="top">
+        <el-button
+          class="action-btn"
+          type="primary"
+          :disabled="selectedCount === 0"
+          :loading="loading"
+          @click="handleGenerate"
+          >Generate</el-button
+        >
+      </el-tooltip>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
-import konvaComponent from "@/components/konvaComponent.vue";  
+import konvaComponent from "@/components/konvaComponent.vue";
+import { CreateStory } from "@/service/api";
+import { useStoryStore } from "@/stores/storyStore";
+import { ElMessage } from "element-plus";
+
+const storyStore = useStoryStore();
+const loading = ref(false);
 
 const topicContainers = ref([
   {
@@ -67,7 +85,7 @@ const topicContainers = ref([
 ]);
 
 const selectedCount = computed(() => {
-  return topicContainers.value.filter(topic => topic.selected).length;
+  return topicContainers.value.filter((topic) => topic.selected).length;
 });
 
 const addNewTopic = () => {
@@ -81,7 +99,7 @@ const addNewTopic = () => {
 };
 
 const handleSelectedNodes = (nodesData) => {
-  console.log('父组件接收到选中的节点数据:', nodesData);
+  console.log("父组件接收到选中的节点数据:", nodesData);
 };
 
 const konvaRefs = ref([]);
@@ -91,28 +109,136 @@ const setKonvaRef = (el, index) => {
 };
 
 const renderNodesToFirstCanvas = (nodesData) => {
-  console.log('TopicContainerList接收到要渲染的节点数据:', nodesData.nodes);
-  console.log('目标画布索引:', nodesData.canvasIndex);
-  
+  console.log("TopicContainerList接收到要渲染的节点数据:", nodesData.nodes);
+  console.log("目标画布索引:", nodesData.canvasIndex);
+
   const canvasIndex = nodesData.canvasIndex || 0;
-  
+
   if (konvaRefs.value[canvasIndex]) {
     console.log(`konvaRefs.value[${canvasIndex}] 存在`);
-    console.log('方法:', Object.keys(konvaRefs.value[canvasIndex]));
-    if (typeof konvaRefs.value[canvasIndex].renderNodes === 'function') {
+    console.log("方法:", Object.keys(konvaRefs.value[canvasIndex]));
+    if (typeof konvaRefs.value[canvasIndex].renderNodes === "function") {
       konvaRefs.value[canvasIndex].renderNodes(nodesData.nodes);
       console.log(`已将节点渲染到画布 ${canvasIndex}`);
     } else {
-      console.log('renderNodes 方法不存在');
+      console.log("renderNodes 方法不存在");
     }
   } else {
     console.log(`画布 ${canvasIndex} 引用不存在`);
   }
 };
 
+const handleGenerate = async () => {
+  loading.value = true;
+  
+  // 获取选中的 topicContainers
+  const selectedTopics = topicContainers.value.filter(
+    (topic) => topic.selected
+  );
+
+  // 导出每个选中的 canvas 图片并生成指定格式的数据
+  const result = [];
+
+  for (let i = 0; i < topicContainers.value.length; i++) {
+    if (topicContainers.value[i].selected && konvaRefs.value[i]) {
+      const konvaRef = konvaRefs.value[i];
+      const containerIndex = i + 1;
+      
+      // 检查 title 和 description
+      const title = topicContainers.value[i].title;
+      const description = topicContainers.value[i].desc;
+      
+      if (!title || !title.trim()) {
+        ElMessage.error(`第 ${containerIndex} 个主题容器的标题不能为空`);
+        loading.value = false;
+        return;
+      }
+      
+      if (!description || !description.trim()) {
+        ElMessage.error(`第 ${containerIndex} 个主题容器的描述不能为空`);
+        loading.value = false;
+        return;
+      }
+      
+      // 检查 canvas 是否有内容
+      if (typeof konvaRef.exportCanvas === "function") {
+        try {
+          const imageData = await konvaRef.exportCanvas();
+          
+          if (!imageData) {
+            ElMessage.error(`第 ${containerIndex} 个主题容器的图片不能为空，请先在画布中添加内容`);
+            loading.value = false;
+            return;
+          }
+          
+          const canvasData = konvaRef.exportElementInfo();
+          
+          if (!canvasData || (Array.isArray(canvasData) && canvasData.length === 0)) {
+            ElMessage.error(`第 ${containerIndex} 个主题容器的画布内容不能为空`);
+            loading.value = false;
+            return;
+          }
+          
+          result.push({
+            screenshot: imageData,
+            title: title,
+            description: description,
+            canvas_data: canvasData,
+          });
+        } catch (error) {
+          console.error(`导出 Canvas ${i} 图片失败:`, error);
+          ElMessage.error(`第 ${containerIndex} 个主题容器的画布导出失败`);
+          loading.value = false;
+          return;
+        }
+      } else {
+        console.error(`Canvas ${i} 没有 exportCanvas 方法`);
+      }
+    }
+  }
+  
+  // 检查是否有选中的主题容器
+  if (result.length === 0) {
+    ElMessage.error("请至少选择一个主题容器");
+    loading.value = false;
+    return;
+  }
+
+  console.log("选中数据:", result);
+  // 调用 CreateStory API
+  try {
+    const response = await CreateStory({
+      story: result,
+    });
+    console.log("创建成功:", response);
+    
+    // 判断接口是否成功
+    if (response && response.success) {
+      // 将 response push 到全局变量 storyList 中
+      storyStore.addStory({
+        selectedTopics: selectedTopics,
+        result: response.data,
+        createdAt: new Date().toLocaleString(),
+      });
+      console.log("storyList:", storyStore.storyList);
+      
+      // 触发创建成功事件
+      emit('createSuccess', storyStore.storyList.length - 1);
+    } else {
+      ElMessage.error("创建失败:" + (response?.message || "未知错误"));
+    }
+  } catch (error) {
+    ElMessage.error("创建失败:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const emit = defineEmits(['createSuccess'])
+
 defineExpose({
   topicContainers,
-  renderNodesToFirstCanvas
+  renderNodesToFirstCanvas,
 });
 </script>
 
@@ -245,14 +371,12 @@ defineExpose({
     justify-content: center;
 
     .action-btn {
-     
       border: none;
       border-radius: 24px;
       padding: 12px 32px;
       font-size: 16px;
       font-weight: 500;
       transition: all 0.2s ease;
-
     }
   }
 }

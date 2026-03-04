@@ -1,15 +1,45 @@
-export const getInterpretationColor = (type, specificity) => {
-  const baseColors = {
-    meaning: { r: 24, g: 144, b: 255 },
-    emotion: { r: 255, g: 77, b: 79 },
-    sensory: { r: 82, g: 196, b: 26 },
-    aesthetic: { r: 114, g: 46, b: 209 },
+/**
+ * 获取气泡颜色，根据类型和个人特异性数值返回渐变颜色
+ * @param {string} type - 类型：aesthetic（审美）, emotion（情感）, sensory（感官）, value（价值&个人意义）
+ * @param {number} specificity - 个人特异性数值（1-5）
+ * @returns {string} 返回颜色字符串
+ */
+export const getBubbleColor = (type, specificity) => {
+  // 定义每种类型的颜色范围（从低到高）
+  const colorRanges = {
+    aesthetic: {
+      low: { r: 255, g: 250, b: 240 }, // 浅米色
+      high: { r: 245, g: 222, b: 179 }, // 深米色
+    },
+    emotion: {
+      low: { r: 255, g: 240, b: 245 }, // 浅粉色
+      high: { r: 255, g: 105, b: 180 }, // 深粉色
+    },
+    sensory: {
+      low: { r: 248, g: 248, b: 242 }, // 浅米色
+      high: { r: 193, g: 205, b: 193 }, // 深绿色
+    },
+    meaning: {
+      low: { r: 240, g: 248, b: 255 }, // 浅蓝色
+      high: { r: 176, g: 224, b: 230 }, // 深蓝色
+    },
   };
 
-  const color = baseColors[type] || { r: 150, g: 150, b: 150 };
-  const intensity = specificity / 5;
+  // 默认颜色
+  const defaultRange = {
+    low: { r: 240, g: 240, b: 240 },
+    high: { r: 200, g: 200, b: 200 },
+  };
 
-  return `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+  const range = colorRanges[type] || defaultRange;
+  const ratio = (specificity - 1) / 4; // 转换为 0-1 范围
+
+  // 计算渐变颜色
+  const r = Math.round(range.low.r + (range.high.r - range.low.r) * ratio);
+  const g = Math.round(range.low.g + (range.high.g - range.low.g) * ratio);
+  const b = Math.round(range.low.b + (range.high.b - range.low.b) * ratio);
+
+  return `rgb(${r}, ${g}, ${b})`;
 };
 
 /**
@@ -324,7 +354,7 @@ export const createInterpretationTextNodes = (
           {
             startX,
             startY: currentY,
-            backgroundColor: getInterpretationColor(type, specificity),
+            backgroundColor: getBubbleColor(type, specificity),
             padding,
             cornerRadius,
             isBubble: true,

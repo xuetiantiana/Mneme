@@ -11,7 +11,6 @@
         :key="index"
         class="card-item"
         :class="{ selected: item.selected }"
-        
         @click="handleItemClick($event, item)"
       >
         <!-- <button
@@ -42,7 +41,6 @@
             :alt="item.title"
             class="card-image"
             :style="getImageStyle(imgIndex)"
-            
           />
         </div>
         <div class="card-footer">
@@ -57,7 +55,7 @@
       :position="popupPosition"
       @close="handleClosePopup"
     />
-    
+
     <PCMCanvasPopup
       :visible="canvasPopupVisible"
       :position="canvasPopupPosition"
@@ -88,36 +86,43 @@ const memoryItems = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch('/data/PCM2/pcm_list_response.json');
+    const response = await fetch("/data/PCM2/response_pcm_list.json");
     const data = await response.json();
-    
+
     if (data.units && Array.isArray(data.units)) {
-      memoryItems.value = data.units.map(unit => {
-        const mainImages = unit.user_input?.images?.map((img, index) => ({
-          image_url: getImageProxyUrl(img),
-          id: unit.id,
-          layout: unit.layout?.main_cluster?.images?.[index] || {}
-        })) || [];
-        
+      memoryItems.value = data.units.map((unit) => {
+        const mainImages =
+          unit.user_input?.images?.map((img, index) => ({
+            image_url: getImageProxyUrl(img),
+            id: unit.id,
+            layout: unit.layout?.main_cluster?.images?.[index] || {},
+          })) || [];
+
         return {
           id: unit.id,
-          title: unit.unit_summary || '未命名记忆',
+          title: unit.unit_summary || "未命名记忆",
           selected: false,
-          images: unit.user_input?.images?.map(img => getImageProxyUrl(img)) || [],
+          images:
+            unit.user_input?.images?.map((img) => getImageProxyUrl(img)) || [],
           mainImages: mainImages,
           createdAt: unit.created_at,
-          text: unit.user_input?.text || '',
-          timePlace: unit.user_input?.time_place || '',
+          text: unit.user_input?.text || "",
+          timePlace: unit.user_input?.time_place || "",
           segments: unit.segments || [],
           user_input: unit.user_input || {},
-          layout: unit.layout || {}
+          layout: unit.layout || {},
         };
       });
-      
-      console.log('已加载 PCM 数据:', memoryItems.value.length, '条记忆', memoryItems.value);
+
+      console.log(
+        "已加载 PCM 数据:",
+        memoryItems.value.length,
+        "条记忆",
+        memoryItems.value
+      );
     }
   } catch (error) {
-    console.error('加载 PCM 数据失败:', error);
+    console.error("加载 PCM 数据失败:", error);
   }
 });
 
@@ -149,54 +154,41 @@ const updateSelectAll = () => {
   selectAll.value = memoryItems.value.every((item) => item.selected);
 };
 
-const handleImageDragStart = (event, imgSrc, title) => {
-  event.dataTransfer.effectAllowed = "copy";
-  event.dataTransfer.setData("imageSrc", imgSrc);
-  event.dataTransfer.setData("imageTitle", title);
-  event.dataTransfer.setData("dragType", "single-image");
-};
-
-const handleCardDragStart = (event, item) => {
-  event.dataTransfer.effectAllowed = "copy";
-  event.dataTransfer.setData("cardData", JSON.stringify(item));
-  event.dataTransfer.setData("dragType", "whole-card");
-};
-
 const handleItemClick = (event, item) => {
   const liElement = event.currentTarget;
   const rect = liElement.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   const popupWidth = 400;
   const popupHeight = 500;
   const margin = 8;
-  
+
   let top = rect.bottom + margin;
   let left = rect.left;
-  
+
   if (top + popupHeight > viewportHeight) {
     top = rect.top - popupHeight - margin;
   }
-  
+
   if (left + popupWidth > viewportWidth) {
     left = viewportWidth - popupWidth - margin;
   }
-  
+
   if (left < margin) {
     left = margin;
   }
-  
+
   if (top < margin) {
     top = margin;
   }
-  
+
   popupPosition.value = {
     top: top,
     // left: left
-    left: 18
+    left: 18,
   };
-  
+
   currentItem.value = item;
   popupVisible.value = true;
 };
@@ -210,35 +202,35 @@ const handleShowCanvas = (event, item) => {
   const rect = buttonElement.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   const popupWidth = 800;
   const popupHeight = 600;
   const margin = 8;
-  
+
   let top = rect.bottom + margin;
   let left = rect.left;
-  
+
   if (top + popupHeight > viewportHeight) {
     top = rect.top - popupHeight - margin;
   }
-  
+
   if (left + popupWidth > viewportWidth) {
     left = viewportWidth - popupWidth - margin;
   }
-  
+
   if (left < margin) {
     left = margin;
   }
-  
+
   if (top < margin) {
     top = margin;
   }
-  
+
   canvasPopupPosition.value = {
     top: top,
-    left: left
+    left: left,
   };
-  
+
   currentCanvasItem.value = item;
   canvasPopupVisible.value = true;
 };

@@ -1,5 +1,9 @@
 import Konva from "konva";
-import { createImageAndTextNodes, createTextNode } from "./canvasPositionUtils";
+import {
+  createImageAndTextNodes,
+  createTextNode,
+  getBubbleColor,
+} from "./canvasPositionUtils";
 
 const getImageProxyUrl = (url) => {
   return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
@@ -476,7 +480,7 @@ export const initPCMBubbles = (bubbles, options = {}) => {
               padding: bubble.textPadding || 5,
               cornerRadius: bubble.textCornerRadius || 4,
               center: true,
-              backgroundColor: bubble.color,
+              backgroundColor: getBubbleColor(bubble.kind, bubble.specificity),
               isBubble: true,
               align: "center",
               width: 60,
