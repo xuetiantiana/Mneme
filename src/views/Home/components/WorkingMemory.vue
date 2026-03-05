@@ -21,11 +21,16 @@
           </el-button>
         </el-tooltip>
       </li>
-      <li>
+      <!-- <li>
         <el-tooltip content="添加图片" placement="right" effect="light">
           <el-button circle size="medium">
             <el-icon><Picture /></el-icon>
           </el-button>
+        </el-tooltip>
+      </li> -->
+      <li>
+        <el-tooltip content="AI辅助" placement="right" effect="light">
+          <el-button circle size="medium"> AI </el-button>
         </el-tooltip>
       </li>
       <li>

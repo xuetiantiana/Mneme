@@ -1,6 +1,6 @@
 <template>
-  <div 
-    v-if="visible" 
+  <div
+    v-if="visible"
     class="pcm-canvas-popup"
     :style="{ top: position.top + 'px', left: position.left + 'px' }"
   >
@@ -15,86 +15,94 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import KonvaComponent from '@/components/konvaComponent.vue'
-import { createImageAndTextNodes } from '@/utils/canvasPositionUtils'
-import { initMainImages, initSegmentsImages,initPCMBubbles } from '@/utils/initPCM'
+import { ref, watch } from "vue";
+import KonvaComponent from "@/components/konvaComponent.vue";
+import { createImageAndTextNodes } from "@/utils/canvasPositionUtils";
+import {
+  initMainImages,
+  initSegmentsImages,
+  initPCMBubbles,
+} from "@/utils/initPCM";
 
 const props = defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   position: {
     type: Object,
-    default: () => ({ top: 0, left: 0 })
+    default: () => ({ top: 0, left: 0 }),
   },
   item: {
     type: Object,
-    default: () => ({})
-  }
-})
+    default: () => ({}),
+  },
+});
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(["close"]);
 
-const konvaRef = ref(null)
+const konvaRef = ref(null);
 
 const handleClose = () => {
-  emit('close')
-}
+  emit("close");
+};
 
 const handleImageButtonClick = (data) => {
-  console.log('Image button clicked, data:', data)
-}
+  console.log("Image button clicked, data:", data);
+};
 
 const renderPCMContent = async () => {
-  console.log(konvaRef.value, props.item)
-  if (!konvaRef.value || !props.item ) {
-    return
+  console.log(konvaRef.value, props.item);
+  if (!konvaRef.value || !props.item) {
+    return;
   }
 
   if (!konvaRef.value.konvaData.stage || !konvaRef.value.konvaData.stage) {
     setTimeout(() => {
-      renderPCMContent()
-    }, 200)
-    return
+      renderPCMContent();
+    }, 200);
+    return;
   }
 
-  console.log(props.item)
+  console.log(props.item);
 
   await initMainImages(props.item, {
     stage: konvaRef.value.konvaData.stage,
-    onButtonClick: handleImageButtonClick
-  }).then((nodes) => {
-    nodes.forEach(node => {
-      console.log(node)
-      konvaRef.value.konvaData.layer.add(node)
-    })
-  }).catch((error) => {
-    console.error('Failed to create PCM nodes:', error)
+    onButtonClick: handleImageButtonClick,
   })
-
-
-
-    await initSegmentsImages(props.item).then((nodes) => {
-    nodes.forEach(node => {
-      console.log(node)
-      konvaRef.value.konvaData.layer.add(node)
+    .then((nodes) => {
+      nodes.forEach((node) => {
+        console.log(node);
+        konvaRef.value.konvaData.layer.add(node);
+      });
     })
-  }).catch((error) => {
-    console.error('Failed to create PCM nodes:', error)
-  })
+    .catch((error) => {
+      console.error("Failed to create PCM nodes:", error);
+    });
+
+  await initSegmentsImages(props.item)
+    .then((nodes) => {
+      nodes.forEach((node) => {
+        console.log(node);
+        konvaRef.value.konvaData.layer.add(node);
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to create PCM nodes:", error);
+    });
 
   props.item.segments.forEach((segment, index) => {
-    initPCMBubbles(segment.layout.bubbles).then((nodes) => {
-      nodes.forEach(node => {
-        console.log(node)
-        konvaRef.value.konvaData.layer.add(node)
+    initPCMBubbles(segment.layout.bubbles)
+      .then((nodes) => {
+        nodes.forEach((node) => {
+          console.log(node);
+          konvaRef.value.konvaData.layer.add(node);
+        });
       })
-    }).catch((error) => {
-      console.error('Failed to create PCM nodes:', error)
-    })
-  })
+      .catch((error) => {
+        console.error("Failed to create PCM nodes:", error);
+      });
+  });
   // try {
   //   const nodes = await createImageAndTextNodes({
   //     imageSrc: props.item.images[0],
@@ -108,17 +116,19 @@ const renderPCMContent = async () => {
   // } catch (error) {
   //   console.error('Failed to create PCM nodes:', error)
   // }
-}
+};
 
 // 当弹窗可见时渲染PCM内容
-watch(() => props.visible, (newVisible) => {
-  if (newVisible) {
-    setTimeout(() => {
-      renderPCMContent()
-    }, 500) // 进一步增加延迟时间，确保 Konva 组件初始化完成
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      setTimeout(() => {
+        renderPCMContent();
+      }, 500); // 进一步增加延迟时间，确保 Konva 组件初始化完成
+    }
   }
-})
-
+);
 </script>
 <style scoped lang="scss">
 .pcm-canvas-popup {
@@ -128,7 +138,7 @@ watch(() => props.visible, (newVisible) => {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  
+
   .popup-header {
     display: flex;
     justify-content: space-between;
@@ -136,13 +146,13 @@ watch(() => props.visible, (newVisible) => {
     padding: 12px 16px;
     border-bottom: 1px solid #e8e8e8;
     background: #fafafa;
-    
+
     .popup-title {
       font-size: 14px;
       font-weight: 600;
       color: #333;
     }
-    
+
     .close-btn {
       background: none;
       border: none;
@@ -157,14 +167,14 @@ watch(() => props.visible, (newVisible) => {
       justify-content: center;
       border-radius: 4px;
       transition: all 0.2s;
-      
+
       &:hover {
         background: #f0f0f0;
         color: #333;
       }
     }
   }
-  
+
   .popup-content {
     width: 1800px;
     height: 900px;

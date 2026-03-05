@@ -6,7 +6,7 @@
   >
     <div class="popup-header">
       <h3 class="popup-title">
-        {{ item.title }}
+               {{ item.title }}
       </h3>
       <button class="close-btn" @click="handleClose">×</button>
     </div>
@@ -86,7 +86,7 @@
                       :key="interp.id"
                       class="interpretation-item draggable-item"
                       :style="{
-                        backgroundColor: getBubbleColor(
+                            backgroundColor: getBubbleColor(
                           'meaning',
                           interp.specificity
                         ),

@@ -18,9 +18,12 @@
       <!-- <button class="tool-btn" @click="resetView">
                 重置视图
                 </button> -->
-                 <button :class="['tool-btn', { active: currentTool === 'text' }]" @click="setTool('text')">
-                    文字
-                </button>
+      <button
+        :class="['tool-btn', { active: currentTool === 'text' }]"
+        @click="setTool('text')"
+      >
+        文字
+      </button>
     </div>
     <div class="toolbar">
       <div class="tool-group">
@@ -622,7 +625,7 @@ const handleTextClick = (
 ) => {
   // 获取点击位置在舞台坐标系中的坐标
   const pos = getPointerPos(e);
-  
+
   // 直接创建文本节点，使用默认文字
   const defaultText = "双击编辑文字";
   const textNode = new Konva.Text({
@@ -645,7 +648,7 @@ const handleTextClick = (
   // 将文字节点添加到图层
   layer!.add(textNode);
   currentTool.value = "select";
-  
+
   // 选中新创建的文字节点
   selectedNodes = [textNode];
   transformer!.nodes(selectedNodes);
@@ -1277,7 +1280,7 @@ const handleDrop = (e: DragEvent) => {
                   handleNodeClick(evt, node);
                 });
                 layer!.add(node);
-                if( node.className === 'Image'){
+                if (node.className === "Image") {
                   // 创建从 mainNode 到当前节点的连接线
                   const connectionLine = createConnection(mainNode, node, {
                     strokeWidth: 2,
@@ -1285,12 +1288,17 @@ const handleDrop = (e: DragEvent) => {
                     dashed: true,
                     onDragMove: (line, source, target) => {
                       const getNodeCenter = (n) => ({
-                        x: n.x() + (n.width() || 0) * n.scaleX() / 2,
-                        y: n.y() + (n.height() || 0) * n.scaleY() / 2,
+                        x: n.x() + ((n.width() || 0) * n.scaleX()) / 2,
+                        y: n.y() + ((n.height() || 0) * n.scaleY()) / 2,
                       });
                       const sourcePos = getNodeCenter(source);
                       const targetPos = getNodeCenter(target);
-                      line.points([sourcePos.x, sourcePos.y, targetPos.x, targetPos.y]);
+                      line.points([
+                        sourcePos.x,
+                        sourcePos.y,
+                        targetPos.x,
+                        targetPos.y,
+                      ]);
                     },
                   });
                   if (connectionLine) {
@@ -1298,7 +1306,6 @@ const handleDrop = (e: DragEvent) => {
                     connectionLine.moveToBottom();
                   }
                 }
-                
               });
               data.segments.forEach((segment, index) => {
                 initPCMBubbles(segment.layout.bubbles, {
@@ -1353,148 +1360,63 @@ const getDropPosition = (e: DragEvent) => {
   return transform.point({ x, y });
 };
 
-// 将别的canvas的节点（多个）旋绕到当前的canvas中，垂直水平居中
+// 将别的 canvas 的节点（多个）复制到当前画布中心，垂直水平居中
 const renderNodes = (nodesData) => {
-  if (!layer) {
-    console.log("图层不存在");
-    return;
-  }
+  if (!layer || !nodesData || nodesData.length === 0) return;
 
-  if (!nodesData || nodesData.length === 0) {
-    console.log("没有可渲染的节点");
-    return;
-  }
+  const isKonvaNodes = nodesData[0] instanceof Konva.Node;
+  if (!isKonvaNodes) return;
 
-  console.log("=== 开始渲染节点到画布 ===");
-  console.log(`节点数量: ${nodesData.length}`, nodesData);
-
-  const isKonvaNodes =
-    nodesData.length > 0 && nodesData[0] instanceof Konva.Node;
-  console.log("节点类型:", isKonvaNodes ? "Konva 节点对象" : "数据对象");
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  if (isKonvaNodes) {
-    nodesData.forEach((node) => {
-      let nodeRight, nodeBottom, nodeX, nodeY;
-
-      if (node instanceof Konva.Group) {
-        const clientRect = node.getClientRect();
-        nodeX = clientRect.x;
-        nodeY = clientRect.y;
-        nodeRight = clientRect.x + clientRect.width;
-        nodeBottom = clientRect.y + clientRect.height;
-        console.log(`Group 节点边界:`, {
-          x: nodeX,
-          y: nodeY,
-          width: clientRect.width,
-          height: clientRect.height,
-        });
-      } else {
-        nodeX = node.x();
-        nodeY = node.y();
-        nodeRight = node.x() + node.width() * node.scaleX();
-        nodeBottom = node.y() + node.height() * node.scaleY();
-      }
-
-      minX = Math.min(minX, nodeX);
-      minY = Math.min(minY, nodeY);
-      maxX = Math.max(maxX, nodeRight);
-      maxY = Math.max(maxY, nodeBottom);
-    });
-  } else {
-  }
-
-  // 计算节点内容的总宽度和高度
-  const contentWidth = maxX - minX;
-  const contentHeight = maxY - minY;
-
-  // 获取画布的宽度和高度
   const canvasWidth = stage.width();
   const canvasHeight = stage.height();
 
-  console.log("节点边界框:", { minX, minY, maxX, maxY });
-  console.log("节点内容尺寸:", { contentWidth, contentHeight });
-  console.log("画布尺寸:", { canvasWidth, canvasHeight });
-
-  const padding = 40;
-  const scaleX = (canvasWidth - padding * 2) / contentWidth;
-  const scaleY = (canvasHeight - padding * 2) / contentHeight;
-  let newScale = Math.min(scaleX, scaleY);
-  newScale = Math.min(newScale, 1);
-
-  console.log("计算出的缩放比例:", newScale);
-
-  const offsetX = (canvasWidth - contentWidth * newScale) / 2 - minX * newScale;
-  const offsetY =
-    (canvasHeight - contentHeight * newScale) / 2 - minY * newScale;
-
-  console.log("居中偏移量:", { offsetX, offsetY });
-
-  if (isKonvaNodes) {
-    nodesData.forEach((node, index) => {
-      console.log(`克隆节点 ${index + 1}:`, node.className);
-
-      let clonedNode;
-
-      if (node instanceof Konva.Group) {
-        const clientRect = node.getClientRect();
-        console.log(`Group 节点原始位置:`, { x: node.x(), y: node.y() });
-        console.log(`Group 节点边界框:`, {
-          x: clientRect.x,
-          y: clientRect.y,
-          width: clientRect.width,
-          height: clientRect.height,
-        });
-
-        clonedNode = node.clone({
-          x: clientRect.x * newScale + offsetX,
-          y: clientRect.y * newScale + offsetY,
-          scaleX: node.scaleX() * newScale,
-          scaleY: node.scaleY() * newScale,
-          id: node.id()
-            ? `${node.id()}_clone_${Date.now()}`
-            : `clone_${Date.now()}_${index}`,
-        });
-
-        console.log(`Group 节点克隆后位置:`, {
-          x: clonedNode.x(),
-          y: clonedNode.y(),
-        });
-      } else {
-        clonedNode = node.clone({
-          x: node.x() * newScale + offsetX,
-          y: node.y() * newScale + offsetY,
-          scaleX: node.scaleX() * newScale,
-          scaleY: node.scaleY() * newScale,
-          id: node.id()
-            ? `${node.id()}_clone_${Date.now()}`
-            : `clone_${Date.now()}_${index}`,
-        });
-      }
-
-      // 移除克隆节点上的所有事件监听器，避免引用原始组件的状态
-      clonedNode.off();
-      
-      // 重新绑定事件监听器到当前组件的作用域
-      clonedNode.on("click tap", (evt) => {
-        handleNodeClick(evt, clonedNode);
-      });
-
-      layer.add(clonedNode);
-      console.log(
-        `节点 ${index + 1} 已克隆并添加到画布，实际位置: (${clonedNode.x()}, ${clonedNode.y()})`
-      );
+  // 先克隆所有节点（不添加到画布）
+  const clonedNodes = [];
+  nodesData.forEach((node, index) => {
+    const clonedNode = node.clone({
+      id: node.id() ? `${node.id()}_clone` : `clone_${index}`,
     });
-  } else {
-    console.log("renderNodes 只支持 Konva 节点对象");
-    return;
-  }
+    clonedNode.off();
+    clonedNode.on("click tap", (evt) => handleNodeClick(evt, clonedNode));
+    clonedNodes.push(clonedNode);
+  });
 
-  console.log("=== 所有节点已渲染到画布 ===");
+  // 计算克隆节点的边界
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  clonedNodes.forEach((node) => {
+    const rect = node.getClientRect();
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    maxY = Math.max(maxY, rect.y + rect.height);
+  });
+
+  const contentWidth = maxX - minX;
+  const contentHeight = maxY - minY;
+  const padding = 40;
+
+  // 计算缩放比例
+  const fitScaleX = (canvasWidth - padding * 2) / contentWidth;
+  const fitScaleY = (canvasHeight - padding * 2) / contentHeight;
+  const fitScale = Math.min(fitScaleX, fitScaleY, 1);
+
+  // 计算偏移量，使内容居中
+  const fitOffsetX =
+    (canvasWidth - contentWidth * fitScale) / 2 - minX * fitScale;
+  const fitOffsetY =
+    (canvasHeight - contentHeight * fitScale) / 2 - minY * fitScale;
+
+  // 应用缩放和偏移，然后添加到画布
+  clonedNodes.forEach((node) => {
+    node.x(node.x() * fitScale + fitOffsetX);
+    node.y(node.y() * fitScale + fitOffsetY);
+    node.scaleX(node.scaleX() * fitScale);
+    node.scaleY(node.scaleY() * fitScale);
+    layer.add(node);
+  });
 };
 
 const createKonvaImage = (nodeData) => {
