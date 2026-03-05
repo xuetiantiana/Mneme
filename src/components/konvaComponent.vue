@@ -126,6 +126,7 @@ import {
 import {
   initMainImages,
   initSegmentsImages,
+  initSegmentImagesItem,
   initPCMBubbles,
 } from "@/utils/initPCM";
 
@@ -1331,6 +1332,34 @@ const handleDrop = (e: DragEvent) => {
         },
       }).then((nodes) => {
         console.log(nodes);
+        nodes.forEach((node) => {
+          node.on("click tap", (evt) => {
+            handleNodeClick(evt, node);
+          });
+          layer!.add(node);
+        });
+      });
+    } else if (dragData.dragType === "segment-image") {
+      const dropPos = getDropPosition(e);
+      const segment = dragData.segment;
+      console.log("dropPos:", dropPos);
+      console.log("segment.layout:", segment.layout);
+      console.log("segment.layout x,y:", segment.layout?.x, segment.layout?.y);
+      console.log(
+        "segment.layout cx,cy:",
+        segment.layout?.cx,
+        segment.layout?.cy
+      );
+      initSegmentImagesItem(segment, {
+        offsetX: dropPos.x - (segment.layout?.cx || segment.layout?.x || 0),
+        offsetY: dropPos.y - (segment.layout?.cy || segment.layout?.y || 0),
+        initBubbles: true,
+      }).then((result) => {
+        console.log("created nodes:", result);
+        result.images.forEach((node) => {
+          console.log("image node position:", node.x(), node.y());
+        });
+        const nodes = [...result.images, ...result.bubbles];
         nodes.forEach((node) => {
           node.on("click tap", (evt) => {
             handleNodeClick(evt, node);

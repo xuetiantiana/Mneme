@@ -6,7 +6,7 @@
   >
     <div class="popup-header">
       <h3 class="popup-title">
-               {{ item.title }}
+        {{ item.title }}
       </h3>
       <button class="close-btn" @click="handleClose">×</button>
     </div>
@@ -56,12 +56,12 @@
                   class="segment-image-img draggable-item"
                   draggable="true"
                   @dragstart="
-                    handleImageDragStart(
+                    handleSegmentItemDragStart(
                       $event,
                       getImageProxyUrl(segment.image_url),
                       segment.label,
                       segment.seg_id,
-                      segment.interpretations
+                      segment
                     )
                   "
                 />
@@ -86,7 +86,7 @@
                       :key="interp.id"
                       class="interpretation-item draggable-item"
                       :style="{
-                            backgroundColor: getBubbleColor(
+                        backgroundColor: getBubbleColor(
                           'meaning',
                           interp.specificity
                         ),
@@ -220,6 +220,7 @@
 <script setup>
 import { defineProps, defineEmits } from "vue";
 import { getBubbleColor } from "@/utils/canvasPositionUtils";
+import { getImageProxyUrl } from "@/utils/initPCM";
 
 const props = defineProps({
   visible: {
@@ -240,10 +241,6 @@ const emit = defineEmits(["close"]);
 
 const handleClose = () => {
   emit("close");
-};
-
-const getImageProxyUrl = (url) => {
-  return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
 };
 
 const handleImageDragStart = (event, imgSrc, title, id, interpretations) => {
@@ -286,6 +283,21 @@ const handlePCMDragStart = (event, item) => {
     {
       dragType: "PCM",
       data: item,
+    },
+  ];
+  event.dataTransfer.setData("dragData", JSON.stringify(dragData));
+};
+
+const handleSegmentItemDragStart = (event, imgSrc, title, id, segment) => {
+  event.dataTransfer.effectAllowed = "copy";
+
+  const dragData = [
+    {
+      imageSrc: imgSrc,
+      text: title,
+      dragType: "segment-image",
+      id: id || "",
+      segment: segment,
     },
   ];
   event.dataTransfer.setData("dragData", JSON.stringify(dragData));

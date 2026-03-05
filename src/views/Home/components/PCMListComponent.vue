@@ -69,6 +69,7 @@
 import { ref, onMounted } from "vue";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 import PCMCanvasPopup from "@/components/PCMCanvasPopup.vue";
+import { getImageProxyUrl } from "@/utils/initPCM";
 
 const selectAll = ref(false);
 const popupVisible = ref(false);
@@ -78,15 +79,11 @@ const canvasPopupVisible = ref(false);
 const canvasPopupPosition = ref({ top: 0, left: 0 });
 const currentCanvasItem = ref({});
 
-const getImageProxyUrl = (url) => {
-  return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
-};
-
 const memoryItems = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/data/PCM2/response_pcm_list.json");
+    const response = await fetch("/data/PCM3/response_pcm_list.json");
     const data = await response.json();
 
     if (data.units && Array.isArray(data.units)) {

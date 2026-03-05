@@ -5,8 +5,11 @@ import {
   getBubbleColor,
 } from "./canvasPositionUtils";
 
-const getImageProxyUrl = (url) => {
-  return url.replace("http://localhost:8000/api/images/data", "/data/PCM2");
+export const getImageProxyUrl = (url) => {
+  return url.replace(
+    "http://localhost:8000/api/images/data/pcm_units/",
+    "/data/PCM3/"
+  );
 };
 
 // 全局悬浮按钮元素，用于图片 hover 时显示
@@ -315,6 +318,72 @@ const createTitleNode = (title, mainImages, offsetX, offsetY) => {
   return titleNode;
 };
 
+export const initSegmentImagesItem = (segment, options = {}) => {
+  const { offsetX = 0, offsetY = 0, initBubbles = true } = options;
+
+  return new Promise((resolve, reject) => {
+    if (!segment || !segment.image_url) {
+      resolve({ images: [], bubbles: [] });
+      return;
+    }
+
+    const layoutData = segment.layout || {};
+    const x = layoutData.x || 0;
+    const y = layoutData.y || 0;
+    const w = layoutData.w || 150;
+    const h = layoutData.h || 150;
+    const rotation = layoutData.rotation || 0;
+    const z_index = layoutData.z_index || 1;
+
+    const imagePromise = createImageAndTextNodes(
+      {
+        imageSrc: getImageProxyUrl(segment.image_url),
+        text: segment.label || "",
+        id: `segment_image_${segment.signifier_id}`,
+      },
+      {
+        startX: x + offsetX,
+        startY: y + offsetY,
+        mainImageWidth: w,
+        mainImageHeight: h,
+        rotation,
+        fontSize: 14,
+        fontFamily: "Arial",
+        fill: "#333",
+        center: true,
+      }
+    )
+      .then(([konvaImage, konvaText]) => {
+        konvaImage.rotation(rotation);
+        konvaImage.zIndex(z_index);
+        const images = [konvaImage];
+        if (konvaText) {
+          images.push(konvaText);
+        }
+        return images;
+      })
+      .catch((error) => {
+        console.error("Failed to create segment Konva image:", error);
+        return [];
+      });
+
+    const bubblePromise =
+      initBubbles &&
+      segment.layout.bubbles &&
+      Array.isArray(segment.layout.bubbles)
+        ? initPCMBubbles(segment.layout.bubbles, { offsetX, offsetY })
+        : Promise.resolve([]);
+
+    Promise.all([imagePromise, bubblePromise])
+      .then(([images, bubbles]) => {
+        resolve({ images, bubbles });
+      })
+      .catch((error) => {
+        resolve({ images: [], bubbles: [] });
+      });
+  });
+};
+
 export const initSegmentsImages = (data, options = {}) => {
   const { offsetX = 0, offsetY = 0 } = options;
 
@@ -328,9 +397,7 @@ export const initSegmentsImages = (data, options = {}) => {
 
     try {
       if (segments && Array.isArray(segments) && segments.length > 0) {
-        let loadedCount = 0;
         let totalImages = 0;
-
         segments.forEach((segment) => {
           if (segment.image_url) {
             totalImages++;
@@ -342,82 +409,22 @@ export const initSegmentsImages = (data, options = {}) => {
           return;
         }
 
-        const nodes = [];
-        const bubblePromises = [];
-        const imagePromises = [];
+        const segmentPromises = segments.map((segment) =>
+          initSegmentImagesItem(segment, { offsetX, offsetY })
+        );
 
-        segments.forEach((segment, index) => {
-          if (!segment.image_url) {
-            return;
-          }
-
-          const layoutData = segments[index].layout || {};
-          const x = layoutData.x || 0;
-          const y = layoutData.y || 0;
-          const w = layoutData.w || 150;
-          const h = layoutData.h || 150;
-          const rotation = layoutData.rotation || 0;
-          const z_index = layoutData.z_index || index + 1;
-
-          const imagePromise = createImageAndTextNodes(
-            {
-              imageSrc: getImageProxyUrl(segment.image_url),
-              text: segment.label || "",
-              id: `segment_image_${segment.signifier_id}`,
-            },
-            {
-              startX: x + offsetX,
-              startY: y + offsetY,
-              mainImageWidth: w,
-              mainImageHeight: h,
-              rotation,
-              fontSize: 14,
-              fontFamily: "Arial",
-              fill: "#333",
-              center: true,
-            }
-          )
-            .then(([konvaImage, konvaText]) => {
-              konvaImage.rotation(rotation);
-              konvaImage.zIndex(z_index);
-              nodes.push(konvaImage);
-              if (konvaText) {
-                nodes.push(konvaText);
-              }
-            })
-            .catch((error) => {
-              console.error("Failed to create segment Konva image:", error);
+        Promise.all(segmentPromises)
+          .then((results) => {
+            const allImages = [];
+            const allBubbles = [];
+            results.forEach((result) => {
+              allImages.push(...result.images);
+              allBubbles.push(...result.bubbles);
             });
-
-          imagePromises.push(imagePromise);
-
-          if (segment.bubbles && Array.isArray(segment.bubbles)) {
-            bubblePromises.push(
-              initPCMBubbles(segment.bubbles, { offsetX, offsetY })
-            );
-          }
-        });
-
-        Promise.all(imagePromises)
-          .then(() => {
-            Promise.all(bubblePromises)
-              .then((bubbleNodesArrays) => {
-                const allBubbleNodes = bubbleNodesArrays.flat();
-                resolve([...nodes, ...allBubbleNodes]);
-              })
-              .catch(() => {
-                resolve(nodes);
-              });
+            resolve([...allImages, ...allBubbles]);
           })
           .catch(() => {
-            Promise.all(bubblePromises)
-              .then((bubbleNodesArrays) => {
-                const allBubbleNodes = bubbleNodesArrays.flat();
-                resolve([...nodes, ...allBubbleNodes]);
-              })
-              .catch(() => {
-                resolve(nodes);
-              });
+            resolve([]);
           });
       } else {
         resolve([]);
