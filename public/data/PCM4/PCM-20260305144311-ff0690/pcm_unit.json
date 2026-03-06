@@ -1,0 +1,370 @@
+{
+  "id": "PCM-20260305144311-ff0690",
+  "created_at": "2026-03-05T14:45:48.069234",
+  "unit_summary": "在上海的一个文创园中，用户感受到凉爽和灵性的氛围。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/uploads/33ff49de_4-1.png"
+    ],
+    "text": "随便走走，当时快要下雨了，天气比较舒服\n很喜欢这张照片整体的意境\n凉爽、灵性",
+    "time_place": "2025.6，上海的一个文创园",
+    "received_at": "2026-03-05T14:43:11.197265"
+  },
+  "segments": [
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "天气凉爽的感受",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "舒适天气",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "放松愉悦",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_01",
+            "text": "凉爽触感",
+            "kind": "sensory",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": "bodily",
+            "ai_confidence": null
+          }
+        ],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 234,
+        "y": -406,
+        "w": 174,
+        "h": 196,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "舒适天气",
+            "kind": "meaning",
+            "x": -93,
+            "y": -144,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "放松愉悦",
+            "kind": "emotion",
+            "x": 27,
+            "y": -169,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_S_01",
+            "text": "凉爽触感",
+            "kind": "sensory",
+            "x": 133,
+            "y": -108,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F3",
+      "seg_id": "S_text_F3",
+      "label": "照片整体的灵性意境",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/generated/S_text_F3.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F3_M_01",
+            "text": "灵性意境",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F3_E_01",
+            "text": "灵感涌现",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F3_A_01",
+            "text": "意境深远",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 5,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 232,
+        "y": 403,
+        "w": 168,
+        "h": 190,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "灵性意境",
+            "kind": "meaning",
+            "x": 159,
+            "y": 52,
+            "r": 30,
+            "specificity": 5
+          },
+          {
+            "interpretation_id": "I_F3_E_01",
+            "text": "灵感涌现",
+            "kind": "emotion",
+            "x": 84,
+            "y": 145,
+            "r": 30,
+            "specificity": 5
+          },
+          {
+            "interpretation_id": "I_F3_A_01",
+            "text": "意境深远",
+            "kind": "aesthetic",
+            "x": -35,
+            "y": 164,
+            "r": 30,
+            "specificity": 5
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_image_F1",
+      "label": "雕塑与湖水的静谧场景",
+      "type": "image_has_text_missing",
+      "source": [
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/crops/S_image_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_AI_01",
+            "text": "静谧和谐",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 3
+          },
+          {
+            "id": "I_F1_M_AI_02",
+            "text": "自然融合",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_AI_01",
+            "text": "宁静愉悦",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 3
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 87,
+      "image_height": 120,
+      "layout": {
+        "x": -476,
+        "y": 0,
+        "w": 192,
+        "h": 217,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_AI_01",
+            "text": "静谧和谐",
+            "kind": "meaning",
+            "x": 27,
+            "y": 152,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_M_AI_02",
+            "text": "自然融合",
+            "kind": "meaning",
+            "x": -61,
+            "y": 141,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_AI_01",
+            "text": "宁静愉悦",
+            "kind": "emotion",
+            "x": -129,
+            "y": 85,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 2179,
+      "h": 1362
+    },
+    "main_cluster": {
+      "cx": 0,
+      "cy": 0,
+      "label": "在上海的一个文创园中，用户感受到凉爽和灵性的氛围。",
+      "images": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "w": 400,
+          "h": 299,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "氛围与感受",
+        "concept": "环境与情绪",
+        "placement": "left",
+        "segment_ids": [
+          "S_image_F1",
+          "S_text_F2"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "灵性意境",
+        "concept": "深远的意境",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F3"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_image_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F3"
+      }
+    ],
+    "origin": {
+      "x": 0,
+      "y": 0
+    },
+    "bubble_coords": "relative",
+    "planning_elapsed_ms": 9109.92
+  }
+}

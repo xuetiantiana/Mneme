@@ -1,0 +1,604 @@
+{
+  "id": "PCM-20260305143659-d97035",
+  "created_at": "2026-03-05T14:42:55.041502",
+  "unit_summary": "在西安寺庙中，猫咪与环境和谐共处。",
+  "context": {
+    "time_anchor": "2025.10",
+    "place_anchor": "西安寺庙"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/8a014d7c_3-1.png",
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/72fbcb3d_3-2.png"
+    ],
+    "text": "我这次去西安的一个寺庙里面，里面有很多很多小猫，还有专门给小猫搭的房子。然后，有很多游客都来喂这些小猫，感觉它们长得也很安详，和寺庙的氛围很融合。",
+    "time_place": "2025.10，西安寺庙里面的小猫",
+    "received_at": "2026-03-05T14:36:59.437510"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "猫咪在寺庙供桌上休息",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "宁静休憩",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "安详舒适",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "和谐宁静",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_01",
+            "text": "静谧构图",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          },
+          {
+            "id": "I_F1_A_02",
+            "text": "色彩和谐",
+            "kind": "aesthetic",
+            "t": 3,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_index": 0,
+      "image_width": 254,
+      "image_height": 297,
+      "layout": {
+        "x": -489,
+        "y": 0,
+        "w": 192,
+        "h": 217,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "宁静休憩",
+            "kind": "meaning",
+            "x": 27,
+            "y": 152,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "安详舒适",
+            "kind": "emotion",
+            "x": -129,
+            "y": 85,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "和谐宁静",
+            "kind": "emotion",
+            "x": -154,
+            "y": 0,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_A_01",
+            "text": "静谧构图",
+            "kind": "aesthetic",
+            "x": -61,
+            "y": -141,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_A_02",
+            "text": "色彩和谐",
+            "kind": "aesthetic",
+            "x": 27,
+            "y": -152,
+            "r": 30,
+            "specificity": 2
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "游客喂猫的场景",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "互动交流",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "游客关爱",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "温暖愉悦",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_01",
+            "text": "和谐美感",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 483,
+        "y": 0,
+        "w": 180,
+        "h": 202,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "互动交流",
+            "kind": "meaning",
+            "x": 15,
+            "y": -147,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "游客关爱",
+            "kind": "meaning",
+            "x": 110,
+            "y": -99,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "温暖愉悦",
+            "kind": "emotion",
+            "x": 148,
+            "y": 0,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_A_01",
+            "text": "和谐美感",
+            "kind": "aesthetic",
+            "x": 15,
+            "y": 147,
+            "r": 30,
+            "specificity": 2
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F3",
+      "seg_id": "S_text_F3",
+      "label": "猫咪专属房子",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F3.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F3_M_01",
+            "text": "专属空间",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F3_M_02",
+            "text": "猫咪庇护",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F3_E_01",
+            "text": "安心温暖",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F3_A_01",
+            "text": "温馨设计",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 0,
+        "y": 510,
+        "w": 180,
+        "h": 202,
+        "group_id": "G3",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "专属空间",
+            "kind": "meaning",
+            "x": 158,
+            "y": 17,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F3_M_02",
+            "text": "猫咪庇护",
+            "kind": "meaning",
+            "x": 106,
+            "y": 118,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F3_E_01",
+            "text": "安心温暖",
+            "kind": "emotion",
+            "x": 0,
+            "y": 159,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F3_A_01",
+            "text": "温馨设计",
+            "kind": "aesthetic",
+            "x": -158,
+            "y": 17,
+            "r": 30,
+            "specificity": 2
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F4",
+      "seg_id": "S_text_F4",
+      "label": "猫咪的安详与寺庙氛围融合",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F4.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F4_M_01",
+            "text": "氛围融合",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F4_M_02",
+            "text": "安详象征",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F4_E_01",
+            "text": "宁静祥和",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F4_A_01",
+            "text": "氛围美感",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 0,
+        "y": -510,
+        "w": 180,
+        "h": 202,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F4_M_01",
+            "text": "氛围融合",
+            "kind": "meaning",
+            "x": -158,
+            "y": -17,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F4_M_02",
+            "text": "安详象征",
+            "kind": "meaning",
+            "x": -106,
+            "y": -118,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F4_E_01",
+            "text": "宁静祥和",
+            "kind": "emotion",
+            "x": 0,
+            "y": -159,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F4_A_01",
+            "text": "氛围美感",
+            "kind": "aesthetic",
+            "x": 158,
+            "y": -17,
+            "r": 30,
+            "specificity": 2
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 2493,
+      "h": 1558
+    },
+    "main_cluster": {
+      "cx": 0,
+      "cy": 0,
+      "label": "在西安寺庙中，猫咪与环境和谐共处。",
+      "images": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "w": 264,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 2
+        },
+        {
+          "index": 1,
+          "x": 106,
+          "y": 86,
+          "w": 215,
+          "h": 287,
+          "rotation": 6,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "猫咪与寺庙",
+        "concept": "和谐共处",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1",
+          "S_text_F4"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "游客与猫咪",
+        "concept": "互动与关爱",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      },
+      {
+        "group_id": "G3",
+        "label": "猫咪的空间",
+        "concept": "专属与温暖",
+        "placement": "bottom-left",
+        "segment_ids": [
+          "S_text_F3"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F4"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F3"
+      }
+    ],
+    "origin": {
+      "x": 0,
+      "y": 0
+    },
+    "bubble_coords": "relative",
+    "planning_elapsed_ms": 4431.6
+  }
+}

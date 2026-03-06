@@ -1,0 +1,461 @@
+{
+  "id": "PCM-20260305143025-5f0579",
+  "created_at": "2026-03-05T14:34:27.671333",
+  "unit_summary": "在深圳宠物店观察小狗，感受放松。",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳宠物店"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/uploads/373da794_1-1.png"
+    ],
+    "text": "看宠物店里面很多小狗\n我住在深圳的时候，每天都会去深圳楼下的商场吃饭，然后顺便去看一看这个宠物店的小狗小猫放松一下。",
+    "time_place": "2025.11，深圳宠物店",
+    "received_at": "2026-03-05T14:30:25.531164"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "宠物店内观察小狗",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_02",
+            "text": "日常放松",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_03",
+            "text": "怀念温暖",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_02",
+            "text": "温馨氛围",
+            "kind": "aesthetic",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_A_01",
+            "text": "柔和色调",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_index": 0,
+      "image_width": 210,
+      "image_height": 191,
+      "layout": {
+        "x": -411,
+        "y": 0,
+        "w": 198,
+        "h": 203,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_02",
+            "text": "日常放松",
+            "kind": "meaning",
+            "x": -50,
+            "y": 149,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_03",
+            "text": "怀念温暖",
+            "kind": "emotion",
+            "x": -152,
+            "y": -39,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_A_01",
+            "text": "柔和色调",
+            "kind": "aesthetic",
+            "x": -50,
+            "y": -149,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_A_02",
+            "text": "温馨氛围",
+            "kind": "aesthetic",
+            "x": 27,
+            "y": -155,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "深圳商场日常",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_02",
+            "text": "生活习惯",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_02",
+            "text": "怀旧情绪",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_E_01",
+            "text": "安定感",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [
+          {
+            "id": "I_F2_S_01",
+            "text": "喧闹声",
+            "kind": "sensory",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": "auditory",
+            "ai_confidence": 2
+          }
+        ],
+        "aesthetic": [
+          {
+            "id": "I_F2_A_01",
+            "text": "现代设计",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 2,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 253,
+        "y": -438,
+        "w": 186,
+        "h": 208,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "生活习惯",
+            "kind": "meaning",
+            "x": -89,
+            "y": -154,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "安定感",
+            "kind": "emotion",
+            "x": 31,
+            "y": -173,
+            "r": 28,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_E_02",
+            "text": "怀旧情绪",
+            "kind": "emotion",
+            "x": 136,
+            "y": -114,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_S_01",
+            "text": "喧闹声",
+            "kind": "sensory",
+            "x": 176,
+            "y": 0,
+            "r": 28,
+            "specificity": 2
+          },
+          {
+            "interpretation_id": "I_F2_A_01",
+            "text": "现代设计",
+            "kind": "aesthetic",
+            "x": 136,
+            "y": 114,
+            "r": 30,
+            "specificity": 2
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F3",
+      "seg_id": "S_text_F3",
+      "label": "放松时刻",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/generated/S_text_F3.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F3_M_01",
+            "text": "心灵休憩",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F3_M_02",
+            "text": "情感调节",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F3_E_02",
+            "text": "怀念宁静",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F3_A_01",
+            "text": "简约美感",
+            "kind": "aesthetic",
+            "t": 0,
+            "specificity": 3,
+            "status": "ai_recommended",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": 2
+          }
+        ]
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 251,
+        "y": 435,
+        "w": 180,
+        "h": 202,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "心灵休憩",
+            "kind": "meaning",
+            "x": 160,
+            "y": -71,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F3_M_02",
+            "text": "情感调节",
+            "kind": "meaning",
+            "x": 166,
+            "y": 54,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F3_E_02",
+            "text": "怀念宁静",
+            "kind": "emotion",
+            "x": -36,
+            "y": 171,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F3_A_01",
+            "text": "简约美感",
+            "kind": "aesthetic",
+            "x": -141,
+            "y": 103,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 2296,
+      "h": 1435
+    },
+    "main_cluster": {
+      "cx": 0,
+      "cy": 0,
+      "label": "在深圳宠物店观察小狗，感受放松。",
+      "images": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "w": 264,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "宠物店体验",
+        "concept": "观察与放松",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "日常生活",
+        "concept": "生活习惯与情感",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2",
+          "S_text_F3"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F3"
+      }
+    ],
+    "origin": {
+      "x": 0,
+      "y": 0
+    },
+    "bubble_coords": "relative",
+    "planning_elapsed_ms": 3620.24
+  }
+}

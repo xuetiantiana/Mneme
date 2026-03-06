@@ -1,0 +1,377 @@
+{
+  "id": "PCM-20260305143444-7d4a0e",
+  "created_at": "2026-03-05T14:36:45.905792",
+  "unit_summary": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+  "context": {
+    "time_anchor": "2025.11",
+    "place_anchor": "深圳楼下路边"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/uploads/c3568493_2-1.png"
+    ],
+    "text": "一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。",
+    "time_place": "2025.11，深圳楼下路边的疯狂动物城快闪",
+    "received_at": "2026-03-05T14:34:44.238822"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "小老鼠雕塑在快闪活动中",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_01",
+            "text": "动画再现",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_01",
+            "text": "惊喜发现",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F1_E_02",
+            "text": "怀旧温馨",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 62,
+      "image_height": 91,
+      "layout": {
+        "x": -404,
+        "y": 0,
+        "w": 186,
+        "h": 217,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_01",
+            "text": "动画再现",
+            "kind": "meaning",
+            "x": 26,
+            "y": 149,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F1_E_01",
+            "text": "惊喜发现",
+            "kind": "emotion",
+            "x": -142,
+            "y": 52,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "怀旧温馨",
+            "kind": "emotion",
+            "x": -142,
+            "y": -52,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_overlap_F2",
+      "label": "疯狂动物城主题快闪",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/crops/S_overlap_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "主题沉浸",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "城市活力",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_01",
+            "text": "欢乐氛围",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 3,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_index": 0,
+      "image_width": 195,
+      "image_height": 150,
+      "layout": {
+        "x": 241,
+        "y": -418,
+        "w": 186,
+        "h": 168,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "主题沉浸",
+            "kind": "meaning",
+            "x": -146,
+            "y": -53,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "城市活力",
+            "kind": "meaning",
+            "x": -77,
+            "y": -134,
+            "r": 30,
+            "specificity": 3
+          },
+          {
+            "interpretation_id": "I_F2_E_01",
+            "text": "欢乐氛围",
+            "kind": "emotion",
+            "x": 27,
+            "y": -153,
+            "r": 30,
+            "specificity": 3
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F3",
+      "seg_id": "S_text_F3",
+      "label": "观看现场感受的不同",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/generated/S_text_F3.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F3_M_01",
+            "text": "现场体验",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F3_M_02",
+            "text": "视觉冲击",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F3_E_01",
+            "text": "新鲜感",
+            "kind": "emotion",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 251,
+        "y": 435,
+        "w": 180,
+        "h": 202,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F3_M_01",
+            "text": "现场体验",
+            "kind": "meaning",
+            "x": 160,
+            "y": -71,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F3_M_02",
+            "text": "视觉冲击",
+            "kind": "meaning",
+            "x": 166,
+            "y": 54,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F3_E_01",
+            "text": "新鲜感",
+            "kind": "emotion",
+            "x": 86,
+            "y": 149,
+            "r": 28,
+            "specificity": 4
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 2235,
+      "h": 1397
+    },
+    "main_cluster": {
+      "cx": 0,
+      "cy": 0,
+      "label": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+      "images": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "w": 262,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "小老鼠雕塑与快闪活动",
+        "concept": "活动体验",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1",
+          "S_overlap_F2"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "观看现场感受",
+        "concept": "情感与视觉",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F3"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_overlap_F2"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F3"
+      }
+    ],
+    "origin": {
+      "x": 0,
+      "y": 0
+    },
+    "bubble_coords": "relative",
+    "planning_elapsed_ms": 4215.74
+  }
+}

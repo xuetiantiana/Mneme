@@ -1,0 +1,273 @@
+{
+  "id": "PCM-20260305144608-3d0a91",
+  "created_at": "2026-03-05T14:47:55.395410",
+  "unit_summary": "在上海的文创园中，圆形建筑与彩色画作营造出一种仪式感，尽管是夏天，却感到凉爽和清爽。",
+  "context": {
+    "time_anchor": "2025.6",
+    "place_anchor": "上海的一个文创园"
+  },
+  "user_input": {
+    "images": [
+      "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/uploads/0d627348_5-1.png"
+    ],
+    "text": "灵性、干净、清爽\n整体的环形给人一种仪式感\n虽然是夏天但是很凉爽的感觉\n有点像观夏的线下店的调性",
+    "time_place": "2025.6，上海的一个文创园",
+    "received_at": "2026-03-05T14:46:08.623692"
+  },
+  "segments": [
+    {
+      "signifier_id": "F1",
+      "seg_id": "S_overlap_F1",
+      "label": "圆形建筑与彩色画作的仪式感",
+      "type": "text_image_overlap",
+      "source": [
+        "author_text",
+        "image"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/crops/S_overlap_F1.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F1_M_02",
+            "text": "空间和谐",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F1_E_02",
+            "text": "怀旧温馨",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": [
+          {
+            "id": "I_F1_A_02",
+            "text": "环形美感",
+            "kind": "aesthetic",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text",
+              "image"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ]
+      },
+      "image_index": 0,
+      "image_width": 254,
+      "image_height": 169,
+      "layout": {
+        "x": -408,
+        "y": 0,
+        "w": 192,
+        "h": 154,
+        "group_id": "G1",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F1_M_02",
+            "text": "空间和谐",
+            "kind": "meaning",
+            "x": -61,
+            "y": 141,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_E_02",
+            "text": "怀旧温馨",
+            "kind": "emotion",
+            "x": -154,
+            "y": 0,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F1_A_02",
+            "text": "环形美感",
+            "kind": "aesthetic",
+            "x": 27,
+            "y": -152,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    },
+    {
+      "signifier_id": "F2",
+      "seg_id": "S_text_F2",
+      "label": "灵性与清爽的氛围",
+      "type": "text_has_image_missing",
+      "source": [
+        "author_text"
+      ],
+      "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/generated/S_text_F2.png",
+      "interpretations": {
+        "meaning": [
+          {
+            "id": "I_F2_M_01",
+            "text": "灵性空间",
+            "kind": "meaning",
+            "t": 0,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          },
+          {
+            "id": "I_F2_M_02",
+            "text": "清爽体验",
+            "kind": "meaning",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "emotion": [
+          {
+            "id": "I_F2_E_02",
+            "text": "清新愉悦",
+            "kind": "emotion",
+            "t": 3,
+            "specificity": 4,
+            "status": "user_provided",
+            "source": [
+              "author_text"
+            ],
+            "modality": null,
+            "ai_confidence": null
+          }
+        ],
+        "sensory": [],
+        "aesthetic": []
+      },
+      "image_width": 1024,
+      "image_height": 1024,
+      "layout": {
+        "x": 408,
+        "y": 0,
+        "w": 192,
+        "h": 214,
+        "group_id": "G2",
+        "bubbles": [
+          {
+            "interpretation_id": "I_F2_M_01",
+            "text": "灵性空间",
+            "kind": "meaning",
+            "x": -27,
+            "y": -152,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_M_02",
+            "text": "清爽体验",
+            "kind": "meaning",
+            "x": 61,
+            "y": -141,
+            "r": 30,
+            "specificity": 4
+          },
+          {
+            "interpretation_id": "I_F2_E_02",
+            "text": "清新愉悦",
+            "kind": "emotion",
+            "x": 154,
+            "y": 0,
+            "r": 30,
+            "specificity": 4
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "canvas": {
+      "w": 1344,
+      "h": 840
+    },
+    "main_cluster": {
+      "cx": 0,
+      "cy": 0,
+      "label": "在上海的文创园中，圆形建筑与彩色画作营造出一种仪式感，尽管是夏天，却感到凉爽和清爽。",
+      "images": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "w": 264,
+          "h": 350,
+          "rotation": 0,
+          "z_index": 1
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group_id": "G1",
+        "label": "圆形建筑与彩色画",
+        "concept": "",
+        "placement": "left",
+        "segment_ids": [
+          "S_overlap_F1"
+        ]
+      },
+      {
+        "group_id": "G2",
+        "label": "灵性与清爽的氛围",
+        "concept": "",
+        "placement": "right",
+        "segment_ids": [
+          "S_text_F2"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "main",
+        "to": "S_overlap_F1"
+      },
+      {
+        "from": "main",
+        "to": "S_text_F2"
+      }
+    ],
+    "origin": {
+      "x": 0,
+      "y": 0
+    },
+    "bubble_coords": "relative",
+    "planning_elapsed_ms": 0.49
+  }
+}

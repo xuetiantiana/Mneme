@@ -1,0 +1,3659 @@
+{
+  "total": 10,
+  "units": [
+    {
+      "id": "PCM-20260305145919-457ce1",
+      "created_at": "2026-03-05T15:01:10.378707",
+      "unit_summary": "在阿那亚买手店体验白色日式风格的陶瓷艺术品。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "阿那亚买手店"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145919-457ce1/uploads/7849ccd5_10-1.png"
+        ],
+        "text": "整个店装修和物品都是白色的，很有日式风格",
+        "time_place": "2025.6，阿那亚买手店",
+        "received_at": "2026-03-05T14:59:19.156999"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "白色陶瓷艺术品展示",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145919-457ce1/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_03",
+                "text": "白色象征",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_03",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F1_A_02",
+                "text": "简洁构图",
+                "kind": "aesthetic",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ]
+          },
+          "image_index": 0,
+          "image_width": 253,
+          "image_height": 229,
+          "layout": {
+            "x": -413,
+            "y": 0,
+            "w": 204,
+            "h": 208,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_03",
+                "text": "白色象征",
+                "kind": "meaning",
+                "x": -103,
+                "y": 123,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_03",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "x": -145,
+                "y": -68,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_A_02",
+                "text": "简洁构图",
+                "kind": "aesthetic",
+                "x": 28,
+                "y": -158,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "日式风格氛围",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145919-457ce1/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_02",
+                "text": "文化融合",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_02",
+                "text": "怀旧情感",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F2_A_02",
+                "text": "静谧氛围",
+                "kind": "aesthetic",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 407,
+            "y": 0,
+            "w": 192,
+            "h": 214,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "文化融合",
+                "kind": "meaning",
+                "x": 61,
+                "y": -141,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_02",
+                "text": "怀旧情感",
+                "kind": "emotion",
+                "x": 154,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_A_02",
+                "text": "静谧氛围",
+                "kind": "aesthetic",
+                "x": -27,
+                "y": 152,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 1354,
+          "h": 846
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在阿那亚买手店体验白色日式风格的陶瓷艺术品。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 263,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "白色陶瓷艺术品展",
+            "concept": "",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "日式风格氛围",
+            "concept": "",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 0.76
+      }
+    },
+    {
+      "id": "PCM-20260305145710-540645",
+      "created_at": "2026-03-05T14:59:08.890661",
+      "unit_summary": "在秦皇岛阿那亚美术馆，天空中飞行的人物让人感受到丰富的想象力。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "秦皇岛阿那亚美术馆"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145710-540645/uploads/395c1564_9-1.png"
+        ],
+        "text": "觉得很有想象力，",
+        "time_place": "2025.6，秦皇岛阿那亚的美术馆",
+        "received_at": "2026-03-05T14:57:10.112131"
+      },
+      "segments": [
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "感受到丰富的想象力",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145710-540645/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "丰富想象",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "激动",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F2_A_01",
+                "text": "灵感迸发",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 464,
+            "y": 0,
+            "w": 168,
+            "h": 190,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "丰富想象",
+                "kind": "meaning",
+                "x": 106,
+                "y": -95,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "激动",
+                "kind": "emotion",
+                "x": 138,
+                "y": 0,
+                "r": 26,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_A_01",
+                "text": "灵感迸发",
+                "kind": "aesthetic",
+                "x": 106,
+                "y": 95,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_image_F1",
+          "label": "天空中飞行的人物",
+          "type": "image_has_text_missing",
+          "source": [
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145710-540645/crops/S_image_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_AI_02",
+                "text": "自由象征",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              },
+              {
+                "id": "I_F1_M_AI_01",
+                "text": "超现实飞行",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_AI_01",
+                "text": "惊奇",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 310,
+          "image_height": 230,
+          "layout": {
+            "x": -476,
+            "y": 0,
+            "w": 192,
+            "h": 168,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_AI_01",
+                "text": "超现实飞行",
+                "kind": "meaning",
+                "x": 27,
+                "y": 152,
+                "r": 30,
+                "specificity": 2
+              },
+              {
+                "interpretation_id": "I_F1_M_AI_02",
+                "text": "自由象征",
+                "kind": "meaning",
+                "x": -61,
+                "y": 141,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_E_AI_01",
+                "text": "惊奇",
+                "kind": "emotion",
+                "x": -125,
+                "y": 82,
+                "r": 26,
+                "specificity": 2
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 1440,
+          "h": 900
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在秦皇岛阿那亚美术馆，天空中飞行的人物让人感受到丰富的想象力。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 400,
+              "h": 288,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "天空中飞行的人物",
+            "concept": "",
+            "placement": "left",
+            "segment_ids": [
+              "S_image_F1"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "感受到丰富的想象",
+            "concept": "",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_image_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 0.43
+      }
+    },
+    {
+      "id": "PCM-20260305145501-bc432d",
+      "created_at": "2026-03-05T14:56:58.730837",
+      "unit_summary": "在上海文创园中，建筑被爬墙虎覆盖，呈现自然的感觉。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "上海的一个文创园"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145501-bc432d/uploads/615056cf_8-1.png"
+        ],
+        "text": "爬墙虎\n自然的感觉。",
+        "time_place": "2025.6，上海的一个文创园",
+        "received_at": "2026-03-05T14:55:01.247637"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "建筑被爬墙虎覆盖",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145501-bc432d/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_01",
+                "text": "自然融合",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_M_AI_02",
+                "text": "生命力象征",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_01",
+                "text": "舒适宁静",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_E_AI_02",
+                "text": "自然亲近",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ],
+            "sensory": [
+              {
+                "id": "I_F1_S_01",
+                "text": "绿意盎然",
+                "kind": "sensory",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": "visual",
+                "ai_confidence": null
+              }
+            ],
+            "aesthetic": [
+              {
+                "id": "I_F1_A_AI_02",
+                "text": "绿意构图",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_index": 0,
+          "image_width": 71,
+          "image_height": 64,
+          "layout": {
+            "x": -407,
+            "y": 0,
+            "w": 192,
+            "h": 196,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_01",
+                "text": "自然融合",
+                "kind": "meaning",
+                "x": 27,
+                "y": 152,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_M_AI_02",
+                "text": "生命力象征",
+                "kind": "meaning",
+                "x": -61,
+                "y": 141,
+                "r": 30,
+                "specificity": 2
+              },
+              {
+                "interpretation_id": "I_F1_E_01",
+                "text": "舒适宁静",
+                "kind": "emotion",
+                "x": -129,
+                "y": 85,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_AI_02",
+                "text": "自然亲近",
+                "kind": "emotion",
+                "x": -154,
+                "y": 0,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_S_01",
+                "text": "绿意盎然",
+                "kind": "sensory",
+                "x": -129,
+                "y": -85,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_A_AI_02",
+                "text": "绿意构图",
+                "kind": "aesthetic",
+                "x": 27,
+                "y": -152,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "自然的感觉",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145501-bc432d/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "自然氛围",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "放松愉悦",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_E_02",
+                "text": "心旷神怡",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 401,
+            "y": 0,
+            "w": 180,
+            "h": 202,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "自然氛围",
+                "kind": "meaning",
+                "x": 15,
+                "y": -147,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "放松愉悦",
+                "kind": "emotion",
+                "x": 148,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_02",
+                "text": "心旷神怡",
+                "kind": "emotion",
+                "x": 110,
+                "y": 99,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 1330,
+          "h": 831
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在上海文创园中，建筑被爬墙虎覆盖，呈现自然的感觉。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 262,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "建筑被爬墙虎覆盖",
+            "concept": "",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "自然的感觉",
+            "concept": "",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 0.34
+      }
+    },
+    {
+      "id": "PCM-20260305145253-7497e8",
+      "created_at": "2026-03-05T14:54:47.393215",
+      "unit_summary": "在上海的文创园中，仿造英国街头的怀旧建筑。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "上海的一个文创园"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145253-7497e8/uploads/cb5a9725_7-1.png"
+        ],
+        "text": "仿造英国街头\n怀旧",
+        "time_place": "2025.6，上海的一个文创园",
+        "received_at": "2026-03-05T14:52:53.112668"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "仿造英国街头的建筑",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145253-7497e8/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_01",
+                "text": "文化融合",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_01",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_E_02",
+                "text": "悠闲愉悦",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 49,
+          "image_height": 124,
+          "layout": {
+            "x": -407,
+            "y": 0,
+            "w": 192,
+            "h": 217,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_01",
+                "text": "文化融合",
+                "kind": "meaning",
+                "x": 27,
+                "y": 152,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_E_01",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "x": -129,
+                "y": 85,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_02",
+                "text": "悠闲愉悦",
+                "kind": "emotion",
+                "x": -154,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "怀旧氛围",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145253-7497e8/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "时光倒流",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_M_02",
+                "text": "记忆唤醒",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "温暖怀旧",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 251,
+            "y": 435,
+            "w": 180,
+            "h": 202,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "时光倒流",
+                "kind": "meaning",
+                "x": 160,
+                "y": -71,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "记忆唤醒",
+                "kind": "meaning",
+                "x": 166,
+                "y": 54,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "温暖怀旧",
+                "kind": "emotion",
+                "x": 87,
+                "y": 151,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_image_F3",
+          "label": "绿色植物覆盖的建筑",
+          "type": "image_has_text_missing",
+          "source": [
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305145253-7497e8/crops/S_image_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_AI_01",
+                "text": "自然融合",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              },
+              {
+                "id": "I_F3_M_AI_02",
+                "text": "生态和谐",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_AI_01",
+                "text": "宁静自然",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 135,
+          "image_height": 48,
+          "layout": {
+            "x": 221,
+            "y": -383,
+            "w": 192,
+            "h": 99,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_AI_01",
+                "text": "自然融合",
+                "kind": "meaning",
+                "x": -108,
+                "y": -39,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F3_M_AI_02",
+                "text": "生态和谐",
+                "kind": "meaning",
+                "x": -69,
+                "y": -92,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F3_E_AI_01",
+                "text": "宁静自然",
+                "kind": "emotion",
+                "x": -7,
+                "y": -115,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2118,
+          "h": 1324
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在上海的文创园中，仿造英国街头的怀旧建筑。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 262,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "怀旧与自然",
+            "concept": "文化与生态融合",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1",
+              "S_image_F3",
+              "S_text_F2"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_image_F3"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 2694.18
+      }
+    },
+    {
+      "id": "PCM-20260305144811-8d2466",
+      "created_at": "2026-03-05T14:52:14.590357",
+      "unit_summary": "在上海的文创园，拱门的彩绘装饰从趣味转变为神秘。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "上海的文创园"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144811-8d2466/uploads/eb9e059e_6-1.png"
+        ],
+        "text": "之前看：\n趣味;\n现在看：\n有些神秘",
+        "time_place": "2025.6，上海的一个文创园",
+        "received_at": "2026-03-05T14:48:11.965218"
+      },
+      "segments": [
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "趣味的感受",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144811-8d2466/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "趣味性",
+                "kind": "meaning",
+                "t": 1,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "愉悦感",
+                "kind": "emotion",
+                "t": 1,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": -392,
+            "y": 0,
+            "w": 162,
+            "h": 184,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "趣味性",
+                "kind": "meaning",
+                "x": -128,
+                "y": 49,
+                "r": 28,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "愉悦感",
+                "kind": "emotion",
+                "x": -128,
+                "y": -49,
+                "r": 28,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_text_F3",
+          "label": "神秘的感受",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144811-8d2466/generated/S_text_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_01",
+                "text": "神秘感",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_01",
+                "text": "探索欲",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 246,
+            "y": -426,
+            "w": 162,
+            "h": 184,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_01",
+                "text": "神秘感",
+                "kind": "meaning",
+                "x": 25,
+                "y": -160,
+                "r": 28,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_E_01",
+                "text": "探索欲",
+                "kind": "emotion",
+                "x": 126,
+                "y": -102,
+                "r": 28,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_image_F1",
+          "label": "拱门的彩绘装饰",
+          "type": "image_has_text_missing",
+          "source": [
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144811-8d2466/crops/S_image_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_AI_01",
+                "text": "文化融合",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              },
+              {
+                "id": "I_F1_M_AI_02",
+                "text": "入口象征",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_AI_01",
+                "text": "好奇心",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 254,
+          "image_height": 338,
+          "layout": {
+            "x": 255,
+            "y": 442,
+            "w": 192,
+            "h": 217,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_AI_01",
+                "text": "文化融合",
+                "kind": "meaning",
+                "x": 140,
+                "y": -118,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_M_AI_02",
+                "text": "入口象征",
+                "kind": "meaning",
+                "x": 182,
+                "y": -21,
+                "r": 30,
+                "specificity": 2
+              },
+              {
+                "interpretation_id": "I_F1_E_AI_01",
+                "text": "好奇心",
+                "kind": "emotion",
+                "x": 162,
+                "y": 81,
+                "r": 28,
+                "specificity": 3
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2286,
+          "h": 1429
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在上海的文创园，拱门的彩绘装饰从趣味转变为神秘。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 262,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "趣味与神秘",
+            "concept": "情感对比",
+            "placement": "left",
+            "segment_ids": [
+              "S_text_F2",
+              "S_text_F3"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "拱门装饰",
+            "concept": "视觉主体",
+            "placement": "right",
+            "segment_ids": [
+              "S_image_F1"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F3"
+          },
+          {
+            "from": "main",
+            "to": "S_image_F1"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 11543.19
+      }
+    },
+    {
+      "id": "PCM-20260305144608-3d0a91",
+      "created_at": "2026-03-05T14:47:55.395410",
+      "unit_summary": "在上海的文创园中，圆形建筑与彩色画作营造出一种仪式感，尽管是夏天，却感到凉爽和清爽。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "上海的一个文创园"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/uploads/0d627348_5-1.png"
+        ],
+        "text": "灵性、干净、清爽\n整体的环形给人一种仪式感\n虽然是夏天但是很凉爽的感觉\n有点像观夏的线下店的调性",
+        "time_place": "2025.6，上海的一个文创园",
+        "received_at": "2026-03-05T14:46:08.623692"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "圆形建筑与彩色画作的仪式感",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_02",
+                "text": "空间和谐",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_02",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F1_A_02",
+                "text": "环形美感",
+                "kind": "aesthetic",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ]
+          },
+          "image_index": 0,
+          "image_width": 254,
+          "image_height": 169,
+          "layout": {
+            "x": -408,
+            "y": 0,
+            "w": 192,
+            "h": 154,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_02",
+                "text": "空间和谐",
+                "kind": "meaning",
+                "x": -61,
+                "y": 141,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_02",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "x": -154,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_A_02",
+                "text": "环形美感",
+                "kind": "aesthetic",
+                "x": 27,
+                "y": -152,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "灵性与清爽的氛围",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144608-3d0a91/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "灵性空间",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_M_02",
+                "text": "清爽体验",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_02",
+                "text": "清新愉悦",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 408,
+            "y": 0,
+            "w": 192,
+            "h": 214,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "灵性空间",
+                "kind": "meaning",
+                "x": -27,
+                "y": -152,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "清爽体验",
+                "kind": "meaning",
+                "x": 61,
+                "y": -141,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_02",
+                "text": "清新愉悦",
+                "kind": "emotion",
+                "x": 154,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 1344,
+          "h": 840
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在上海的文创园中，圆形建筑与彩色画作营造出一种仪式感，尽管是夏天，却感到凉爽和清爽。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "圆形建筑与彩色画",
+            "concept": "",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "灵性与清爽的氛围",
+            "concept": "",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 0.49
+      }
+    },
+    {
+      "id": "PCM-20260305144311-ff0690",
+      "created_at": "2026-03-05T14:45:48.069234",
+      "unit_summary": "在上海的一个文创园中，用户感受到凉爽和灵性的氛围。",
+      "context": {
+        "time_anchor": "2025.6",
+        "place_anchor": "上海的一个文创园"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/uploads/33ff49de_4-1.png"
+        ],
+        "text": "随便走走，当时快要下雨了，天气比较舒服\n很喜欢这张照片整体的意境\n凉爽、灵性",
+        "time_place": "2025.6，上海的一个文创园",
+        "received_at": "2026-03-05T14:43:11.197265"
+      },
+      "segments": [
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "天气凉爽的感受",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "舒适天气",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "放松愉悦",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [
+              {
+                "id": "I_F2_S_01",
+                "text": "凉爽触感",
+                "kind": "sensory",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": "bodily",
+                "ai_confidence": null
+              }
+            ],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 234,
+            "y": -406,
+            "w": 174,
+            "h": 196,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "舒适天气",
+                "kind": "meaning",
+                "x": -93,
+                "y": -144,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "放松愉悦",
+                "kind": "emotion",
+                "x": 27,
+                "y": -169,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_S_01",
+                "text": "凉爽触感",
+                "kind": "sensory",
+                "x": 133,
+                "y": -108,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_text_F3",
+          "label": "照片整体的灵性意境",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/generated/S_text_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_01",
+                "text": "灵性意境",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 5,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_01",
+                "text": "灵感涌现",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 5,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F3_A_01",
+                "text": "意境深远",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 5,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 232,
+            "y": 403,
+            "w": 168,
+            "h": 190,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_01",
+                "text": "灵性意境",
+                "kind": "meaning",
+                "x": 159,
+                "y": 52,
+                "r": 30,
+                "specificity": 5
+              },
+              {
+                "interpretation_id": "I_F3_E_01",
+                "text": "灵感涌现",
+                "kind": "emotion",
+                "x": 84,
+                "y": 145,
+                "r": 30,
+                "specificity": 5
+              },
+              {
+                "interpretation_id": "I_F3_A_01",
+                "text": "意境深远",
+                "kind": "aesthetic",
+                "x": -35,
+                "y": 164,
+                "r": 30,
+                "specificity": 5
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_image_F1",
+          "label": "雕塑与湖水的静谧场景",
+          "type": "image_has_text_missing",
+          "source": [
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305144311-ff0690/crops/S_image_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_AI_01",
+                "text": "静谧和谐",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              },
+              {
+                "id": "I_F1_M_AI_02",
+                "text": "自然融合",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_AI_01",
+                "text": "宁静愉悦",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 3
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 87,
+          "image_height": 120,
+          "layout": {
+            "x": -476,
+            "y": 0,
+            "w": 192,
+            "h": 217,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_AI_01",
+                "text": "静谧和谐",
+                "kind": "meaning",
+                "x": 27,
+                "y": 152,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_M_AI_02",
+                "text": "自然融合",
+                "kind": "meaning",
+                "x": -61,
+                "y": 141,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_E_AI_01",
+                "text": "宁静愉悦",
+                "kind": "emotion",
+                "x": -129,
+                "y": 85,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2179,
+          "h": 1362
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在上海的一个文创园中，用户感受到凉爽和灵性的氛围。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 400,
+              "h": 299,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "氛围与感受",
+            "concept": "环境与情绪",
+            "placement": "left",
+            "segment_ids": [
+              "S_image_F1",
+              "S_text_F2"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "灵性意境",
+            "concept": "深远的意境",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F3"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_image_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F3"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 9109.92
+      }
+    },
+    {
+      "id": "PCM-20260305143659-d97035",
+      "created_at": "2026-03-05T14:42:55.041502",
+      "unit_summary": "在西安寺庙中，猫咪与环境和谐共处。",
+      "context": {
+        "time_anchor": "2025.10",
+        "place_anchor": "西安寺庙"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/8a014d7c_3-1.png",
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/72fbcb3d_3-2.png"
+        ],
+        "text": "我这次去西安的一个寺庙里面，里面有很多很多小猫，还有专门给小猫搭的房子。然后，有很多游客都来喂这些小猫，感觉它们长得也很安详，和寺庙的氛围很融合。",
+        "time_place": "2025.10，西安寺庙里面的小猫",
+        "received_at": "2026-03-05T14:36:59.437510"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "猫咪在寺庙供桌上休息",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_01",
+                "text": "宁静休憩",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_01",
+                "text": "安详舒适",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_E_02",
+                "text": "和谐宁静",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F1_A_01",
+                "text": "静谧构图",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              },
+              {
+                "id": "I_F1_A_02",
+                "text": "色彩和谐",
+                "kind": "aesthetic",
+                "t": 3,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_index": 0,
+          "image_width": 254,
+          "image_height": 297,
+          "layout": {
+            "x": -489,
+            "y": 0,
+            "w": 192,
+            "h": 217,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_01",
+                "text": "宁静休憩",
+                "kind": "meaning",
+                "x": 27,
+                "y": 152,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_E_01",
+                "text": "安详舒适",
+                "kind": "emotion",
+                "x": -129,
+                "y": 85,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_02",
+                "text": "和谐宁静",
+                "kind": "emotion",
+                "x": -154,
+                "y": 0,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_A_01",
+                "text": "静谧构图",
+                "kind": "aesthetic",
+                "x": -61,
+                "y": -141,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_A_02",
+                "text": "色彩和谐",
+                "kind": "aesthetic",
+                "x": 27,
+                "y": -152,
+                "r": 30,
+                "specificity": 2
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "游客喂猫的场景",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "互动交流",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_M_02",
+                "text": "游客关爱",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "温暖愉悦",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F2_A_01",
+                "text": "和谐美感",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 483,
+            "y": 0,
+            "w": 180,
+            "h": 202,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "互动交流",
+                "kind": "meaning",
+                "x": 15,
+                "y": -147,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "游客关爱",
+                "kind": "meaning",
+                "x": 110,
+                "y": -99,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "温暖愉悦",
+                "kind": "emotion",
+                "x": 148,
+                "y": 0,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_A_01",
+                "text": "和谐美感",
+                "kind": "aesthetic",
+                "x": 15,
+                "y": 147,
+                "r": 30,
+                "specificity": 2
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_text_F3",
+          "label": "猫咪专属房子",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_01",
+                "text": "专属空间",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F3_M_02",
+                "text": "猫咪庇护",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_01",
+                "text": "安心温暖",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F3_A_01",
+                "text": "温馨设计",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 0,
+            "y": 510,
+            "w": 180,
+            "h": 202,
+            "group_id": "G3",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_01",
+                "text": "专属空间",
+                "kind": "meaning",
+                "x": 158,
+                "y": 17,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F3_M_02",
+                "text": "猫咪庇护",
+                "kind": "meaning",
+                "x": 106,
+                "y": 118,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F3_E_01",
+                "text": "安心温暖",
+                "kind": "emotion",
+                "x": 0,
+                "y": 159,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_A_01",
+                "text": "温馨设计",
+                "kind": "aesthetic",
+                "x": -158,
+                "y": 17,
+                "r": 30,
+                "specificity": 2
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F4",
+          "seg_id": "S_text_F4",
+          "label": "猫咪的安详与寺庙氛围融合",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F4.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F4_M_01",
+                "text": "氛围融合",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F4_M_02",
+                "text": "安详象征",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F4_E_01",
+                "text": "宁静祥和",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F4_A_01",
+                "text": "氛围美感",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 0,
+            "y": -510,
+            "w": 180,
+            "h": 202,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F4_M_01",
+                "text": "氛围融合",
+                "kind": "meaning",
+                "x": -158,
+                "y": -17,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F4_M_02",
+                "text": "安详象征",
+                "kind": "meaning",
+                "x": -106,
+                "y": -118,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F4_E_01",
+                "text": "宁静祥和",
+                "kind": "emotion",
+                "x": 0,
+                "y": -159,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F4_A_01",
+                "text": "氛围美感",
+                "kind": "aesthetic",
+                "x": 158,
+                "y": -17,
+                "r": 30,
+                "specificity": 2
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2493,
+          "h": 1558
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在西安寺庙中，猫咪与环境和谐共处。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 2
+            },
+            {
+              "index": 1,
+              "x": 106,
+              "y": 86,
+              "w": 215,
+              "h": 287,
+              "rotation": 6,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "猫咪与寺庙",
+            "concept": "和谐共处",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1",
+              "S_text_F4"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "游客与猫咪",
+            "concept": "互动与关爱",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2"
+            ]
+          },
+          {
+            "group_id": "G3",
+            "label": "猫咪的空间",
+            "concept": "专属与温暖",
+            "placement": "bottom-left",
+            "segment_ids": [
+              "S_text_F3"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F4"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F3"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 4431.6
+      }
+    },
+    {
+      "id": "PCM-20260305143444-7d4a0e",
+      "created_at": "2026-03-05T14:36:45.905792",
+      "unit_summary": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+      "context": {
+        "time_anchor": "2025.11",
+        "place_anchor": "深圳楼下路边"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/uploads/c3568493_2-1.png"
+        ],
+        "text": "一天我突然发现楼下多了很多《疯狂动物城》的快闪。嗯，其中有一个我印象最深刻的就是这个小老鼠。它也出现在动画片里面，但现场把它搭建出来，观看的感受还是很不一样。",
+        "time_place": "2025.11，深圳楼下路边的疯狂动物城快闪",
+        "received_at": "2026-03-05T14:34:44.238822"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "小老鼠雕塑在快闪活动中",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_01",
+                "text": "动画再现",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_01",
+                "text": "惊喜发现",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_E_02",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 62,
+          "image_height": 91,
+          "layout": {
+            "x": -404,
+            "y": 0,
+            "w": 186,
+            "h": 217,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_01",
+                "text": "动画再现",
+                "kind": "meaning",
+                "x": 26,
+                "y": 149,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_E_01",
+                "text": "惊喜发现",
+                "kind": "emotion",
+                "x": -142,
+                "y": 52,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_02",
+                "text": "怀旧温馨",
+                "kind": "emotion",
+                "x": -142,
+                "y": -52,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_overlap_F2",
+          "label": "疯狂动物城主题快闪",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/crops/S_overlap_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_01",
+                "text": "主题沉浸",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_M_02",
+                "text": "城市活力",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_01",
+                "text": "欢乐氛围",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text",
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_index": 0,
+          "image_width": 195,
+          "image_height": 150,
+          "layout": {
+            "x": 241,
+            "y": -418,
+            "w": 186,
+            "h": 168,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_01",
+                "text": "主题沉浸",
+                "kind": "meaning",
+                "x": -146,
+                "y": -53,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "城市活力",
+                "kind": "meaning",
+                "x": -77,
+                "y": -134,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "欢乐氛围",
+                "kind": "emotion",
+                "x": 27,
+                "y": -153,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_text_F3",
+          "label": "观看现场感受的不同",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143444-7d4a0e/generated/S_text_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_01",
+                "text": "现场体验",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F3_M_02",
+                "text": "视觉冲击",
+                "kind": "meaning",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_01",
+                "text": "新鲜感",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": []
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 251,
+            "y": 435,
+            "w": 180,
+            "h": 202,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_01",
+                "text": "现场体验",
+                "kind": "meaning",
+                "x": 160,
+                "y": -71,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_M_02",
+                "text": "视觉冲击",
+                "kind": "meaning",
+                "x": 166,
+                "y": 54,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_E_01",
+                "text": "新鲜感",
+                "kind": "emotion",
+                "x": 86,
+                "y": 149,
+                "r": 28,
+                "specificity": 4
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2235,
+          "h": 1397
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在深圳楼下的疯狂动物城快闪中，用户对小老鼠雕塑印象深刻。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 262,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "小老鼠雕塑与快闪活动",
+            "concept": "活动体验",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1",
+              "S_overlap_F2"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "观看现场感受",
+            "concept": "情感与视觉",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F3"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_overlap_F2"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F3"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 4215.74
+      }
+    },
+    {
+      "id": "PCM-20260305143025-5f0579",
+      "created_at": "2026-03-05T14:34:27.671333",
+      "unit_summary": "在深圳宠物店观察小狗，感受放松。",
+      "context": {
+        "time_anchor": "2025.11",
+        "place_anchor": "深圳宠物店"
+      },
+      "user_input": {
+        "images": [
+          "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/uploads/373da794_1-1.png"
+        ],
+        "text": "看宠物店里面很多小狗\n我住在深圳的时候，每天都会去深圳楼下的商场吃饭，然后顺便去看一看这个宠物店的小狗小猫放松一下。",
+        "time_place": "2025.11，深圳宠物店",
+        "received_at": "2026-03-05T14:30:25.531164"
+      },
+      "segments": [
+        {
+          "signifier_id": "F1",
+          "seg_id": "S_overlap_F1",
+          "label": "宠物店内观察小狗",
+          "type": "text_image_overlap",
+          "source": [
+            "author_text",
+            "image"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/crops/S_overlap_F1.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F1_M_02",
+                "text": "日常放松",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F1_E_03",
+                "text": "怀念温暖",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F1_A_02",
+                "text": "温馨氛围",
+                "kind": "aesthetic",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F1_A_01",
+                "text": "柔和色调",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "image"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_index": 0,
+          "image_width": 210,
+          "image_height": 191,
+          "layout": {
+            "x": -411,
+            "y": 0,
+            "w": 198,
+            "h": 203,
+            "group_id": "G1",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F1_M_02",
+                "text": "日常放松",
+                "kind": "meaning",
+                "x": -50,
+                "y": 149,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_E_03",
+                "text": "怀念温暖",
+                "kind": "emotion",
+                "x": -152,
+                "y": -39,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F1_A_01",
+                "text": "柔和色调",
+                "kind": "aesthetic",
+                "x": -50,
+                "y": -149,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F1_A_02",
+                "text": "温馨氛围",
+                "kind": "aesthetic",
+                "x": 27,
+                "y": -155,
+                "r": 30,
+                "specificity": 4
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F2",
+          "seg_id": "S_text_F2",
+          "label": "深圳商场日常",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/generated/S_text_F2.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F2_M_02",
+                "text": "生活习惯",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F2_E_02",
+                "text": "怀旧情绪",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F2_E_01",
+                "text": "安定感",
+                "kind": "emotion",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [
+              {
+                "id": "I_F2_S_01",
+                "text": "喧闹声",
+                "kind": "sensory",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": "auditory",
+                "ai_confidence": 2
+              }
+            ],
+            "aesthetic": [
+              {
+                "id": "I_F2_A_01",
+                "text": "现代设计",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 2,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 253,
+            "y": -438,
+            "w": 186,
+            "h": 208,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F2_M_02",
+                "text": "生活习惯",
+                "kind": "meaning",
+                "x": -89,
+                "y": -154,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_E_01",
+                "text": "安定感",
+                "kind": "emotion",
+                "x": 31,
+                "y": -173,
+                "r": 28,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F2_E_02",
+                "text": "怀旧情绪",
+                "kind": "emotion",
+                "x": 136,
+                "y": -114,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F2_S_01",
+                "text": "喧闹声",
+                "kind": "sensory",
+                "x": 176,
+                "y": 0,
+                "r": 28,
+                "specificity": 2
+              },
+              {
+                "interpretation_id": "I_F2_A_01",
+                "text": "现代设计",
+                "kind": "aesthetic",
+                "x": 136,
+                "y": 114,
+                "r": 30,
+                "specificity": 2
+              }
+            ]
+          }
+        },
+        {
+          "signifier_id": "F3",
+          "seg_id": "S_text_F3",
+          "label": "放松时刻",
+          "type": "text_has_image_missing",
+          "source": [
+            "author_text"
+          ],
+          "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143025-5f0579/generated/S_text_F3.png",
+          "interpretations": {
+            "meaning": [
+              {
+                "id": "I_F3_M_01",
+                "text": "心灵休憩",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              },
+              {
+                "id": "I_F3_M_02",
+                "text": "情感调节",
+                "kind": "meaning",
+                "t": 0,
+                "specificity": 3,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "emotion": [
+              {
+                "id": "I_F3_E_02",
+                "text": "怀念宁静",
+                "kind": "emotion",
+                "t": 3,
+                "specificity": 4,
+                "status": "user_provided",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": null
+              }
+            ],
+            "sensory": [],
+            "aesthetic": [
+              {
+                "id": "I_F3_A_01",
+                "text": "简约美感",
+                "kind": "aesthetic",
+                "t": 0,
+                "specificity": 3,
+                "status": "ai_recommended",
+                "source": [
+                  "author_text"
+                ],
+                "modality": null,
+                "ai_confidence": 2
+              }
+            ]
+          },
+          "image_width": 1024,
+          "image_height": 1024,
+          "layout": {
+            "x": 251,
+            "y": 435,
+            "w": 180,
+            "h": 202,
+            "group_id": "G2",
+            "bubbles": [
+              {
+                "interpretation_id": "I_F3_M_01",
+                "text": "心灵休憩",
+                "kind": "meaning",
+                "x": 160,
+                "y": -71,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_M_02",
+                "text": "情感调节",
+                "kind": "meaning",
+                "x": 166,
+                "y": 54,
+                "r": 30,
+                "specificity": 3
+              },
+              {
+                "interpretation_id": "I_F3_E_02",
+                "text": "怀念宁静",
+                "kind": "emotion",
+                "x": -36,
+                "y": 171,
+                "r": 30,
+                "specificity": 4
+              },
+              {
+                "interpretation_id": "I_F3_A_01",
+                "text": "简约美感",
+                "kind": "aesthetic",
+                "x": -141,
+                "y": 103,
+                "r": 30,
+                "specificity": 3
+              }
+            ]
+          }
+        }
+      ],
+      "layout": {
+        "canvas": {
+          "w": 2296,
+          "h": 1435
+        },
+        "main_cluster": {
+          "cx": 0,
+          "cy": 0,
+          "label": "在深圳宠物店观察小狗，感受放松。",
+          "images": [
+            {
+              "index": 0,
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 350,
+              "rotation": 0,
+              "z_index": 1
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group_id": "G1",
+            "label": "宠物店体验",
+            "concept": "观察与放松",
+            "placement": "left",
+            "segment_ids": [
+              "S_overlap_F1"
+            ]
+          },
+          {
+            "group_id": "G2",
+            "label": "日常生活",
+            "concept": "生活习惯与情感",
+            "placement": "right",
+            "segment_ids": [
+              "S_text_F2",
+              "S_text_F3"
+            ]
+          }
+        ],
+        "connections": [
+          {
+            "from": "main",
+            "to": "S_overlap_F1"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F2"
+          },
+          {
+            "from": "main",
+            "to": "S_text_F3"
+          }
+        ],
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "bubble_coords": "relative",
+        "planning_elapsed_ms": 3620.24
+      }
+    }
+  ]
+}

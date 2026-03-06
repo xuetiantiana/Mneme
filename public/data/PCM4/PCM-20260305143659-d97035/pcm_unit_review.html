@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCM UNIT — PCM-20260305143659-d97035</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: #f5f5f0;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ── 顶部信息栏 ── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+}
+.header .meta {
+  font-size: 13px;
+  color: #888;
+}
+.header .summary {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── 画布容器 ── */
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  overflow: auto;
+}
+.canvas {
+  position: relative;
+  background: #fafaf6;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: visible;
+}
+
+/* ── 连接线 ── */
+.connection {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.connection line {
+  stroke: #ccc;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+/* ── 主图群 ── */
+.main-image {
+  position: absolute;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid #fff;
+}
+.main-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #f5f5f0;
+}
+
+/* ── 主图标签 ── */
+.main-label {
+  position: absolute;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* ── Segment 卡片 ── */
+.segment {
+  position: absolute;
+  background: #fff;
+  border: 1.5px solid #e0ddd8;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.segment:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  z-index: 20;
+}
+.segment .seg-img {
+  width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f5f5f0;
+}
+.segment .seg-label {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.segment .seg-type {
+  font-size: 8px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+/* ── Bubble ── */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
+  cursor: default;
+  z-index: 15;
+  transition: transform 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.bubble:hover {
+  transform: scale(1.15);
+  z-index: 30;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+/* ── AOI 裁剪框叠加层 ── */
+.aoi-overlay {
+  position: absolute;
+  border: 2px dashed #ff6b35;
+  background: rgba(255, 107, 53, 0.08);
+  pointer-events: none;
+  z-index: 40;
+  border-radius: 3px;
+}
+.aoi-label {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  font-size: 9px;
+  color: #ff6b35;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.9);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  display: none;
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  max-width: 320px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  pointer-events: none;
+}
+.tooltip.show { display: block; }
+.tooltip h4 { font-size: 14px; margin-bottom: 6px; color: #333; }
+.tooltip .interp-list { list-style: none; padding: 0; }
+.tooltip .interp-list li {
+  padding: 3px 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip .interp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── 底部面板 ── */
+.info-panel {
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.info-panel .info-block {
+  min-width: 200px;
+}
+.info-panel .info-block h3 {
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🧠 PCM-20260305143659-d97035</h1>
+  <div class="summary">在西安寺庙中，猫咪与环境和谐共处。</div>
+  <div class="meta">
+    2025.10 · 西安寺庙
+  </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-wrap">
+  <div class="canvas" id="canvas" style="width:2493px; height:1558px;">
+
+    <!-- SVG 连接线 -->
+    <svg class="connection" width="2493" height="1558" style="position:absolute;top:0;left:0;width:100%;height:100%;">
+      <line x1="1246" y1="779" x2="757" y2="779" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="1246" y1="779" x2="1729" y2="779" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="1246" y1="779" x2="1246" y2="1289" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+      <line x1="1246" y1="779" x2="1246" y2="269" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 4" />
+    </svg>
+
+    <div class="main-image" style="left:1114px; top:604px; width:264px; height:350px; z-index:2; transform:rotate(0deg);">
+      <img src="uploads/8a014d7c_3-1.png" alt="主图 0">
+      <div class="aoi-overlay" style="left:1px; top:47px; width:263px; height:302px;"><span class="aoi-label">S_overlap_F1 (OMDET)</span></div>
+    </div>
+    <div class="main-image" style="left:1245px; top:722px; width:215px; height:287px; z-index:1; transform:rotate(6deg);">
+      <img src="uploads/72fbcb3d_3-2.png" alt="主图 1">
+    </div>
+    <div class="main-label" style="left:1246px; top:972px;">在西安寺庙中，猫咪与环境和谐共处。</div>
+
+    <div class="segment" data-seg-id="S_overlap_F1" style="left:661px; top:671px; width:192px; height:217px; border-color:#e8d8c8;">
+      <img class="seg-img" src="crops/S_overlap_F1.png" alt="猫咪在寺庙供桌上休息" style="height:180px;">
+      <div class="seg-label">猫咪在寺庙供桌上休息</div>
+      <div class="seg-type">text image overlap</div>
+    </div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:754px; top:901px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 宁静休憩 (specificity=3)">宁静休憩</div>
+    <div class="bubble" data-kind="emotion" data-specificity="4" style="left:598px; top:834px; width:60px; height:60px; background:hsl(0, 55%, 68%); font-size:11px;" title="emotion: 安详舒适 (specificity=4)">安详舒适</div>
+    <div class="bubble" data-kind="emotion" data-specificity="3" style="left:573px; top:749px; width:60px; height:60px; background:hsl(0, 55%, 75%); font-size:11px;" title="emotion: 和谐宁静 (specificity=3)">和谐宁静</div>
+    <div class="bubble" data-kind="aesthetic" data-specificity="3" style="left:666px; top:608px; width:60px; height:60px; background:hsl(35, 45%, 75%); font-size:11px;" title="aesthetic: 静谧构图 (specificity=3)">静谧构图</div>
+    <div class="bubble" data-kind="aesthetic" data-specificity="2" style="left:754px; top:597px; width:60px; height:60px; background:hsl(35, 45%, 82%); font-size:11px;" title="aesthetic: 色彩和谐 (specificity=2)">色彩和谐</div>
+    <div class="segment" data-seg-id="S_text_F2" style="left:1639px; top:678px; width:180px; height:202px; border-color:#d8e8c8;">
+      <img class="seg-img" src="generated/S_text_F2.png" alt="游客喂猫的场景" style="height:165px;">
+      <div class="seg-label">游客喂猫的场景</div>
+      <div class="seg-type">text has image missing</div>
+    </div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:1714px; top:602px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 互动交流 (specificity=3)">互动交流</div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:1809px; top:650px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 游客关爱 (specificity=3)">游客关爱</div>
+    <div class="bubble" data-kind="emotion" data-specificity="4" style="left:1847px; top:749px; width:60px; height:60px; background:hsl(0, 55%, 68%); font-size:11px;" title="emotion: 温暖愉悦 (specificity=4)">温暖愉悦</div>
+    <div class="bubble" data-kind="aesthetic" data-specificity="2" style="left:1714px; top:896px; width:60px; height:60px; background:hsl(35, 45%, 82%); font-size:11px;" title="aesthetic: 和谐美感 (specificity=2)">和谐美感</div>
+    <div class="segment" data-seg-id="S_text_F3" style="left:1156px; top:1188px; width:180px; height:202px; border-color:#d8e8c8;">
+      <img class="seg-img" src="generated/S_text_F3.png" alt="猫咪专属房子" style="height:165px;">
+      <div class="seg-label">猫咪专属房子</div>
+      <div class="seg-type">text has image missing</div>
+    </div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:1374px; top:1276px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 专属空间 (specificity=3)">专属空间</div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:1322px; top:1377px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 猫咪庇护 (specificity=3)">猫咪庇护</div>
+    <div class="bubble" data-kind="emotion" data-specificity="4" style="left:1216px; top:1418px; width:60px; height:60px; background:hsl(0, 55%, 68%); font-size:11px;" title="emotion: 安心温暖 (specificity=4)">安心温暖</div>
+    <div class="bubble" data-kind="aesthetic" data-specificity="2" style="left:1058px; top:1276px; width:60px; height:60px; background:hsl(35, 45%, 82%); font-size:11px;" title="aesthetic: 温馨设计 (specificity=2)">温馨设计</div>
+    <div class="segment" data-seg-id="S_text_F4" style="left:1156px; top:168px; width:180px; height:202px; border-color:#d8e8c8;">
+      <img class="seg-img" src="generated/S_text_F4.png" alt="猫咪的安详与寺庙氛围融合" style="height:165px;">
+      <div class="seg-label">猫咪的安详与寺庙氛围融合</div>
+      <div class="seg-type">text has image missing</div>
+    </div>
+    <div class="bubble" data-kind="meaning" data-specificity="4" style="left:1058px; top:222px; width:60px; height:60px; background:hsl(16, 60%, 68%); font-size:11px;" title="meaning: 氛围融合 (specificity=4)">氛围融合</div>
+    <div class="bubble" data-kind="meaning" data-specificity="3" style="left:1110px; top:121px; width:60px; height:60px; background:hsl(16, 60%, 75%); font-size:11px;" title="meaning: 安详象征 (specificity=3)">安详象征</div>
+    <div class="bubble" data-kind="emotion" data-specificity="4" style="left:1216px; top:80px; width:60px; height:60px; background:hsl(0, 55%, 68%); font-size:11px;" title="emotion: 宁静祥和 (specificity=4)">宁静祥和</div>
+    <div class="bubble" data-kind="aesthetic" data-specificity="2" style="left:1374px; top:222px; width:60px; height:60px; background:hsl(35, 45%, 82%); font-size:11px;" title="aesthetic: 氛围美感 (specificity=2)">氛围美感</div>
+
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Info Panel -->
+<div class="info-panel">
+  <div class="info-block">
+    <h3>用户输入</h3>
+    <p>我这次去西安的一个寺庙里面，里面有很多很多小猫，还有专门给小猫搭的房子。然后，有很多游客都来喂这些小猫，感觉它们长得也很安详，和寺庙的氛围很融合。</p>
+    <p style="color:#aaa; margin-top:4px;">2025.10，西安寺庙里面的小猫</p>
+  </div>
+  <div class="info-block">
+    <h3>分组</h3>
+    <p><strong>G1</strong> 猫咪与寺庙 → left [S_overlap_F1, S_text_F4]</p>
+    <p><strong>G2</strong> 游客与猫咪 → right [S_text_F2]</p>
+    <p><strong>G3</strong> 猫咪的空间 → bottom-left [S_text_F3]</p>
+  </div>
+  <div class="info-block">
+    <h3>布局</h3>
+    <p>画布: 2493 × 1558 px</p>
+    <p>规划耗时: 4431.6 ms</p>
+  </div>
+  <div class="info-block">
+    <h3>AOI / 检测</h3>
+    <p>OmDet: 23 个检测 (altar, cat, cushion, dog, mat, person, shoe, table, altar, book, bottle, cake, candle, cat, cushion, desk, dining table, dog, flower, mat, painting, potted plant, table, vase)</p>
+    <p><strong>S_text_F2</strong> AI生成图片 (耗时 43177.24ms)</p>
+    <p><strong>S_text_F3</strong> AI生成图片 (耗时 101347.31ms)</p>
+    <p><strong>S_text_F4</strong> AI生成图片 (耗时 101114.54ms)</p>
+    <p><strong>S_overlap_F1</strong> crop: [1,45]-[254,336] 来源=omdet 匹配=cat(0.93), altar(0.51), table(0.40), mat(0.85), cushion(0.40) 最高分=0.93</p>
+  </div>
+</div>
+
+<!-- Segment Tooltip 交互 -->
+<script>
+const PCM_DATA = {"id": "PCM-20260305143659-d97035", "created_at": "2026-03-05T14:42:55.041502", "unit_summary": "在西安寺庙中，猫咪与环境和谐共处。", "context": {"time_anchor": "2025.10", "place_anchor": "西安寺庙"}, "user_input": {"images": ["http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/8a014d7c_3-1.png", "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/uploads/72fbcb3d_3-2.png"], "text": "我这次去西安的一个寺庙里面，里面有很多很多小猫，还有专门给小猫搭的房子。然后，有很多游客都来喂这些小猫，感觉它们长得也很安详，和寺庙的氛围很融合。", "time_place": "2025.10，西安寺庙里面的小猫", "received_at": "2026-03-05T14:36:59.437510"}, "segments": [{"signifier_id": "F1", "seg_id": "S_overlap_F1", "label": "猫咪在寺庙供桌上休息", "type": "text_image_overlap", "source": ["author_text", "image"], "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/crops/S_overlap_F1.png", "interpretations": {"meaning": [{"id": "I_F1_M_01", "text": "宁静休憩", "kind": "meaning", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F1_E_01", "text": "安详舒适", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}, {"id": "I_F1_E_02", "text": "和谐宁静", "kind": "emotion", "t": 3, "specificity": 3, "status": "user_provided", "source": ["author_text", "image"], "modality": null, "ai_confidence": null}], "sensory": [], "aesthetic": [{"id": "I_F1_A_01", "text": "静谧构图", "kind": "aesthetic", "t": 0, "specificity": 3, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 2}, {"id": "I_F1_A_02", "text": "色彩和谐", "kind": "aesthetic", "t": 3, "specificity": 2, "status": "ai_recommended", "source": ["image"], "modality": null, "ai_confidence": 2}]}, "image_index": 0, "image_width": 254, "image_height": 297, "layout": {"x": -489, "y": 0, "w": 192, "h": 217, "group_id": "G1", "bubbles": [{"interpretation_id": "I_F1_M_01", "text": "宁静休憩", "kind": "meaning", "x": 27, "y": 152, "r": 30, "specificity": 3}, {"interpretation_id": "I_F1_E_01", "text": "安详舒适", "kind": "emotion", "x": -129, "y": 85, "r": 30, "specificity": 4}, {"interpretation_id": "I_F1_E_02", "text": "和谐宁静", "kind": "emotion", "x": -154, "y": 0, "r": 30, "specificity": 3}, {"interpretation_id": "I_F1_A_01", "text": "静谧构图", "kind": "aesthetic", "x": -61, "y": -141, "r": 30, "specificity": 3}, {"interpretation_id": "I_F1_A_02", "text": "色彩和谐", "kind": "aesthetic", "x": 27, "y": -152, "r": 30, "specificity": 2}]}}, {"signifier_id": "F2", "seg_id": "S_text_F2", "label": "游客喂猫的场景", "type": "text_has_image_missing", "source": ["author_text"], "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F2.png", "interpretations": {"meaning": [{"id": "I_F2_M_01", "text": "互动交流", "kind": "meaning", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F2_M_02", "text": "游客关爱", "kind": "meaning", "t": 3, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F2_E_01", "text": "温暖愉悦", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "sensory": [], "aesthetic": [{"id": "I_F2_A_01", "text": "和谐美感", "kind": "aesthetic", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["author_text"], "modality": null, "ai_confidence": 2}]}, "image_width": 1024, "image_height": 1024, "layout": {"x": 483, "y": 0, "w": 180, "h": 202, "group_id": "G2", "bubbles": [{"interpretation_id": "I_F2_M_01", "text": "互动交流", "kind": "meaning", "x": 15, "y": -147, "r": 30, "specificity": 3}, {"interpretation_id": "I_F2_M_02", "text": "游客关爱", "kind": "meaning", "x": 110, "y": -99, "r": 30, "specificity": 3}, {"interpretation_id": "I_F2_E_01", "text": "温暖愉悦", "kind": "emotion", "x": 148, "y": 0, "r": 30, "specificity": 4}, {"interpretation_id": "I_F2_A_01", "text": "和谐美感", "kind": "aesthetic", "x": 15, "y": 147, "r": 30, "specificity": 2}]}}, {"signifier_id": "F3", "seg_id": "S_text_F3", "label": "猫咪专属房子", "type": "text_has_image_missing", "source": ["author_text"], "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F3.png", "interpretations": {"meaning": [{"id": "I_F3_M_01", "text": "专属空间", "kind": "meaning", "t": 0, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F3_M_02", "text": "猫咪庇护", "kind": "meaning", "t": 3, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F3_E_01", "text": "安心温暖", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "sensory": [], "aesthetic": [{"id": "I_F3_A_01", "text": "温馨设计", "kind": "aesthetic", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["author_text"], "modality": null, "ai_confidence": 2}]}, "image_width": 1024, "image_height": 1024, "layout": {"x": 0, "y": 510, "w": 180, "h": 202, "group_id": "G3", "bubbles": [{"interpretation_id": "I_F3_M_01", "text": "专属空间", "kind": "meaning", "x": 158, "y": 17, "r": 30, "specificity": 3}, {"interpretation_id": "I_F3_M_02", "text": "猫咪庇护", "kind": "meaning", "x": 106, "y": 118, "r": 30, "specificity": 3}, {"interpretation_id": "I_F3_E_01", "text": "安心温暖", "kind": "emotion", "x": 0, "y": 159, "r": 30, "specificity": 4}, {"interpretation_id": "I_F3_A_01", "text": "温馨设计", "kind": "aesthetic", "x": -158, "y": 17, "r": 30, "specificity": 2}]}}, {"signifier_id": "F4", "seg_id": "S_text_F4", "label": "猫咪的安详与寺庙氛围融合", "type": "text_has_image_missing", "source": ["author_text"], "image_url": "http://localhost:8000/api/images/data/pcm_units/PCM-20260305143659-d97035/generated/S_text_F4.png", "interpretations": {"meaning": [{"id": "I_F4_M_01", "text": "氛围融合", "kind": "meaning", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}, {"id": "I_F4_M_02", "text": "安详象征", "kind": "meaning", "t": 3, "specificity": 3, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "emotion": [{"id": "I_F4_E_01", "text": "宁静祥和", "kind": "emotion", "t": 0, "specificity": 4, "status": "user_provided", "source": ["author_text"], "modality": null, "ai_confidence": null}], "sensory": [], "aesthetic": [{"id": "I_F4_A_01", "text": "氛围美感", "kind": "aesthetic", "t": 0, "specificity": 2, "status": "ai_recommended", "source": ["author_text"], "modality": null, "ai_confidence": 2}]}, "image_width": 1024, "image_height": 1024, "layout": {"x": 0, "y": -510, "w": 180, "h": 202, "group_id": "G1", "bubbles": [{"interpretation_id": "I_F4_M_01", "text": "氛围融合", "kind": "meaning", "x": -158, "y": -17, "r": 30, "specificity": 4}, {"interpretation_id": "I_F4_M_02", "text": "安详象征", "kind": "meaning", "x": -106, "y": -118, "r": 30, "specificity": 3}, {"interpretation_id": "I_F4_E_01", "text": "宁静祥和", "kind": "emotion", "x": 0, "y": -159, "r": 30, "specificity": 4}, {"interpretation_id": "I_F4_A_01", "text": "氛围美感", "kind": "aesthetic", "x": 158, "y": -17, "r": 30, "specificity": 2}]}}], "layout": {"canvas": {"w": 2493, "h": 1558}, "main_cluster": {"cx": 0, "cy": 0, "label": "在西安寺庙中，猫咪与环境和谐共处。", "images": [{"index": 0, "x": 0, "y": 0, "w": 264, "h": 350, "rotation": 0, "z_index": 2}, {"index": 1, "x": 106, "y": 86, "w": 215, "h": 287, "rotation": 6, "z_index": 1}]}, "groups": [{"group_id": "G1", "label": "猫咪与寺庙", "concept": "和谐共处", "placement": "left", "segment_ids": ["S_overlap_F1", "S_text_F4"]}, {"group_id": "G2", "label": "游客与猫咪", "concept": "互动与关爱", "placement": "right", "segment_ids": ["S_text_F2"]}, {"group_id": "G3", "label": "猫咪的空间", "concept": "专属与温暖", "placement": "bottom-left", "segment_ids": ["S_text_F3"]}], "connections": [{"from": "main", "to": "S_overlap_F1"}, {"from": "main", "to": "S_text_F4"}, {"from": "main", "to": "S_text_F2"}, {"from": "main", "to": "S_text_F3"}], "origin": {"x": 0, "y": 0}, "bubble_coords": "relative", "planning_elapsed_ms": 4431.6}};
+
+const tooltip = document.getElementById('tooltip');
+const kindLabels = { meaning: '含义', emotion: '情感', sensory: '感官', aesthetic: '审美' };
+
+document.querySelectorAll('.segment').forEach(el => {
+  el.addEventListener('mouseenter', (e) => {
+    const segId = el.dataset.segId;
+    const seg = PCM_DATA.segments.find(s => s.seg_id === segId);
+    if (!seg) return;
+
+    let html = `<h4>${seg.label}</h4><ul class="interp-list">`;
+    for (const [kind, items] of Object.entries(seg.interpretations)) {
+      const color = { meaning: '#F2D4CC', emotion: '#F5C6C6', sensory: '#C8D8E8', aesthetic: '#E6DBC8' }[kind] || '#ddd';
+      for (const it of items) {
+        html += `<li><span class="interp-dot" style="background:${color}"></span>${kindLabels[kind] || kind}: ${it.text} <span style="color:#aaa">(s=${it.specificity})</span></li>`;
+      }
+    }
+    html += '</ul>';
+    tooltip.innerHTML = html;
+    tooltip.classList.add('show');
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+  });
+
+  el.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+  });
+});
+</script>
+
+</body>
+</html>
