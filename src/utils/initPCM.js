@@ -8,7 +8,7 @@ import {
 export const getImageProxyUrl = (url) => {
   return url.replace(
     "http://localhost:8000/api/images/data/pcm_units/",
-    "/data/PCM3/"
+    "/data/PCM4/"
   );
 };
 
@@ -371,7 +371,10 @@ export const initSegmentImagesItem = (segment, options = {}) => {
       initBubbles &&
       segment.layout.bubbles &&
       Array.isArray(segment.layout.bubbles)
-        ? initPCMBubbles(segment.layout.bubbles, { offsetX, offsetY })
+        ? initPCMBubbles(segment.layout.bubbles, {
+            offsetX: x + offsetX,
+            offsetY: y + offsetY,
+          })
         : Promise.resolve([]);
 
     Promise.all([imagePromise, bubblePromise])

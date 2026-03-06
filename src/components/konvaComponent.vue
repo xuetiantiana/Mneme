@@ -168,6 +168,13 @@ const konvaData = reactive({
   layer: null,
 });
 
+// 封装画布拖动方法
+const moveStage = (pos: { x: number; y: number }) => {
+  if (!stage) return;
+  stage.x(stage.x() + pos.x);
+  stage.y(stage.y() + pos.y);
+};
+
 onMounted(() => {
   stage = new Konva.Stage({
     container: container.value!,
@@ -203,8 +210,52 @@ onMounted(() => {
   stage.on("dblclick", handleDoubleClick);
   stage.on("wheel", handleWheel);
 
+  // 右键按下切换到 pan 模式，松开恢复
+  let previousTool = "select";
+  let isRightMouseDown = false;
+  let rightMouseDownPos = { x: 0, y: 0 };
+  let rightMouseStartPos = { x: 0, y: 0 };
+
+  stage.on("mousedown", (e) => {
+    if (e.evt.button === 2) {
+      e.evt.preventDefault();
+      isRightMouseDown = true;
+      rightMouseStartPos = stage!.getPointerPosition() || { x: 0, y: 0 };
+      rightMouseDownPos = { ...rightMouseStartPos };
+      previousTool = currentTool.value;
+      setTool("pan");
+    }
+  });
+
+  stage.on("mousemove", (e) => {
+    if (isRightMouseDown && currentTool.value === "pan") {
+      const pos = stage!.getPointerPosition();
+      if (pos) {
+        const dx = pos.x - rightMouseDownPos.x;
+        const dy = pos.y - rightMouseDownPos.y;
+        moveStage({ x: dx, y: dy });
+        rightMouseDownPos = { x: pos.x, y: pos.y };
+      }
+    }
+  });
+
+  stage.on("mouseup", (e) => {
+    if (e.evt.button === 2) {
+      isRightMouseDown = false;
+      setTool("select");
+    }
+  });
+
+  stage.on("mouseleave", () => {
+    if (isRightMouseDown) {
+      isRightMouseDown = false;
+      setTool("select");
+    }
+  });
+
   window.addEventListener("resize", handleResize);
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("contextmenu", (e) => e.preventDefault());
   konvaData.stage = stage;
   konvaData.layer = layer;
 
@@ -392,8 +443,7 @@ const handleMouseMove = (
     const dy = pos.y - panStartPos.y;
 
     // 更新舞台位置，实现画布平移
-    stage!.x(stage!.x() + dx);
-    stage!.y(stage!.y() + dy);
+    moveStage({ x: dx, y: dy });
 
     // 更新起始位置为当前位置
     panStartPos = pos;
@@ -581,15 +631,15 @@ const addNodeSelectStyle = (node: Konva.Node) => {
   }
 
   // 如果是线条，改变颜色
-  if (node instanceof Konva.Line) {
-    if (!node.getAttr("_originalStroke")) {
-      node.setAttr("_originalStroke", node.stroke());
-      node.setAttr("_originalStrokeWidth", node.strokeWidth());
-    }
-    node.setAttr("_originalStroke", node.stroke());
-    node.stroke("#1890ff");
-    node.strokeWidth(node.strokeWidth() + 2);
-  }
+  // if (node instanceof Konva.Line) {
+  //   if (!node.getAttr("_originalStroke")) {
+  //     node.setAttr("_originalStroke", node.stroke());
+  //     node.setAttr("_originalStrokeWidth", node.strokeWidth());
+  //   }
+  //   node.setAttr("_originalStroke", node.stroke());
+  //   node.stroke("#1890ff");
+  //   node.strokeWidth(node.strokeWidth() + 2);
+  // }
 };
 
 // 移除节点的选中样式
@@ -612,10 +662,10 @@ const removeNodeSelectStyle = (node: Konva.Node) => {
   }
 
   // 如果是线条，恢复原始颜色和线宽
-  if (node instanceof Konva.Line) {
-    node.stroke(node.getAttr("_originalStroke") || "#000000");
-    node.strokeWidth(node.getAttr("_originalStrokeWidth") || 5);
-  }
+  // if (node instanceof Konva.Line) {
+  //   node.stroke(node.getAttr("_originalStroke") || "#000000");
+  //   node.strokeWidth(node.getAttr("_originalStrokeWidth") || 5);
+  // }
 };
 
 // 处理文字添加事件
@@ -1281,50 +1331,53 @@ const handleDrop = (e: DragEvent) => {
                   handleNodeClick(evt, node);
                 });
                 layer!.add(node);
-                if (node.className === "Image") {
-                  // 创建从 mainNode 到当前节点的连接线
-                  const connectionLine = createConnection(mainNode, node, {
-                    strokeWidth: 2,
-                    arrow: true,
-                    dashed: true,
-                    onDragMove: (line, source, target) => {
-                      const getNodeCenter = (n) => ({
-                        x: n.x() + ((n.width() || 0) * n.scaleX()) / 2,
-                        y: n.y() + ((n.height() || 0) * n.scaleY()) / 2,
-                      });
-                      const sourcePos = getNodeCenter(source);
-                      const targetPos = getNodeCenter(target);
-                      line.points([
-                        sourcePos.x,
-                        sourcePos.y,
-                        targetPos.x,
-                        targetPos.y,
-                      ]);
-                    },
-                  });
-                  if (connectionLine) {
-                    layer!.add(connectionLine);
-                    connectionLine.moveToBottom();
-                  }
-                }
+                // if (node.className === "Image") {
+                //   // 创建从 mainNode 到当前节点的连接线
+                //   const connectionLine = createConnection(mainNode, node, {
+                //     strokeWidth: 2,
+                //     arrow: true,
+                //     dashed: true,
+                //     onDragMove: (line, source, target) => {
+                //       const getNodeCenter = (n) => {
+                //         const absPos = n.getAbsolutePosition();
+                //         return {
+                //           x: absPos.x + (n.width() * n.scaleX()) / 2,
+                //           y: absPos.y + (n.height() * n.scaleY()) / 2,
+                //         };
+                //       };
+                //       const sourcePos = getNodeCenter(source);
+                //       const targetPos = getNodeCenter(target);
+                //       line.points([
+                //         sourcePos.x,
+                //         sourcePos.y,
+                //         targetPos.x,
+                //         targetPos.y,
+                //       ]);
+                //     },
+                //   });
+                //   if (connectionLine) {
+                //     layer!.add(connectionLine);
+                //     connectionLine.moveToBottom();
+                //   }
+                // }
               });
-              data.segments.forEach((segment, index) => {
-                initPCMBubbles(segment.layout.bubbles, {
-                  offsetX: currentOffsetX,
-                  offsetY: currentOffsetY,
-                })
-                  .then((nodes) => {
-                    nodes.forEach((node) => {
-                      node.on("click tap", (evt) => {
-                        handleNodeClick(evt, node);
-                      });
-                      layer!.add(node);
-                    });
-                  })
-                  .catch((error) => {
-                    console.error("Failed to create PCM nodes:", error);
-                  });
-              });
+              // data.segments.forEach((segment, index) => {
+              //   initPCMBubbles(segment.layout.bubbles, {
+              //     offsetX: currentOffsetX,
+              //     offsetY: currentOffsetY,
+              //   })
+              //     .then((nodes) => {
+              //       nodes.forEach((node) => {
+              //         node.on("click tap", (evt) => {
+              //           handleNodeClick(evt, node);
+              //         });
+              //         layer!.add(node);
+              //       });
+              //     })
+              //     .catch((error) => {
+              //       console.error("Failed to create PCM nodes:", error);
+              //     });
+              // });
             })
             .catch((error) => {
               console.error("Failed to create PCM nodes:", error);

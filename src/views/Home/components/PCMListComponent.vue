@@ -35,12 +35,12 @@
         <!-- <button @click.stop="handleShowCanvas($event, item)">展示PCM canvas</button> -->
         <div class="card-images">
           <img
-            v-for="(img, imgIndex) in item.images"
+            v-for="(img, imgIndex) in item.mainImages"
             :key="imgIndex"
-            :src="img"
+            :src="img.image_url"
             :alt="item.title"
             class="card-image"
-            :style="getImageStyle(imgIndex)"
+            :style="getImageStyle(imgIndex, img.layout)"
           />
         </div>
         <div class="card-footer">
@@ -83,7 +83,7 @@ const memoryItems = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/data/PCM3/response_pcm_list.json");
+    const response = await fetch("/data/PCM4/response_pcm_list.json");
     const data = await response.json();
 
     if (data.units && Array.isArray(data.units)) {
@@ -123,10 +123,10 @@ onMounted(async () => {
   }
 });
 
-const getImageStyle = (index) => {
+const getImageStyle = (index, layout) => {
   const offsets = [
-    { top: 0, left: 0, rotate: -5 },
-    { top: 10, left: 20, rotate: 8 },
+    { top: 0, left: 0, rotate: layout.rotation },
+    { top: 10, left: 20, rotate: layout.rotation || 8 },
   ];
   return {
     top: `${offsets[index].top}px`,
