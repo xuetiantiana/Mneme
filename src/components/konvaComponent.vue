@@ -1146,6 +1146,9 @@ const handleDragOver = (e: DragEvent) => {
 const handleDrop = (e: DragEvent) => {
   e.preventDefault();
 
+  // 切换到选择模式
+  currentTool.value = "select";
+
   // 获取拖拽数据
   const dragDataStr = e.dataTransfer!.getData("dragData");
   if (!dragDataStr) {

@@ -70,6 +70,7 @@ import { ref, onMounted } from "vue";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 import PCMCanvasPopup from "@/components/PCMCanvasPopup.vue";
 import { getImageProxyUrl } from "@/utils/initPCM";
+import { GetPCMList } from "@/service/api";
 
 const selectAll = ref(false);
 const popupVisible = ref(false);
@@ -83,8 +84,9 @@ const memoryItems = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/data/PCM4/response_pcm_list.json");
-    const data = await response.json();
+    const response = await GetPCMList();
+    console.log("response", response);
+    const data = response.data;
 
     if (data.units && Array.isArray(data.units)) {
       memoryItems.value = data.units.map((unit) => {

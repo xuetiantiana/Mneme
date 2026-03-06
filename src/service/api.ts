@@ -6,6 +6,12 @@ const request = createAxios({
   baseURL: "http://20.1.170.90:2233/chat",
 });
 
+export const GetPCMList = (data: any): any => {
+  return request.get(
+    "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/pcm/list"
+  );
+};
+
 export const CreateStory = (data: any): any => {
   //   return request.post("/api/story/create", data);
 

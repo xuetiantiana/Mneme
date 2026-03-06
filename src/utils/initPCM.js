@@ -6,10 +6,15 @@ import {
 } from "./canvasPositionUtils";
 
 export const getImageProxyUrl = (url) => {
-  return url.replace(
-    "http://localhost:8000/api/images/data/pcm_units/",
-    "/data/PCM4/"
-  );
+  if (!url) return "";
+
+  // 如果是 Azure 图片，使用代理
+  if (url.includes("azurewebsites.net")) {
+    const path = url.split("azurewebsites.net")[1];
+    return `/azure${path}`;
+  }
+
+  return url;
 };
 
 // 全局悬浮按钮元素，用于图片 hover 时显示
@@ -353,14 +358,20 @@ export const initSegmentImagesItem = (segment, options = {}) => {
         center: true,
       }
     )
-      .then(([konvaImage, konvaText]) => {
-        konvaImage.rotation(rotation);
-        konvaImage.zIndex(z_index);
-        const images = [konvaImage];
-        if (konvaText) {
-          images.push(konvaText);
+      .then((nodes) => {
+        if (nodes instanceof Konva.Group) {
+          return [nodes];
         }
-        return images;
+        return nodes;
+      })
+      .then((nodes) => {
+        nodes.forEach((node) => {
+          if (node instanceof Konva.Image) {
+            node.rotation(rotation);
+            node.zIndex(z_index);
+          }
+        });
+        return nodes;
       })
       .catch((error) => {
         console.error("Failed to create segment Konva image:", error);
@@ -378,7 +389,8 @@ export const initSegmentImagesItem = (segment, options = {}) => {
         : Promise.resolve([]);
 
     Promise.all([imagePromise, bubblePromise])
-      .then(([images, bubbles]) => {
+      .then(([nodes, bubbles]) => {
+        const images = Array.isArray(nodes) ? nodes : [nodes];
         resolve({ images, bubbles });
       })
       .catch((error) => {

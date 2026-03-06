@@ -7,7 +7,10 @@
     >
 
     <!-- 故事列表弹窗 -->
-    <StoryListDialog v-model="showStoryListDialog" :defaultIndex="currentStoryIndex"></StoryListDialog>
+    <StoryListDialog
+      v-model="showStoryListDialog"
+      :defaultIndex="currentStoryIndex"
+    ></StoryListDialog>
     <!-- left-panel -->
     <div class="left-panel" v-show="showLeft">
       <div class="panel-header">
@@ -34,10 +37,34 @@
 
     <!-- main-panel -->
     <div class="main-panel">
-      <div class="panel-header">
-        <div class="header-left"></div>
-        <span>Wroking memory</span>
-        <div class="header-right"></div>
+      <div class="panel-header" style="justify-content: center">
+        <span>
+          Wroking memory
+          <button class="fullscreen-btn" @click="toggleFullscreen" title="全屏">
+            <svg
+              v-if="!isFullscreen"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="currentColor"
+            >
+              <path
+                d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+              />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="currentColor"
+            >
+              <path
+                d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"
+              />
+            </svg>
+          </button>
+        </span>
       </div>
       <div class="main-content">
         <WorkingMemory
@@ -58,7 +85,10 @@
         </button>
       </div>
       <div class="panel-content">
-        <TopicContainerList ref="topicContainerListRef" @createSuccess="handleCreateSuccess"></TopicContainerList>
+        <TopicContainerList
+          ref="topicContainerListRef"
+          @createSuccess="handleCreateSuccess"
+        ></TopicContainerList>
       </div>
     </div>
     <el-tooltip content="显示 My Story" placement="left">
@@ -75,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import PCMListComponent from "@/views/Home/components/PCMListComponent.vue";
 import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
 import StoryListDialog from "@/views/Home/components/StoryListDialog.vue";
@@ -84,6 +114,18 @@ import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 
 const showLeft = ref(true);
 const showRight = ref(true);
+
+const isFullscreen = computed(() => !showLeft.value && !showRight.value);
+
+const toggleFullscreen = () => {
+  if (isFullscreen.value) {
+    showLeft.value = true;
+    showRight.value = true;
+  } else {
+    showLeft.value = false;
+    showRight.value = false;
+  }
+};
 const showStoryListDialog = ref(false);
 const currentStoryIndex = ref(0);
 const topicContainerListRef = ref(null);
@@ -157,7 +199,7 @@ const handleRenderNodesToTopic = (nodesData) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 0 0.5rem;
+    position: relative;
     padding: 0.8rem;
     border-bottom: 1px solid #e2e2e2;
 
@@ -176,9 +218,22 @@ const handleRenderNodesToTopic = (nodesData) => {
       border: none;
       font-size: 24px;
       cursor: pointer;
-      padding: 0 8px;
       color: #666;
+      padding: 4px;
+      &:hover {
+        color: #333;
+      }
+    }
 
+    .fullscreen-btn {
+      display: inline-flex;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      padding: 0 4px;
+      vertical-align: middle;
+      margin-left: 8px;
       &:hover {
         color: #333;
       }
@@ -207,6 +262,7 @@ const handleRenderNodesToTopic = (nodesData) => {
     cursor: pointer;
     font-size: 18px;
     color: #666;
+    z-index: 10;
 
     &:hover {
       background-color: #f0f0f0;

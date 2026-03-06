@@ -83,6 +83,7 @@ export const createImageAndTextNodes = (
     padding = 5,
     cornerRadius = 4,
     center = false,
+    group: isGroup = true,
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -115,8 +116,8 @@ export const createImageAndTextNodes = (
 
         const konvaImage = new Konva.Image({
           image: imgObj,
-          x: imageX,
-          y: imageY,
+          x: isGroup ? 0 : imageX,
+          y: isGroup ? 0 : imageY,
           width,
           height,
           draggable: true,
@@ -128,8 +129,8 @@ export const createImageAndTextNodes = (
           createTextNode(
             { text, id },
             {
-              startX: imageX,
-              startY: imageY + height + titleGap,
+              startX: isGroup ? 0 : imageX,
+              startY: isGroup ? height + titleGap : imageY + height + titleGap,
               fontSize,
               fontFamily,
               fill,
@@ -141,13 +142,39 @@ export const createImageAndTextNodes = (
             }
           )
             .then((konvaText) => {
-              resolve([konvaImage, konvaText]);
+              if (isGroup) {
+                const groupNode = new Konva.Group({
+                  x: imageX,
+                  y: imageY,
+                  draggable: true,
+                  id: id || "",
+                });
+                konvaImage.draggable(false);
+                konvaText.draggable(false);
+                groupNode.add(konvaImage);
+                groupNode.add(konvaText);
+                resolve(groupNode);
+              } else {
+                resolve([konvaImage, konvaText]);
+              }
             })
             .catch((error) => {
               reject(error);
             });
         } else {
-          resolve([konvaImage]);
+          if (isGroup) {
+            const groupNode = new Konva.Group({
+              x: imageX,
+              y: imageY,
+              draggable: true,
+              id: id || "",
+            });
+            konvaImage.draggable(false);
+            groupNode.add(konvaImage);
+            resolve([groupNode]);
+          } else {
+            resolve([konvaImage]);
+          }
         }
       } catch (error) {
         reject(error);
@@ -399,7 +426,7 @@ export const createInterpretationTextNodes = (
  */
 export const createConnectionLine = (sourceNode, targetNode, options = {}) => {
   const {
-    stroke = '#ccc',
+    stroke = "#ccc",
     strokeWidth = 2,
     arrow = true,
     pointerLength = 10,
@@ -433,18 +460,22 @@ export const createConnectionLine = (sourceNode, targetNode, options = {}) => {
     pointerAtEnding: true,
     fill: stroke,
     dash: dashed ? [10, 5] : [],
-    lineCap: 'round',
-    lineJoin: 'round',
+    lineCap: "round",
+    lineJoin: "round",
   });
 
   // 存储源节点和目标节点的引用，用于后续更新
-  connectionLine.setAttr('sourceNode', sourceNode);
-  connectionLine.setAttr('targetNode', targetNode);
+  connectionLine.setAttr("sourceNode", sourceNode);
+  connectionLine.setAttr("targetNode", targetNode);
 
   // 监听节点拖拽事件，更新连线位置
   if (options.onDragMove) {
-    sourceNode.on('dragmove', () => options.onDragMove(connectionLine, sourceNode, targetNode));
-    targetNode.on('dragmove', () => options.onDragMove(connectionLine, sourceNode, targetNode));
+    sourceNode.on("dragmove", () =>
+      options.onDragMove(connectionLine, sourceNode, targetNode)
+    );
+    targetNode.on("dragmove", () =>
+      options.onDragMove(connectionLine, sourceNode, targetNode)
+    );
   }
 
   return connectionLine;
@@ -461,14 +492,17 @@ export const createConnection = (sourceNode, targetNode, options = {}) => {
   return createConnectionLine(sourceNode, targetNode, options);
 };
 
-
 /**
  * 更新连线位置（当节点拖拽时调用）
  * @param {Object} connectionLine - 连线对象
  * @param {Object} sourceNode - 源节点
  * @param {Object} targetNode - 目标节点
  */
-export const updateConnectionPosition = (connectionLine, sourceNode, targetNode) => {
+export const updateConnectionPosition = (
+  connectionLine,
+  sourceNode,
+  targetNode
+) => {
   const getNodeCenter = (node) => {
     const x = node.x();
     const y = node.y();
