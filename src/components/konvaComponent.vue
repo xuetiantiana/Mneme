@@ -599,73 +599,54 @@ const handleNodeClick = (
   transformer!.moveToTop();
 };
 
-// 为节点添加选中样式
-const addNodeSelectStyle = (node: Konva.Node) => {
-  // Konva.Group 不支持阴影样式，跳过
-  if (node instanceof Konva.Group) {
+// 封装节点阴影设置方法
+const setNodeShadow = (node: Konva.Node, isSelected: boolean) => {
+  // 连线（Arrow/Line）不处理
+  if (node instanceof Konva.Arrow || node instanceof Konva.Line) {
     return;
   }
 
-  // 保存节点的原始样式
-  if (!node.getAttr("_originalShadowColor")) {
-    node.setAttr("_originalShadowColor", node.shadowColor());
-    node.setAttr("_originalShadowBlur", node.shadowBlur());
-    node.setAttr("_originalShadowOffset", node.shadowOffset());
-    node.setAttr("_originalShadowOpacity", node.shadowOpacity());
-  }
-
-  // 添加选中样式：蓝色阴影
-  // node.shadowColor('red')
-  // node.shadowBlur(15)
-  // node.shadowOffset({ x: 0, y: 0 })
-  // node.shadowOpacity(0.6)
-
-  // 如果是文字，添加边框效果
-  if (node instanceof Konva.Text) {
-    if (!node.getAttr("_originalStroke")) {
-      node.setAttr("_originalStroke", node.stroke());
-      node.setAttr("_originalStrokeWidth", node.strokeWidth());
+  const applyShadow = (n: Konva.Node) => {
+    if (isSelected) {
+      if (!n.getAttr("_originalShadowColor")) {
+        n.setAttr("_originalShadowColor", n.shadowColor());
+        n.setAttr("_originalShadowBlur", n.shadowBlur());
+        n.setAttr("_originalShadowOffset", n.shadowOffset());
+        n.setAttr("_originalShadowOpacity", n.shadowOpacity());
+      }
+      n.shadowColor("#1890ff");
+      n.shadowBlur(10);
+      n.shadowOffset({ x: 0, y: 0 });
+      n.shadowOpacity(0.3);
+    } else {
+      n.shadowColor(n.getAttr("_originalShadowColor") || null);
+      n.shadowBlur(n.getAttr("_originalShadowBlur") || 0);
+      n.shadowOffset(n.getAttr("_originalShadowOffset") || { x: 0, y: 0 });
+      n.shadowOpacity(n.getAttr("_originalShadowOpacity") || 0);
     }
-    // node.stroke('#1890ff')
-    // node.strokeWidth(2)
+  };
+
+  if (node instanceof Konva.Group) {
+    node.getChildren().forEach((child) => {
+      if (child instanceof Konva.Arrow || child instanceof Konva.Line) {
+        return;
+      }
+      applyShadow(child);
+    });
+    return;
   }
 
-  // 如果是线条，改变颜色
-  // if (node instanceof Konva.Line) {
-  //   if (!node.getAttr("_originalStroke")) {
-  //     node.setAttr("_originalStroke", node.stroke());
-  //     node.setAttr("_originalStrokeWidth", node.strokeWidth());
-  //   }
-  //   node.setAttr("_originalStroke", node.stroke());
-  //   node.stroke("#1890ff");
-  //   node.strokeWidth(node.strokeWidth() + 2);
-  // }
+  applyShadow(node);
+};
+
+// 为节点添加选中样式
+const addNodeSelectStyle = (node: Konva.Node) => {
+  setNodeShadow(node, true);
 };
 
 // 移除节点的选中样式
 const removeNodeSelectStyle = (node: Konva.Node) => {
-  // Konva.Group 不支持阴影样式，跳过
-  if (node instanceof Konva.Group) {
-    return;
-  }
-
-  // 恢复节点的原始样式
-  node.shadowColor(node.getAttr("_originalShadowColor") || "black");
-  node.shadowBlur(node.getAttr("_originalShadowBlur") || 0);
-  node.shadowOffset(node.getAttr("_originalShadowOffset") || { x: 0, y: 0 });
-  node.shadowOpacity(node.getAttr("_originalShadowOpacity") || 0);
-
-  // 如果是文字，移除边框效果
-  if (node instanceof Konva.Text) {
-    node.stroke(node.getAttr("_originalStroke") || "transparent");
-    node.strokeWidth(node.getAttr("_originalStrokeWidth") || 0);
-  }
-
-  // 如果是线条，恢复原始颜色和线宽
-  // if (node instanceof Konva.Line) {
-  //   node.stroke(node.getAttr("_originalStroke") || "#000000");
-  //   node.strokeWidth(node.getAttr("_originalStrokeWidth") || 5);
-  // }
+  setNodeShadow(node, false);
 };
 
 // 处理文字添加事件
@@ -1459,6 +1440,8 @@ const renderNodes = (nodesData) => {
       id: node.id() ? `${node.id()}_clone` : `clone_${index}`,
     });
     clonedNode.off();
+    // 移除选中阴影
+    removeNodeSelectStyle(clonedNode);
     clonedNode.on("click tap", (evt) => handleNodeClick(evt, clonedNode));
     clonedNodes.push(clonedNode);
   });
