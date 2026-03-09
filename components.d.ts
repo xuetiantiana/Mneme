@@ -7,29 +7,18 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Canvas3: typeof import('./src/components/canvas3.vue')['default']
     CanvasComponent: typeof import('./src/components/canvasComponent.vue')['default']
-    ChatBox: typeof import('./src/components/ChatBox.vue')['default']
-    ChatIMessageList: typeof import('./src/components/ChatIMessageList.vue')['default']
-    ChatInput: typeof import('./src/components/ChatInput.vue')['default']
-    ChatSidebar: typeof import('./src/components/ChatSidebar.vue')['default']
-    copy: typeof import('./src/components/canvasComponent copy.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
-    ElDropdown: typeof import('element-plus/es')['ElDropdown']
-    ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
-    ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
+    ElDialog: typeof import('element-plus/es')['ElDialog']
     ElIcon: typeof import('element-plus/es')['ElIcon']
-    ElImage: typeof import('element-plus/es')['ElImage']
     ElInput: typeof import('element-plus/es')['ElInput']
+    ElPopover: typeof import('element-plus/es')['ElPopover']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
-    ElUpload: typeof import('element-plus/es')['ElUpload']
-    HierarchicalCanvasComponent: typeof import('./src/components/hierarchicalCanvasComponent.vue')['default']
-    PreviewDocument: typeof import('./src/components/PreviewDocument.vue')['default']
+    KonvaComponent: typeof import('./src/components/konvaComponent.vue')['default']
+    PCMCanvasPopup: typeof import('./src/components/PCMCanvasPopup.vue')['default']
+    PCMDetailPopup: typeof import('./src/components/PCMDetailPopup.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SvgIcon: typeof import('./src/components/svgIcon.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

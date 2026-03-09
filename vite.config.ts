@@ -49,6 +49,12 @@ export default defineConfig({
         secure: false,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/image-proxy/, "")
+      },
+      "/azure": {
+        target: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net",
+        secure: false,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/azure/, "")
       }
     }
   },

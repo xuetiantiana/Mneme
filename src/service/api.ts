@@ -3,7 +3,7 @@ import { createAxios } from "./axios";
 
 //其他配置
 const request = createAxios({
-  baseURL: "http://20.1.170.90:2233/chat",
+  baseURL: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net",
 });
 
 export const GetPCMList = (data: any): any => {
@@ -13,7 +13,7 @@ export const GetPCMList = (data: any): any => {
 };
 
 export const CreateStory = (data: any): any => {
-  //   return request.post("/api/story/create", data);
+    return request.post("/api/story/create", data);
 
   const response = {
     success: true,

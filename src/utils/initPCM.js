@@ -14,6 +14,12 @@ export const getImageProxyUrl = (url) => {
     return `/azure${path}`;
   }
 
+  // 如果是 trae-api-cn.mchost.guru 图片，使用代理
+  if (url.includes("trae-api-cn.mchost.guru")) {
+    const path = url.split("trae-api-cn.mchost.guru")[1];
+    return `/image-proxy${path}`;
+  }
+
   return url;
 };
 
