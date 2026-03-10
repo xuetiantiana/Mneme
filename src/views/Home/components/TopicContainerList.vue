@@ -178,7 +178,7 @@ const handleGenerate = async () => {
           }
 
           const canvasData = konvaRef.exportElementInfo();
-
+          console.log("$$$$canvasData", canvasData);
           if (
             !canvasData ||
             (Array.isArray(canvasData) && canvasData.length === 0)
@@ -190,11 +190,16 @@ const handleGenerate = async () => {
             return;
           }
 
+          // 将 JSON 字符串数组转换为解析后的对象数组
+          const parsedCanvasData = canvasData.map((jsonStr) =>
+            JSON.parse(jsonStr)
+          );
+
           result.push({
             screenshot: imageData,
             title: title,
             description: description,
-            // canvas_data: canvasData,
+            canvas_data: parsedCanvasData,
           });
         } catch (error) {
           console.error(`导出 Canvas ${i} 图片失败:`, error);

@@ -23,106 +23,120 @@ export const getImageProxyUrl = (url) => {
   return url;
 };
 
-// 全局悬浮按钮元素，用于图片 hover 时显示
-let hoverButton = null;
+// 全局 Konva 按钮组，用于图片 hover 时显示
+let hoverButtonGroup = null;
 
 /**
- * 创建悬浮操作按钮
- * 如果按钮已存在则直接返回，避免重复创建
- * @returns {HTMLButtonElement} 返回创建的按钮元素
+ * 创建 Konva 悬浮操作按钮
+ * @param {Konva.Layer} layer - 所在的图层
+ * @returns {Konva.Group} 返回创建的按钮组
  */
-const createHoverButton = () => {
-  // 如果按钮已存在，直接返回已有按钮
-  if (hoverButton) return hoverButton;
+const createHoverButtonGroup = (layer) => {
+  // 如果已存在且未被销毁，则直接返回
+  if (hoverButtonGroup && hoverButtonGroup.getStage()) return hoverButtonGroup;
 
-  // 创建按钮元素
-  const button = document.createElement("button");
-  button.textContent = "操作";
-  // 设置按钮样式：固定定位、蓝色背景、圆角等
-  button.style.cssText = `
-    position: fixed;
-    z-index: 9999;
-    padding: 6px 12px;
-    background: #1890ff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    display: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: background 0.2s;
-  `;
-  // 鼠标进入按钮时高亮显示
-  button.addEventListener("mouseenter", () => {
-    button.style.background = "#40a9ff";
+  const group = new Konva.Group({
+    visible: false,
+    listening: true,
+    name: "hover-action-btn",
   });
-  // 鼠标离开按钮时恢复默认颜色
-  button.addEventListener("mouseleave", () => {
-    button.style.background = "#1890ff";
+
+  const rect = new Konva.Rect({
+    width: 60,
+    height: 28,
+    fill: "#1890ff",
+    cornerRadius: 4,
+    shadowColor: "black",
+    shadowBlur: 10,
+    shadowOffset: { x: 0, y: 2 },
+    shadowOpacity: 0.2,
   });
-  // 将按钮添加到 body 中，使用 fixed 定位脱离画布
-  document.body.appendChild(button);
-  hoverButton = button;
-  return button;
+
+  const text = new Konva.Text({
+    text: "操作",
+    fontSize: 12,
+    fill: "white",
+    width: 60,
+    height: 28,
+    align: "center",
+    verticalAlign: "middle",
+  });
+
+  group.add(rect);
+  group.add(text);
+
+  // 悬浮效果
+  group.on("mouseenter", () => {
+    document.body.style.cursor = "pointer";
+    rect.fill("#40a9ff");
+    layer.batchDraw();
+  });
+
+  group.on("mouseleave", () => {
+    document.body.style.cursor = "default";
+    rect.fill("#1890ff");
+    layer.batchDraw();
+  });
+
+  layer.add(group);
+  hoverButtonGroup = group;
+  return group;
 };
 
 /**
  * 显示悬浮按钮在图片内部的右上角
- * @param {Konva.Stage} stage - Konva 舞台实例，用于获取容器位置
+ * @param {Konva.Layer} layer - 当前图层
  * @param {Konva.Image} konvaImage - 当前 hover 的图片节点
  * @param {Object} data - initMainImages 传入的原始数据，点击按钮时传递给回调
  * @param {Function} onButtonClick - 点击按钮时的回调函数，接收 (data, node) 两个参数
  */
-const showHoverButton = (stage, konvaImage, data, onButtonClick) => {
+const showHoverButtonGroup = (layer, konvaImage, data, onButtonClick) => {
   // 检查图片是否已扩展，已扩展则不显示按钮
   const isExpanded = konvaImage.getAttr("isExpanded");
   if (isExpanded) {
-    hideHoverButton();
+    hideHoverButtonGroup();
     return;
   }
 
-  const button = createHoverButton();
-  // 获取画布容器在视口中的位置信息
-  const containerRect = stage.container().getBoundingClientRect();
+  const buttonGroup = createHoverButtonGroup(layer);
 
-  // 获取图片的绝对位置（考虑缩放、平移等变换）
-  const absPos = konvaImage.getAbsolutePosition();
-  const imageWidth = konvaImage.width();
-
-  // 获取按钮的实际尺寸
-  const buttonWidth = button.offsetWidth || 40;
-  const buttonHeight = button.offsetHeight || 28;
+  // 获取图片的绝对位置和尺寸
+  const imageX = konvaImage.x();
+  const imageY = konvaImage.y();
+  const imageWidth = konvaImage.width() * konvaImage.scaleX();
 
   // 计算按钮位置：图片内部的右上角，向内偏移 8px
-  const buttonX = containerRect.left + absPos.x + imageWidth - buttonWidth - 8;
-  const buttonY = containerRect.top + absPos.y + 8;
+  const buttonX = imageX + imageWidth - 60 - 8;
+  const buttonY = imageY + 8;
 
-  // 设置按钮位置并显示
-  button.style.left = `${buttonX}px`;
-  button.style.top = `${buttonY}px`;
-  button.style.display = "block";
+  buttonGroup.position({ x: buttonX, y: buttonY });
+  buttonGroup.visible(true);
+  buttonGroup.moveToTop();
+  layer.batchDraw();
 
-  // 绑定点击事件，点击时调用传入的回调函数并传递 data 和 node 参数
-  button.onclick = () => {
+  // 绑定点击事件
+  buttonGroup.off("click tap"); // 先解绑旧事件
+  buttonGroup.on("click tap", (e) => {
+    e.cancelBubble = true; // 阻止冒泡
     if (onButtonClick && typeof onButtonClick === "function") {
       // 标记图片为已扩展
       konvaImage.setAttr("isExpanded", true);
       onButtonClick(data, konvaImage);
-      // 点击后隐藏按钮
-      hideHoverButton();
+      // 点击后删除按钮
+      hideHoverButtonGroup();
     }
-  };
+  });
 };
 
 /**
- * 隐藏悬浮按钮
- * 清除按钮的点击事件处理器
+ * 删除悬浮按钮
  */
-const hideHoverButton = () => {
-  if (hoverButton) {
-    hoverButton.style.display = "none";
-    hoverButton.onclick = null;
+const hideHoverButtonGroup = () => {
+  if (hoverButtonGroup) {
+    const layer = hoverButtonGroup.getLayer();
+    hoverButtonGroup.destroy();
+    hoverButtonGroup = null;
+    if (layer) layer.batchDraw();
   }
 };
 
@@ -198,23 +212,63 @@ export const initMainImages = (data, options = {}) => {
 
               // 如果传入了 stage 实例，为图片添加鼠标交互事件
               if (stage) {
+                // 获取 stage 所在的 layer，用于添加按钮
+                const layer = stage.getLayers()[0]; // 假设只有一个主要图层，或者可以传入 layer
+
                 // 鼠标进入图片时，显示悬浮操作按钮
                 konvaImage.on("mouseenter", () => {
-                  showHoverButton(stage, konvaImage, data, onButtonClick);
+                  if (layer) {
+                    showHoverButtonGroup(
+                      layer,
+                      konvaImage,
+                      data,
+                      onButtonClick
+                    );
+                  }
                 });
 
                 // 鼠标离开图片时，如果目标不是按钮本身，则隐藏按钮
                 konvaImage.on("mouseleave", (e) => {
-                  const relatedTarget = e.evt.relatedTarget;
-                  if (relatedTarget !== hoverButton) {
-                    hideHoverButton();
+                  const pointerPos = stage.getPointerPosition();
+                  if (!pointerPos) return;
+
+                  // 获取鼠标位置下的所有形状
+                  const shapes = stage.getIntersection(pointerPos);
+
+                  // 检查是否在按钮组内
+                  let isOverButton = false;
+                  if (hoverButtonGroup && hoverButtonGroup.visible()) {
+                    // 简单判断：如果鼠标还在图片内或者在按钮范围内
+                    // 但这里 mouseleave 触发说明离开了图片
+                    // 我们需要检查是否进入了按钮
+                    // 由于 Konva 的事件机制，直接检查 pointerPos 是否在按钮 rect 内可能更准确
+                    const btnRect = hoverButtonGroup.getClientRect();
+                    if (
+                      pointerPos.x >= btnRect.x &&
+                      pointerPos.x <= btnRect.x + btnRect.width &&
+                      pointerPos.y >= btnRect.y &&
+                      pointerPos.y <= btnRect.y + btnRect.height
+                    ) {
+                      isOverButton = true;
+                    }
+                  }
+
+                  if (!isOverButton) {
+                    hideHoverButtonGroup();
                   }
                 });
 
                 // 图片拖动时，如果按钮正在显示，则更新按钮位置跟随图片
                 konvaImage.on("dragmove", () => {
-                  if (hoverButton && hoverButton.style.display === "block") {
-                    showHoverButton(stage, konvaImage, data, onButtonClick);
+                  if (hoverButtonGroup && hoverButtonGroup.visible()) {
+                    if (layer) {
+                      showHoverButtonGroup(
+                        layer,
+                        konvaImage,
+                        data,
+                        onButtonClick
+                      );
+                    }
                   }
                 });
               }

@@ -100,7 +100,9 @@
                 <button class="clear-btn" @click="clearCanvas">清除画布</button>
             </div> -->
     </div>
-    <div style="width: 100%; min-height: 200px; height: 100%">
+    <div
+      style="width: 100%; min-height: 200px; height: 100%; position: relative"
+    >
       <div
         ref="container"
         :class="['canvas-container', { panning: currentTool === 'pan' }]"
@@ -108,6 +110,29 @@
         @dragover="handleDragOver"
         @drop="handleDrop"
       ></div>
+
+      <!-- 自定义滚动条 -->
+      <div class="scrollbar-h" v-show="scrollbars.h.visible">
+        <div
+          class="scrollbar-thumb-h"
+          :style="{
+            width: scrollbars.h.thumbWidth + 'px',
+            transform: `translateX(${scrollbars.h.thumbPos}px)`,
+          }"
+          @mousedown.stop="handleScrollbarDragStart('h', $event)"
+        ></div>
+      </div>
+
+      <div class="scrollbar-v" v-show="scrollbars.v.visible">
+        <div
+          class="scrollbar-thumb-v"
+          :style="{
+            height: scrollbars.v.thumbHeight + 'px',
+            transform: `translateY(${scrollbars.v.thumbPos}px)`,
+          }"
+          @mousedown.stop="handleScrollbarDragStart('v', $event)"
+        ></div>
+      </div>
     </div>
   </div>
 </template>
@@ -130,7 +155,7 @@ import {
   initPCMBubbles,
 } from "@/utils/initPCM";
 
-const emit = defineEmits(["sendSelectedNodes"]);
+const emit = defineEmits(["sendSelectedNodes", "ai-ring-click"]);
 
 // DOM 元素引用
 const container = ref<HTMLDivElement>(); // 画布容器
@@ -152,6 +177,21 @@ let selectionStartPos = { x: 0, y: 0 }; // 框选起始位置
 let panStartPos = { x: 0, y: 0 }; // 平移起始位置
 let lastLine: Konva.Line | null = null; // 当前正在绘制的线条
 
+// AI 辅助功能状态变量
+let aiRingSlices: Konva.Group[] = []; // 存储环形分区的四个扇形（包含文字）
+let aiGuideLine: Konva.Line | null = null; // 存储中心到鼠标的引导线
+let aiAssistState: {
+  centerX: number;
+  centerY: number;
+  innerRadius: number;
+  outerRadius: number;
+  target?: Konva.Node; // 关联的节点
+  isLocked?: boolean; // 是否锁定交互（点击后）
+} | null = null; // 存储 AI 辅助环的几何状态信息
+
+// 环形分区标签配置
+const aiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
+
 // 工具和配置选项
 const currentTool = ref<
   "select" | "brush" | "eraser" | "text" | "image" | "pan"
@@ -168,11 +208,876 @@ const konvaData = reactive({
   layer: null,
 });
 
+// 滚动条状态
+const scrollbars = reactive({
+  h: {
+    visible: false,
+    thumbWidth: 0,
+    thumbPos: 0,
+    trackSize: 0,
+    contentSize: 0,
+    viewSize: 0,
+  },
+  v: {
+    visible: false,
+    thumbHeight: 0,
+    thumbPos: 0,
+    trackSize: 0,
+    contentSize: 0,
+    viewSize: 0,
+  },
+});
+
+// 更新滚动条状态
+const updateScrollbars = () => {
+  if (!stage || !layer) return;
+  // 强制重新计算布局
+  layer.batchDraw();
+
+  const padding = 301; // 滚动条边缘留白
+  const box = layer.getClientRect({ skipTransform: true });
+
+  // 应用 padding 到 box
+  box.x -= padding;
+  box.y -= padding;
+  box.width += padding * 2;
+  box.height += padding * 2;
+
+  // console.log("updateScrollbars box:", box);
+
+  const viewRect = {
+    width: stage.width() / stage.scaleX(),
+    height: stage.height() / stage.scaleY(),
+    x: -stage.x() / stage.scaleX(),
+    y: -stage.y() / stage.scaleY(),
+  };
+
+  // 如果 box 是空的（没有任何元素），或者 box 的大小为 0，则不需要滚动条
+  if (
+    (box.width === 0 && box.height === 0) ||
+    !isFinite(box.width) ||
+    !isFinite(box.height)
+  ) {
+    scrollbars.h.visible = false;
+    scrollbars.v.visible = false;
+    return;
+  }
+
+  // 计算内容区域（包含可视区域和实际内容）
+  const contentRect = {
+    x: Math.min(box.x, viewRect.x),
+    y: Math.min(box.y, viewRect.y),
+    width:
+      Math.max(box.x + box.width, viewRect.x + viewRect.width) -
+      Math.min(box.x, viewRect.x),
+    height:
+      Math.max(box.y + box.height, viewRect.y + viewRect.height) -
+      Math.min(box.y, viewRect.y),
+  };
+
+  // 水平滚动条
+  const hTrackSize = stage.width() - 20; // 留出一点边距
+  const hRatio = viewRect.width / contentRect.width;
+
+  // 只有当内容比视口宽，且比例小于 0.99（避免浮点数误差）时才显示
+  if (hRatio < 0.99) {
+    scrollbars.h.visible = true;
+    scrollbars.h.trackSize = hTrackSize;
+    scrollbars.h.contentSize = contentRect.width;
+    scrollbars.h.viewSize = viewRect.width;
+
+    // 滑块宽度，最小 20px
+    scrollbars.h.thumbWidth = Math.max(hTrackSize * hRatio, 20);
+
+    // 滑块位置
+    const hProgress =
+      (viewRect.x - contentRect.x) / (contentRect.width - viewRect.width);
+    const hMaxPos = hTrackSize - scrollbars.h.thumbWidth;
+    scrollbars.h.thumbPos = Math.min(Math.max(hMaxPos * hProgress, 0), hMaxPos);
+  } else {
+    scrollbars.h.visible = false;
+  }
+
+  // 垂直滚动条
+  const vTrackSize = stage.height() - 20;
+  const vRatio = viewRect.height / contentRect.height;
+
+  if (vRatio < 0.99) {
+    scrollbars.v.visible = true;
+    scrollbars.v.trackSize = vTrackSize;
+    scrollbars.v.contentSize = contentRect.height;
+    scrollbars.v.viewSize = viewRect.height;
+
+    scrollbars.v.thumbHeight = Math.max(vTrackSize * vRatio, 20);
+
+    const vProgress =
+      (viewRect.y - contentRect.y) / (contentRect.height - viewRect.height);
+    const vMaxPos = vTrackSize - scrollbars.v.thumbHeight;
+    scrollbars.v.thumbPos = Math.min(Math.max(vMaxPos * vProgress, 0), vMaxPos);
+  } else {
+    scrollbars.v.visible = false;
+  }
+};
+
+// 处理滚动条拖拽
+let isScrollbarDragging = false;
+let scrollbarDragStartPos = { x: 0, y: 0 };
+let scrollbarDragStartThumbPos = 0;
+let activeScrollbar = "";
+
+const handleScrollbarDragStart = (type: "h" | "v", e: MouseEvent) => {
+  isScrollbarDragging = true;
+  activeScrollbar = type;
+  scrollbarDragStartPos = { x: e.clientX, y: e.clientY };
+  scrollbarDragStartThumbPos =
+    type === "h" ? scrollbars.h.thumbPos : scrollbars.v.thumbPos;
+
+  document.addEventListener("mousemove", handleScrollbarDragMove);
+  document.addEventListener("mouseup", handleScrollbarDragEnd);
+};
+
+const handleScrollbarDragMove = (e: MouseEvent) => {
+  if (!isScrollbarDragging || !stage) return;
+
+  const padding = 301; // 与 updateScrollbars 保持一致
+
+  if (activeScrollbar === "h") {
+    const delta = e.clientX - scrollbarDragStartPos.x;
+    const maxThumbPos = scrollbars.h.trackSize - scrollbars.h.thumbWidth;
+    let newThumbPos = Math.min(
+      Math.max(scrollbarDragStartThumbPos + delta, 0),
+      maxThumbPos
+    );
+
+    // 反向计算舞台位置
+    const progress = newThumbPos / maxThumbPos;
+    const contentWidth = scrollbars.h.contentSize;
+    const viewWidth = scrollbars.h.viewSize;
+
+    // 获取当前的内容包围盒以确定起始点
+    const box = layer!.getClientRect({ skipTransform: true });
+    // 同样需要应用 padding
+    box.x -= padding;
+    box.y -= padding;
+    box.width += padding * 2;
+    box.height += padding * 2;
+
+    const viewX = -stage.x() / stage.scaleX();
+    const minX = Math.min(box.x, viewX);
+
+    const newViewX = minX + progress * (contentWidth - viewWidth);
+    stage.x(-newViewX * stage.scaleX());
+  } else {
+    const delta = e.clientY - scrollbarDragStartPos.y;
+    const maxThumbPos = scrollbars.v.trackSize - scrollbars.v.thumbHeight;
+    let newThumbPos = Math.min(
+      Math.max(scrollbarDragStartThumbPos + delta, 0),
+      maxThumbPos
+    );
+
+    const progress = newThumbPos / maxThumbPos;
+    const contentHeight = scrollbars.v.contentSize;
+    const viewHeight = scrollbars.v.viewSize;
+
+    const box = layer!.getClientRect({ skipTransform: true });
+    // 同样需要应用 padding
+    box.x -= padding;
+    box.y -= padding;
+    box.width += padding * 2;
+    box.height += padding * 2;
+
+    const viewY = -stage.y() / stage.scaleY();
+    const minY = Math.min(box.y, viewY);
+
+    const newViewY = minY + progress * (contentHeight - viewHeight);
+    stage.y(-newViewY * stage.scaleY());
+  }
+
+  stage.batchDraw();
+  updateScrollbars();
+};
+
+const handleScrollbarDragEnd = () => {
+  isScrollbarDragging = false;
+  activeScrollbar = "";
+  document.removeEventListener("mousemove", handleScrollbarDragMove);
+  document.removeEventListener("mouseup", handleScrollbarDragEnd);
+};
+
 // 封装画布拖动方法
 const moveStage = (pos: { x: number; y: number }) => {
   if (!stage) return;
   stage.x(stage.x() + pos.x);
   stage.y(stage.y() + pos.y);
+  stage.batchDraw();
+  updateScrollbars();
+};
+
+// 清除 AI 辅助相关的图形和状态
+// 在切换工具、取消选中或重新触发时调用
+const clearAiAssist = () => {
+  // 销毁所有扇形
+  aiRingSlices.forEach((slice) => slice.destroy());
+  aiRingSlices = [];
+
+  // 销毁引导线
+  if (aiGuideLine) {
+    aiGuideLine.destroy();
+    aiGuideLine = null;
+  }
+
+  // 移除事件监听
+  if (aiAssistState && aiAssistState.target) {
+    const target = aiAssistState.target;
+    target.off("dragmove", updateAiAssistPosition);
+    target.off("transform", updateAiAssistPosition);
+  }
+
+  // 重置状态
+  aiAssistState = null;
+
+  // 重绘图层
+  if (layer) {
+    layer.batchDraw();
+  }
+};
+
+// 更新 AI 辅助环位置
+// 当选中元素移动或变换时调用
+const updateAiAssistPosition = () => {
+  if (!aiAssistState || !aiAssistState.target) return;
+
+  const target = aiAssistState.target;
+  const box = target.getClientRect({ skipShadow: true });
+
+  // 将绝对坐标转换为 Layer 局部坐标
+  const transform = layer!.getAbsoluteTransform().copy().invert();
+  const localPos = transform.point({
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  });
+
+  // 更新圆心位置
+  aiAssistState.centerX = localPos.x;
+  aiAssistState.centerY = localPos.y;
+
+  // 更新半径 (考虑缩放)
+  const scaleX = stage!.scaleX();
+  const diagonal = Math.sqrt(box.width * box.width + box.height * box.height);
+  // 注意：这里的 box.width 包含了 scale，所以除以 scaleX 得到原始比例下的尺寸
+  const innerRadius = diagonal / 2 / scaleX;
+
+  aiAssistState.innerRadius = innerRadius;
+  aiAssistState.outerRadius = innerRadius + 200 / scaleX; // 保持外圈宽度视觉一致? 或者固定数值
+
+  // 更新所有扇形的位置和半径
+  aiRingSlices.forEach((group) => {
+    group.x(aiAssistState!.centerX);
+    group.y(aiAssistState!.centerY);
+
+    const slice = group.findOne(".slice") as Konva.Arc;
+    if (slice) {
+      slice.innerRadius(aiAssistState!.innerRadius);
+      slice.outerRadius(aiAssistState!.outerRadius);
+    }
+
+    // 更新文字位置
+    const labelGroup = group.findOne(".labelGroup") as Konva.Group;
+    if (labelGroup) {
+      const angle = (slice.rotation() + 45) * (Math.PI / 180); // 扇形中心角度
+      const radius =
+        (aiAssistState!.innerRadius + aiAssistState!.outerRadius) / 2;
+
+      labelGroup.x(Math.cos(angle) * radius);
+      labelGroup.y(Math.sin(angle) * radius);
+    }
+  });
+
+  // 如果引导线存在，隐藏它（因为位置变了，需要鼠标移动触发更新）
+  if (aiGuideLine) {
+    aiGuideLine.hide();
+  }
+
+  layer!.batchDraw();
+};
+
+// 更新 AI 辅助交互效果
+// 根据鼠标位置高亮对应扇区，并更新引导线
+// 参数 pos: 鼠标在舞台坐标系中的位置
+const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
+  if (!aiAssistState || aiRingSlices.length === 0 || !layer) return;
+
+  // 如果状态被锁定（已点击），则不再更新交互
+  if (aiAssistState.isLocked) return;
+
+  // 计算鼠标相对于圆心的距离和角度
+  const dx = pos.x - aiAssistState.centerX;
+  const dy = pos.y - aiAssistState.centerY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  // 判断鼠标是否在圆环范围内
+  const inRing =
+    distance >= aiAssistState.innerRadius &&
+    distance <= aiAssistState.outerRadius;
+
+  // 计算鼠标所在的象限（扇区索引）
+  let activeIndex = -1;
+  if (inRing) {
+    // 将角度标准化为 0 到 2PI，并减去起始偏移量 45 度（PI/4）
+    // 这样 45-135 度对应 index 0，以此类推
+    const normalized =
+      (Math.atan2(dy, dx) + Math.PI * 2 - Math.PI / 4) % (Math.PI * 2);
+    // 每个扇区 90 度 (PI/2)，计算当前索引
+    activeIndex = Math.floor(normalized / (Math.PI / 2));
+  }
+
+  // 更新所有扇区的样式
+  aiRingSlices.forEach((group, index) => {
+    const isActive = index === activeIndex;
+
+    // 更新扇形背景
+    const slice = group.findOne(".slice") as Konva.Arc;
+    if (slice) {
+      slice.fill(
+        isActive
+          ? "rgba(24, 144, 255, 0.2)" // 高亮颜色 (加深一点)
+          : "rgba(24, 144, 255, 0.05)" // 默认颜色 (很浅)
+      );
+    }
+
+    // 更新标签样式
+    const labelGroup = group.findOne(".labelGroup") as Konva.Group;
+    if (labelGroup) {
+      const bg = labelGroup.findOne(".labelBg") as Konva.Rect;
+      const text = labelGroup.findOne(".labelText") as Konva.Text;
+
+      if (bg) {
+        // 激活时浅蓝色背景，非激活时透明
+        bg.fill(isActive ? "#e6f7ff" : "transparent");
+        // 激活时无边框，非激活时也无边框
+        bg.stroke(null);
+      }
+
+      if (text) {
+        // 激活时黑色，非激活时灰色
+        text.fill(isActive ? "#000" : "#999");
+      }
+
+      // 激活时稍微放大
+      labelGroup.scale({ x: isActive ? 1.1 : 1, y: isActive ? 1.1 : 1 });
+    }
+  });
+
+  // 处理引导线（从圆心指向鼠标位置）
+  if (inRing) {
+    if (!aiGuideLine) {
+      // 如果引导线不存在，创建新线条
+      aiGuideLine = new Konva.Line({
+        points: [aiAssistState.centerX, aiAssistState.centerY, pos.x, pos.y],
+        stroke: "#8cc5ff", // 浅蓝色
+        strokeWidth: 2,
+        dash: [10, 5], // 虚线
+        listening: false, // 不响应鼠标事件
+      });
+      layer.add(aiGuideLine);
+      aiGuideLine.moveToTop();
+    } else {
+      // 如果引导线已存在，更新终点坐标
+      aiGuideLine.points([
+        aiAssistState.centerX,
+        aiAssistState.centerY,
+        pos.x,
+        pos.y,
+      ]);
+      aiGuideLine.show();
+      aiGuideLine.moveToTop();
+    }
+  } else if (aiGuideLine) {
+    // 如果鼠标不在圆环内，且未锁定，则隐藏引导线
+    aiGuideLine.hide();
+  }
+
+  // 确保变换器始终在最上层
+  if (transformer) {
+    transformer.moveToTop();
+  }
+  layer.batchDraw();
+};
+
+// 处理舞台点击事件，用于检测 AI 辅助环的点击
+const handleStageClick = (
+  e: Konva.KonvaEventObject<MouseEvent | TouchEvent>
+) => {
+  // 如果 AI 辅助未激活，不处理
+  if (!aiAssistState || !layer) return;
+
+  const pos = getPointerPos(e);
+
+  // 计算鼠标相对于圆心的距离和角度
+  const dx = pos.x - aiAssistState.centerX;
+  const dy = pos.y - aiAssistState.centerY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  // 判断点击是否在圆环范围内
+  const inRing =
+    distance >= aiAssistState.innerRadius &&
+    distance <= aiAssistState.outerRadius;
+
+  if (inRing) {
+    // 阻止事件继续传播，避免触发取消选中等逻辑
+    e.cancelBubble = true;
+
+    // 如果已经锁定（弹窗已显示），则不再响应点击
+    if (aiAssistState.isLocked) return;
+
+    // 计算点击的扇区索引
+    const normalized =
+      (Math.atan2(dy, dx) + Math.PI * 2 - Math.PI / 4) % (Math.PI * 2);
+    const index = Math.floor(normalized / (Math.PI / 2));
+
+    // 获取标签和连线长度
+    const label = aiRingLabels[index];
+    const lineLength = distance - aiAssistState.innerRadius;
+
+    // 获取屏幕坐标用于定位弹窗
+    const pointerPos = stage!.getPointerPosition();
+    const screenPos = pointerPos
+      ? {
+          x: pointerPos.x + container.value!.getBoundingClientRect().left,
+          y: pointerPos.y + container.value!.getBoundingClientRect().top,
+        }
+      : { x: 0, y: 0 };
+
+    // 停止 AI 交互更新，锁定引导线位置
+    aiAssistState.isLocked = true;
+
+    // 如果已经锁定，需要更新引导线的位置到新的点击点，以便 createAiContentNode 获取正确的终点
+    if (aiGuideLine) {
+      aiGuideLine.points([
+        aiAssistState.centerX,
+        aiAssistState.centerY,
+        pos.x,
+        pos.y,
+      ]);
+      aiGuideLine.show(); // 确保显示
+      layer.batchDraw();
+    }
+
+    // 触发事件通知父组件
+    emit("ai-ring-click", {
+      label,
+      lineLength,
+      position: screenPos,
+    });
+
+    console.log("AI Ring Click:", { label, lineLength, screenPos });
+  }
+};
+
+// 创建 AI 生成的内容节点（在确认后调用）
+const createAiContentNode = (content: string) => {
+  if (!aiAssistState || !aiGuideLine || !layer) return;
+
+  // 获取引导线的起点和终点
+  const points = aiGuideLine.points();
+  const startX = points[0];
+  const startY = points[1];
+  const endX = points[2];
+  const endY = points[3];
+
+  // 计算引导线向量
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const currentLength = Math.sqrt(dx * dx + dy * dy);
+
+  // 1. 先初步创建节点以获取其宽高
+  const textNode = new Konva.Text({
+    x: 0,
+    y: 0,
+    text: content,
+    fontSize: 14,
+    fontFamily: "Arial",
+    fill: "#333",
+    padding: 10,
+    width: 200, // 限制宽度自动换行
+    align: "left",
+  });
+
+  const bgNode = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: textNode.width(),
+    height: textNode.height(),
+    fill: "#fff",
+    stroke: "#8cc5ff",
+    strokeWidth: 1,
+    cornerRadius: 8,
+    shadowColor: "rgba(0, 0, 0, 0.1)",
+    shadowBlur: 10,
+    shadowOffset: { x: 0, y: 4 },
+  });
+
+  // 2. 计算从中心点到矩形边界在指定方向上的距离
+  // 设矩形半宽为 w, 半高为 h, 射线向量为 (dx, dy)
+  const w = bgNode.width() / 2;
+  const h = bgNode.height() / 2;
+
+  let finalCenterX = endX;
+  let finalCenterY = endY;
+
+  if (currentLength > 0) {
+    const unitX = dx / currentLength;
+    const unitY = dy / currentLength;
+
+    // 计算射线与矩形四边交点的距离 d
+    // 根据相似三角形原理：
+    // 如果 unitX 不为 0，与左右边交点距离 d1 = w / |unitX|
+    // 如果 unitY 不为 0，与上下边交点距离 d2 = h / |unitY|
+    // 取其中的最小值即为中心到边界的真实距离
+    const d1 = unitX !== 0 ? Math.abs(w / unitX) : Infinity;
+    const d2 = unitY !== 0 ? Math.abs(h / unitY) : Infinity;
+    const distanceToEdge = Math.min(d1, d2);
+
+    // 最终中心点 = 引导线终点 + 方向向量 * 距离边界的长度
+    finalCenterX = endX + unitX * distanceToEdge;
+    finalCenterY = endY + unitY * distanceToEdge;
+  }
+
+  // 3. 创建内容组
+  const group = new Konva.Group({
+    x: finalCenterX,
+    y: finalCenterY,
+    draggable: true,
+    name: "ai-content-node",
+  });
+  group.add(bgNode);
+  group.add(textNode);
+
+  // 设置偏移量，使 finalCenterX/Y 对应节点的中心位置
+  group.offset({
+    x: w,
+    y: h,
+  });
+
+  layer.add(group);
+
+  // 获取源节点
+  const sourceNode = aiAssistState.target;
+
+  if (sourceNode) {
+    // 创建持久化连线
+    createConnection(sourceNode, group);
+  } else {
+    // 降级：如果找不到源节点（极少情况），使用静态坐标
+    const persistentLine = new Konva.Line({
+      points: [startX, startY, endX, endY], // 静态连线连到边界点
+      stroke: "#8cc5ff",
+      strokeWidth: 2,
+      dash: [10, 5],
+      listening: false,
+    });
+    layer.add(persistentLine);
+    persistentLine.moveToBottom();
+  }
+
+  // 清除 AI 辅助环，但保留这个新创建的内容和连线
+  // clearAiAssist 会销毁 aiGuideLine，所以上面我们已经读取了 points
+  clearAiAssist();
+
+  // 重新绘制
+  layer.batchDraw();
+
+  return group;
+};
+
+const createConnection = (node1: Konva.Node, node2: Konva.Node) => {
+  const line = new Konva.Line({
+    stroke: "#8cc5ff",
+    strokeWidth: 2,
+    dash: [10, 5],
+    listening: false, // 确保连线不响应鼠标事件，也就无法被选中
+  });
+
+  // 存储连接关系
+  line.setAttr("fromNodeId", node1.id() || node1.name());
+  line.setAttr("toNodeId", node2.id() || node2.name());
+
+  layer!.add(line);
+  line.moveToBottom();
+
+  const updateLine = () => {
+    // 获取节点在 Layer 坐标系中的中心点
+    const getCenter = (node: Konva.Node) => {
+      // 使用 relativeTo: node 获取节点自身的局部包围盒
+      // 这不受节点旋转/缩放/位移的影响，只反映内容的几何尺寸
+      const localBox = node.getClientRect({
+        skipShadow: true,
+        relativeTo: node,
+      });
+
+      // 计算局部中心点
+      const localCenter = {
+        x: localBox.x + localBox.width / 2,
+        y: localBox.y + localBox.height / 2,
+      };
+
+      // 将局部中心点转换为绝对坐标（Stage 坐标）
+      // 使用 getAbsoluteTransform()，它包含了节点的所有变换矩阵（包括 Transformer 施加的）
+      const absoluteCenter = node.getAbsoluteTransform().point(localCenter);
+
+      // 将绝对坐标转回 Layer 坐标，以便连线使用
+      const layerTransform = layer!.getAbsoluteTransform().copy().invert();
+      return layerTransform.point(absoluteCenter);
+    };
+
+    const p1 = getCenter(node1);
+    const p2 = getCenter(node2);
+
+    line.points([p1.x, p1.y, p2.x, p2.y]);
+  };
+
+  // 辅助函数：检查连线本身是否被 Transformer 选中
+  const isLineSelected = () => {
+    if (!transformer) return false;
+    const nodes = transformer.nodes();
+    return nodes.includes(line);
+  };
+
+  // 绑定事件：总是监听 dragend/transformend 确保最终位置正确
+  node1.on("dragend transformend", updateLine);
+  node2.on("dragend transformend", updateLine);
+
+  // 绑定 dragmove/transform 事件：
+  const handleMove = () => {
+    // 如果连线也被选中了，就不需要手动更新位置（Transformer 会带着它移动）
+    if (!isLineSelected()) {
+      updateLine();
+    }
+  };
+
+  node1.on("dragmove transform", handleMove);
+  node2.on("dragmove transform", handleMove);
+
+  // 监听 Transformer 事件
+  if (transformer) {
+    transformer.on("dragmove transform", () => {
+      const nodes = transformer!.nodes();
+      // 如果连线本身被选中，跳过更新
+      if (nodes.includes(line)) return;
+
+      if (nodes.includes(node1) || nodes.includes(node2)) {
+        updateLine();
+      }
+    });
+
+    transformer.on("dragend transformend", () => {
+      // 无论如何，操作结束时强制更新一次
+      // 使用 setTimeout 确保在下一帧更新，避免坐标尚未完全同步
+      const nodes = transformer!.nodes();
+      if (
+        nodes.includes(node1) ||
+        nodes.includes(node2) ||
+        nodes.includes(line)
+      ) {
+        setTimeout(() => {
+          updateLine();
+          layer!.batchDraw(); // 确保重绘
+        }, 0);
+      }
+    });
+  }
+
+  // 初始更新一次
+  updateLine();
+
+  return line;
+};
+
+// 取消 AI 辅助锁定状态，恢复交互
+const cancelAiAssist = () => {
+  if (aiAssistState) {
+    aiAssistState.isLocked = false;
+
+    // 隐藏引导线
+    if (aiGuideLine) {
+      aiGuideLine.hide();
+    }
+
+    // 重置所有扇区高亮状态
+    aiRingSlices.forEach((group) => {
+      const slice = group.findOne(".slice") as Konva.Arc;
+      if (slice) {
+        slice.fill("rgba(24, 144, 255, 0.18)");
+      }
+
+      const labelGroup = group.findOne(".labelGroup") as Konva.Group;
+      if (labelGroup) {
+        const bg = labelGroup.findOne(".labelBg") as Konva.Rect;
+        const text = labelGroup.findOne(".labelText") as Konva.Text;
+        if (bg) {
+          bg.fill("rgba(255, 255, 255, 0.8)");
+          bg.stroke("#1890ff");
+        }
+        if (text) {
+          text.fill("#1890ff");
+        }
+        labelGroup.scale({ x: 1, y: 1 });
+      }
+    });
+
+    layer!.batchDraw();
+  }
+};
+
+// 触发 AI 辅助功能
+// 在选中元素周围生成交互式圆环
+// 返回值: 包含成功状态和消息的对象
+const triggerAiAssist = () => {
+  if (!layer) {
+    return { success: false, message: "画布未初始化" };
+  }
+
+  if (selectedNodes.length === 0) {
+    return { success: false, message: "请先选中一个元素" };
+  }
+
+  if (selectedNodes.length > 1) {
+    return { success: false, message: "请只选中一个元素后再试" };
+  }
+
+  // 获取选中元素及其边界信息
+  const target = selectedNodes[0];
+  const box = target.getClientRect({ skipShadow: true });
+
+  // 计算对角线长度的一半作为内圆半径，确保能包住整个元素
+  const diagonal = Math.sqrt(box.width * box.width + box.height * box.height);
+
+  // 考虑 Stage 的缩放
+  const scaleX = stage!.scaleX();
+  const innerRadius = diagonal / 2 / scaleX;
+
+  if (innerRadius <= 0) {
+    return { success: false, message: "当前元素尺寸无效" };
+  }
+
+  // 先清除已存在的 AI 辅助图形
+  clearAiAssist();
+
+  // 计算圆心位置 (转换为 Layer 局部坐标)
+  const transform = layer!.getAbsoluteTransform().copy().invert();
+  const localPos = transform.point({
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+  });
+
+  // 初始化 AI 辅助状态
+  aiAssistState = {
+    centerX: localPos.x,
+    centerY: localPos.y,
+    innerRadius,
+    outerRadius: innerRadius + 200 / scaleX, // 外圆半径比内圆大 200 (视觉像素)
+    target: target,
+  };
+
+  // 绑定事件监听，确保圆环跟随移动
+  target.on("dragmove", updateAiAssistPosition);
+  target.on("transform", updateAiAssistPosition);
+
+  // 创建四个扇形分区
+  for (let index = 0; index < 4; index++) {
+    const group = new Konva.Group({
+      x: aiAssistState.centerX,
+      y: aiAssistState.centerY,
+      listening: true, // 开启监听，拦截点击事件
+    });
+
+    // 绑定点击事件，阻止冒泡
+    group.on("click tap", (e) => {
+      // 阻止事件冒泡到下面的节点
+      e.cancelBubble = true;
+      // 触发舞台点击处理逻辑（复用 handleStageClick）
+      handleStageClick(e);
+    });
+
+    // 绑定鼠标移入移出事件，增强交互体验（可选，目前主要逻辑在 updateAiAssistInteraction）
+    group.on("mouseenter", () => {
+      if (stage) stage.container().style.cursor = "pointer";
+    });
+    group.on("mouseleave", () => {
+      if (stage) stage.container().style.cursor = "default";
+    });
+
+    const slice = new Konva.Arc({
+      name: "slice",
+      innerRadius: aiAssistState.innerRadius,
+      outerRadius: aiAssistState.outerRadius,
+      angle: 90, // 每个扇形 90 度
+      rotation: index * 90 + 45, // 旋转 45 度，使扇区分割线呈 X 型
+      fill: "rgba(24, 144, 255, 0.05)", // 初始颜色更浅
+      stroke: null, // 移除描边，使扇区之间无分界线
+      strokeWidth: 0,
+      listening: true, // 开启监听
+    });
+    group.add(slice);
+
+    // 创建标签
+    const labelGroup = new Konva.Group({
+      name: "labelGroup",
+      listening: false, // 标签本身不需要独立监听，跟随 group
+    });
+
+    // 计算文字位置 (扇形中心)
+    // 扇形起始角度为 index*90 + 45，中心线再加 45 度，即 index*90 + 90
+    const angle = (index * 90 + 90) * (Math.PI / 180);
+    const radius = (aiAssistState.innerRadius + aiAssistState.outerRadius) / 2;
+    const labelX = Math.cos(angle) * radius;
+    const labelY = Math.sin(angle) * radius;
+
+    labelGroup.position({ x: labelX, y: labelY });
+
+    const text = new Konva.Text({
+      name: "labelText",
+      text: aiRingLabels[index],
+      fontSize: 14,
+      fontFamily: "Arial",
+      fill: "#999", // 默认灰色
+      align: "center",
+      verticalAlign: "middle",
+      padding: 8,
+    });
+
+    // 文字背景
+    const bg = new Konva.Rect({
+      name: "labelBg",
+      width: text.width(),
+      height: text.height(),
+      fill: "transparent", // 默认透明
+      stroke: null, // 默认无边框
+      strokeWidth: 0,
+      cornerRadius: 4,
+    });
+
+    // 居中背景和文字
+    bg.offset({ x: bg.width() / 2, y: bg.height() / 2 });
+    text.offset({ x: text.width() / 2, y: text.height() / 2 });
+
+    labelGroup.add(bg);
+    labelGroup.add(text);
+    group.add(labelGroup);
+
+    aiRingSlices.push(group);
+    layer.add(group);
+    group.moveToTop();
+  }
+
+  // 确保变换器在辅助图形之上
+  if (transformer) {
+    transformer.moveToTop();
+  }
+  layer.batchDraw();
+  updateScrollbars();
+
+  return { success: true };
 };
 
 onMounted(() => {
@@ -206,6 +1111,8 @@ onMounted(() => {
   stage.on("mousedown touchstart", handleMouseDown);
   stage.on("mousemove touchmove", handleMouseMove);
   stage.on("mouseup touchend", handleMouseUp);
+  // 监听点击事件，处理 AI 辅助环的点击交互
+  stage.on("click tap", handleStageClick);
   stage.on("mouseleave touchcancel", handleMouseUp);
   stage.on("dblclick", handleDoubleClick);
   stage.on("wheel", handleWheel);
@@ -215,6 +1122,10 @@ onMounted(() => {
   let isRightMouseDown = false;
   let rightMouseDownPos = { x: 0, y: 0 };
   let rightMouseStartPos = { x: 0, y: 0 };
+
+  stage.on("contextmenu", (e) => {
+    e.evt.preventDefault();
+  });
 
   stage.on("mousedown", (e) => {
     if (e.evt.button === 2) {
@@ -275,6 +1186,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  clearAiAssist();
   if (stage) {
     stage.destroy();
   }
@@ -300,48 +1212,66 @@ const handleKeyDown = (e: KeyboardEvent) => {
   }
 };
 
-// 处理鼠标滚轮事件，实现画布的缩放功能
+// 处理鼠标滚轮事件，实现画布的缩放和滚动功能
 const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-  // 检查是否按下了 Ctrl 键，只有按住 Ctrl 键时才进行缩放操作
-  if (!e.evt.ctrlKey) {
-    return;
-  }
-
   // 阻止默认的滚动行为
   e.evt.preventDefault();
 
-  // 获取当前缩放比例
-  const oldScale = scale.value;
-  // 获取鼠标在舞台上的当前位置
-  const pointer = stage!.getPointerPosition()!;
+  // 检查是否按下了 Ctrl 键，按住 Ctrl 键时进行缩放操作
+  if (e.evt.ctrlKey) {
+    // 获取当前缩放比例
+    const oldScale = scale.value;
+    // 获取鼠标在舞台上的当前位置
+    const pointer = stage!.getPointerPosition()!;
 
-  // 计算鼠标相对于舞台原点的位置（考虑当前的缩放和平移）
-  const mousePointTo = {
-    x: (pointer.x - stage!.x()) / oldScale,
-    y: (pointer.y - stage!.y()) / oldScale,
-  };
+    // 计算鼠标相对于舞台原点的位置（考虑当前的缩放和平移）
+    const mousePointTo = {
+      x: (pointer.x - stage!.x()) / oldScale,
+      y: (pointer.y - stage!.y()) / oldScale,
+    };
 
-  // 设置缩放因子为 1.1（每次缩放 10%）
-  const scaleBy = 1.1;
-  // 根据滚轮方向计算新的缩放比例：向下滚动缩小，向上滚动放大
-  let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    // 设置缩放因子为 1.1（每次缩放 10%）
+    const scaleBy = 1.1;
+    // 根据滚轮方向计算新的缩放比例：向下滚动缩小，向上滚动放大
+    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
 
-  // 限制缩放比例在最小值和最大值之间
-  newScale = Math.max(minScale, Math.min(maxScale, newScale));
+    // 限制缩放比例在最小值和最大值之间
+    newScale = Math.max(minScale, Math.min(maxScale, newScale));
 
-  // 应用新的缩放比例到舞台
-  stage!.scale({ x: newScale, y: newScale });
+    // 应用新的缩放比例到舞台
+    stage!.scale({ x: newScale, y: newScale });
 
-  // 计算新的舞台位置，使缩放以鼠标位置为中心
-  const newPos = {
-    x: pointer.x - mousePointTo.x * newScale,
-    y: pointer.y - mousePointTo.y * newScale,
-  };
+    // 计算新的舞台位置，使缩放以鼠标位置为中心
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
 
-  // 更新舞台位置
-  stage!.position(newPos);
-  // 更新缩放比例的响应式变量
-  scale.value = newScale;
+    // 更新舞台位置
+    stage!.position(newPos);
+    // 更新缩放比例的响应式变量
+    scale.value = newScale;
+  } else {
+    // 滚动画布
+    // 如果按住 Shift 键，且垂直滚动，转换为水平滚动
+    let dx = e.evt.deltaX;
+    let dy = e.evt.deltaY;
+
+    if (e.evt.shiftKey && dx === 0) {
+      dx = dy;
+      dy = 0;
+    }
+
+    const newPos = {
+      x: stage!.x() - dx,
+      y: stage!.y() - dy,
+    };
+
+    stage!.position(newPos);
+    stage!.batchDraw();
+  }
+
+  updateScrollbars();
 };
 
 // 获取鼠标/触摸点在舞台坐标系中的位置
@@ -385,7 +1315,24 @@ const handleMouseDown = (
 
   if (currentTool.value === "select") {
     const clickedOnEmpty = e.target === e.target.getStage();
-    if (clickedOnEmpty) {
+
+    // 如果 AI 辅助开启且点击了 AI 环内的区域，不进行清空操作
+    let isAiRingClick = false;
+    if (aiAssistState) {
+      const pos = getPointerPos(e);
+      const dx = pos.x - aiAssistState.centerX;
+      const dy = pos.y - aiAssistState.centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (
+        distance >= aiAssistState.innerRadius &&
+        distance <= aiAssistState.outerRadius
+      ) {
+        isAiRingClick = true;
+      }
+    }
+
+    if (clickedOnEmpty && !isAiRingClick) {
+      clearAiAssist();
       // 先移除所有节点的选中样式
       selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
@@ -424,6 +1371,7 @@ const handleMouseDown = (
   });
 
   layer!.add(lastLine);
+  updateScrollbars();
 };
 
 // 处理鼠标移动事件
@@ -434,6 +1382,9 @@ const handleMouseDown = (
 const handleMouseMove = (
   e: Konva.KonvaEventObject<MouseEvent | TouchEvent>
 ) => {
+  const pointerPos = getPointerPos(e);
+  updateAiAssistInteraction(pointerPos);
+
   // 处理平移操作
   if (isPanning.value) {
     // 获取当前鼠标位置
@@ -453,7 +1404,7 @@ const handleMouseMove = (
   // 处理框选操作
   if (isSelecting.value) {
     // 获取鼠标在舞台坐标系中的位置
-    const pos = getPointerPos(e);
+    const pos = pointerPos;
 
     // 计算选择框的左上角坐标（取起始点和当前点的最小值）
     const x = Math.min(selectionStartPos.x, pos.x);
@@ -475,11 +1426,12 @@ const handleMouseMove = (
 
   // 处理绘制操作
   // 获取鼠标在舞台坐标系中的位置
-  const pos = getPointerPos(e);
+  const pos = pointerPos;
   // 将新点添加到线条的点数组中
   const newPoints = lastLine.points().concat([pos.x, pos.y]);
   // 更新线条的点
   lastLine.points(newPoints);
+  updateScrollbars();
 };
 
 // 处理鼠标释放事件
@@ -506,7 +1458,15 @@ const handleMouseUp = () => {
 
     selectedNodes = [];
     shapes.forEach((shape) => {
-      if (shape === transformer || shape === selectionBox) return;
+      // 过滤掉 Transformer、选择框、AI 辅助元素以及 listening=false 的元素
+      if (
+        shape === transformer ||
+        shape === selectionBox ||
+        shape.name() === "slice" ||
+        shape.name() === "labelGroup" ||
+        shape.listening() === false
+      )
+        return;
 
       const shapeBox = shape.getClientRect();
       if (haveIntersection(box, shapeBox)) {
@@ -553,6 +1513,7 @@ const handleNodeClick = (
   e: Konva.KonvaEventObject<MouseEvent | TouchEvent>,
   node: Konva.Node
 ) => {
+  clearAiAssist();
   // 如果当前是平移模式，不处理节点点击事件
   if (currentTool.value === "pan") {
     return;
@@ -876,6 +1837,9 @@ const setTool = (
   tool: "select" | "brush" | "eraser" | "text" | "image" | "pan"
 ) => {
   currentTool.value = tool;
+  if (tool !== "select") {
+    clearAiAssist();
+  }
   // 如果切换到非选择工具，清空选中节点并移除选中样式
   if (tool !== "select" && transformer) {
     selectedNodes.forEach((n) => removeNodeSelectStyle(n));
@@ -904,6 +1868,7 @@ const updateDraggableState = () => {
 const deleteSelectedNodes = () => {
   if (selectedNodes.length === 0) return;
 
+  clearAiAssist();
   selectedNodes.forEach((node) => {
     node.destroy();
   });
@@ -1017,26 +1982,48 @@ const exportElementInfo = () => {
     return;
   }
 
-  const nodes = children.filter((n) => n !== transformer && n !== selectionBox);
-  // if (nodes.length === 0) {
-  //   console.log("画布中没有图形元素");
-  //   return;
-  // }
+  const nodes = children.filter((n) => {
+    // 过滤掉变换器、选择框、AI 引导线和 AI 环
+    return (
+      n !== transformer &&
+      n !== selectionBox &&
+      n !== aiGuideLine &&
+      !aiRingSlices.includes(n) &&
+      n.name() !== "hover-action-btn" // 过滤掉悬浮按钮
+    );
+  });
 
-  // console.log("=== 画布元素详细信息 ===");
-  // console.log(`总元素数量: ${nodes.length}`, nodes);
-  // console.log("");
+  return nodes.map((node) => {
+    const json = JSON.parse(node.toJSON());
 
-  // nodes.forEach((node, index) => {
-  //   const elementInfo = getNodeInfo(node, index);
-  //   console.log(`元素 ${index + 1}:`, elementInfo);
-  // });
+    // 如果是 Image 节点，手动添加 src 信息
+    if (node instanceof Konva.Image) {
+      const img = node.image();
+      if (img && img instanceof HTMLImageElement) {
+        json.attrs.imageSrc = img.src;
+      }
+    } else if (node instanceof Konva.Group) {
+      // 递归处理 Group 中的 Image 节点
+      const processGroup = (groupNode: any, groupJson: any) => {
+        if (groupJson.children) {
+          groupJson.children.forEach((childJson: any, index: number) => {
+            const childNode = groupNode.children[index];
+            if (childNode instanceof Konva.Image) {
+              const img = childNode.image();
+              if (img && img instanceof HTMLImageElement) {
+                childJson.attrs.imageSrc = img.src;
+              }
+            } else if (childNode instanceof Konva.Group) {
+              processGroup(childNode, childJson);
+            }
+          });
+        }
+      };
+      processGroup(node, json);
+    }
 
-  // console.log("");
-  // console.log("=== 完整 JSON 数据 ===");
-  // console.log(stage.toJSON());
-
-  return nodes;
+    return JSON.stringify(json);
+  });
 };
 
 // 获取节点的详细信息
@@ -1131,6 +2118,7 @@ const sendSelectedNodesToParent = () => {
 // 清除画布
 // 删除图层中的所有节点，包括图形、文字、图片等
 const clearCanvas = () => {
+  clearAiAssist();
   layer!.destroyChildren();
 };
 
@@ -1231,6 +2219,7 @@ const handleDrop = (e: DragEvent) => {
                   });
                   layer!.add(interpretationNode);
                 });
+                setTimeout(() => updateScrollbars(), 1000);
               })
               .catch((error) => {
                 console.error(
@@ -1239,6 +2228,8 @@ const handleDrop = (e: DragEvent) => {
                 );
               });
           }
+
+          setTimeout(() => updateScrollbars(), 1000);
         })
         .catch((error) => {
           console.error("Failed to create image and text nodes:", error);
@@ -1281,6 +2272,7 @@ const handleDrop = (e: DragEvent) => {
           currentTool.value = "select";
           // 更新节点的可拖拽状态
           updateDraggableState();
+          setTimeout(() => updateScrollbars(), 1000);
         })
         .catch((error) => {
           console.error("Failed to create text node:", error);
@@ -1345,6 +2337,8 @@ const handleDrop = (e: DragEvent) => {
                 //   }
                 // }
               });
+
+              setTimeout(() => updateScrollbars(), 1000);
               // data.segments.forEach((segment, index) => {
               //   initPCMBubbles(segment.layout.bubbles, {
               //     offsetX: currentOffsetX,
@@ -1375,6 +2369,7 @@ const handleDrop = (e: DragEvent) => {
           });
           layer!.add(node);
         });
+        setTimeout(() => updateScrollbars(), 1000);
       });
     } else if (dragData.dragType === "segment-image") {
       const dropPos = getDropPosition(e);
@@ -1403,6 +2398,7 @@ const handleDrop = (e: DragEvent) => {
           });
           layer!.add(node);
         });
+        setTimeout(() => updateScrollbars(), 1000);
       });
     }
   });
@@ -1485,6 +2481,7 @@ const renderNodes = (nodesData) => {
     node.scaleY(node.scaleY() * fitScale);
     layer.add(node);
   });
+  setTimeout(() => updateScrollbars(), 1000);
 };
 
 const createKonvaImage = (nodeData) => {
@@ -1566,17 +2563,78 @@ const createKonvaRect = (nodeData) => {
   });
 };
 
+const clearSelection = () => {
+  if (!transformer) return;
+
+  // 移除所有节点的选中样式
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  selectedNodes = [];
+  transformer.nodes([]);
+  layer?.batchDraw();
+};
+
 defineExpose({
+  createAiContentNode,
+  cancelAiAssist,
   getSelectedNodes,
   renderNodes,
   konvaData,
   exportCanvas,
   exportElementInfo,
   setTool,
+  triggerAiAssist,
+  clearSelection,
 });
 </script>
 
 <style scoped>
+/* 滚动条样式 */
+.scrollbar-h {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.scrollbar-v {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  width: 8px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.scrollbar-thumb-h {
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.2s;
+}
+
+.scrollbar-thumb-v {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.2s;
+}
+
+.scrollbar-thumb-h:hover,
+.scrollbar-thumb-v:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .drawing-board {
   display: flex;
   flex-direction: column;
