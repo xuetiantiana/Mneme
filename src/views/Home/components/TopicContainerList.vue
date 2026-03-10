@@ -52,7 +52,11 @@
       </div>
     </div>
     <div class="bottom-action">
-      <el-tooltip :disabled="selectedCount > 0" content="请先选择主题容器" placement="top">
+      <el-tooltip
+        :disabled="selectedCount > 0"
+        content="请先选择主题容器"
+        placement="top"
+      >
         <el-button
           class="action-btn"
           type="primary"
@@ -130,7 +134,7 @@ const renderNodesToFirstCanvas = (nodesData) => {
 
 const handleGenerate = async () => {
   loading.value = true;
-  
+
   // 获取选中的 topicContainers
   const selectedTopics = topicContainers.value.filter(
     (topic) => topic.selected
@@ -143,47 +147,54 @@ const handleGenerate = async () => {
     if (topicContainers.value[i].selected && konvaRefs.value[i]) {
       const konvaRef = konvaRefs.value[i];
       const containerIndex = i + 1;
-      
+
       // 检查 title 和 description
       const title = topicContainers.value[i].title;
       const description = topicContainers.value[i].desc;
-      
+
       if (!title || !title.trim()) {
         ElMessage.error(`第 ${containerIndex} 个主题容器的标题不能为空`);
         loading.value = false;
         return;
       }
-      
+
       if (!description || !description.trim()) {
         ElMessage.error(`第 ${containerIndex} 个主题容器的描述不能为空`);
         loading.value = false;
         return;
       }
-      
+
       // 检查 canvas 是否有内容
       if (typeof konvaRef.exportCanvas === "function") {
         try {
           const imageData = await konvaRef.exportCanvas();
-          
+
           if (!imageData) {
-            ElMessage.error(`第 ${containerIndex} 个主题容器的图片不能为空，请先在画布中添加内容`);
+            ElMessage.error(
+              `第 ${containerIndex} 个主题容器的图片不能为空，请先在画布中添加内容`
+            );
             loading.value = false;
             return;
           }
-          
+
           const canvasData = konvaRef.exportElementInfo();
-          
-          if (!canvasData || (Array.isArray(canvasData) && canvasData.length === 0)) {
-            ElMessage.error(`第 ${containerIndex} 个主题容器的画布内容不能为空`);
+
+          if (
+            !canvasData ||
+            (Array.isArray(canvasData) && canvasData.length === 0)
+          ) {
+            ElMessage.error(
+              `第 ${containerIndex} 个主题容器的画布内容不能为空`
+            );
             loading.value = false;
             return;
           }
-          
+
           result.push({
             screenshot: imageData,
             title: title,
             description: description,
-            canvas_data: canvasData,
+            // canvas_data: canvasData,
           });
         } catch (error) {
           console.error(`导出 Canvas ${i} 图片失败:`, error);
@@ -196,7 +207,7 @@ const handleGenerate = async () => {
       }
     }
   }
-  
+
   // 检查是否有选中的主题容器
   if (result.length === 0) {
     ElMessage.error("请至少选择一个主题容器");
@@ -208,33 +219,33 @@ const handleGenerate = async () => {
   // 调用 CreateStory API
   try {
     const response = await CreateStory({
-      story: result,
+      themes: result,
     });
     console.log("创建成功:", response);
-    
+    const res = response.data;
     // 判断接口是否成功
-    if (response && response.success) {
-      // 将 response push 到全局变量 storyList 中
+    if (res && res.success) {
       storyStore.addStory({
         selectedTopics: selectedTopics,
-        result: response.data,
+        result: res.data, // 适配不同的后端返回结构
         createdAt: new Date().toLocaleString(),
       });
       console.log("storyList:", storyStore.storyList);
-      
+
       // 触发创建成功事件
-      emit('createSuccess', storyStore.storyList.length - 1);
+      emit("createSuccess", 0);
     } else {
       ElMessage.error("创建失败:" + (response?.message || "未知错误"));
+      ElMessage.error("创建失败:" + (error?.message || "未知错误"));
     }
-  } catch (error) {
-    ElMessage.error("创建失败:", error);
+    ElMessage.error(errorMsg);
+    loading.value = false;
   } finally {
     loading.value = false;
   }
 };
 
-const emit = defineEmits(['createSuccess'])
+const emit = defineEmits(["createSuccess"]);
 
 defineExpose({
   topicContainers,
