@@ -67,7 +67,7 @@ export const getBubbleColor = (type, specificity) => {
  * @returns {Promise<Array<Konva.Node>>} 返回 Promise，解析为包含 Konva.Image 和（可选的）Konva.Text 或 Konva.Group 的数组
  */
 export const createImageAndTextNodes = (
-  { imageSrc, text, id },
+  { imageSrc, text, id, customType },
   options = {}
 ) => {
   const {
@@ -123,11 +123,12 @@ export const createImageAndTextNodes = (
           draggable: true,
           id: id || "",
           cornerRadius: 10,
+          customType: customType || "", // 使用自定义属性存储类型
         });
 
         if (text) {
           createTextNode(
-            { text, id },
+            { text, id, customType },
             {
               startX: isGroup ? 0 : imageX,
               startY: isGroup ? height + titleGap : imageY + height + titleGap,
@@ -148,6 +149,7 @@ export const createImageAndTextNodes = (
                   y: imageY,
                   draggable: true,
                   id: id || "",
+                  customType: customType, // 使用自定义属性存储类型
                 });
                 konvaImage.draggable(false);
                 konvaText.draggable(false);
@@ -168,6 +170,7 @@ export const createImageAndTextNodes = (
               y: imageY,
               draggable: true,
               id: id || "",
+              customType: customType, // 使用自定义属性存储类型
             });
             konvaImage.draggable(false);
             groupNode.add(konvaImage);
@@ -202,7 +205,7 @@ export const createImageAndTextNodes = (
  * @param {boolean} options.isBubble - 是否为气泡样式，true 时显示圆形气泡带阴影，false 时显示普通矩形背景或纯文本，默认 false
  * @returns {Promise<Konva.Node>} 返回 Promise，解析为 Konva.Text 或 Konva.Group 对象
  */
-export const createTextNode = ({ text, id }, options = {}) => {
+export const createTextNode = ({ text, id, customType }, options = {}) => {
   const {
     startX = 0,
     startY = 0,
@@ -229,6 +232,7 @@ export const createTextNode = ({ text, id }, options = {}) => {
         fill,
         draggable: false,
         id: id || "",
+        customType: customType || "", // 使用自定义属性存储类型
         width: width || undefined,
         lineHeight: 1.4,
         align,
@@ -255,6 +259,7 @@ export const createTextNode = ({ text, id }, options = {}) => {
           y: startY,
           draggable: true,
           id: id || "",
+          customType: customType || "", // 使用自定义属性存储类型
         });
 
         group.add(background);

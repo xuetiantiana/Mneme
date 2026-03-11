@@ -203,7 +203,9 @@ export const initMainImages = (data, options = {}) => {
                 height: calculatedHeight,
                 rotation,
                 draggable: true,
-                id: `main_image_${data.id}_${index}`,
+                // id: `main_image_${data.id}_${index}`,
+                id: data.id,
+                customType: data.type, // 显式使用自定义属性
                 zIndex: z_index,
                 stroke: "#f1f1f1",
                 strokeWidth: 8,
@@ -404,7 +406,9 @@ export const initSegmentImagesItem = (segment, options = {}) => {
       {
         imageSrc: getImageProxyUrl(segment.image_url),
         text: segment.label || "",
-        id: `segment_image_${segment.signifier_id}`,
+        // id: `segment_image_${segment.signifier_id}`,
+        id: segment.id,
+        customType: segment.type,
       },
       {
         startX: x + offsetX,
@@ -551,7 +555,8 @@ export const initPCMBubbles = (bubbles, options = {}) => {
           createTextNode(
             {
               text: bubble.text,
-              id: `bubble_text_${bubble.interpretation_id}`,
+              id: bubble.id,
+              customType: bubble.type,
             },
             {
               startX: x,
