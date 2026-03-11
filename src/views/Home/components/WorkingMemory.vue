@@ -10,12 +10,18 @@
     "
   >
     <div style="height: 100%" @click.self="closeAiPopup">
-      <KonvaComponent ref="konvaRef" @ai-ring-click="handleAiRingClick" />
+      <KonvaComponent
+        ref="konvaRef"
+        @ai-ring-click="handleAiRingClick"
+        @ai-mode-change="handleAiModeChange"
+      />
       <AiQuestionPopup
         :visible="aiPopupVisible"
         :position="aiPopupData.position"
         :label="aiPopupData.label"
         :line-length="aiPopupData.lineLength"
+        :question-list="aiPopupData.questionList"
+        :loading="aiPopupData.loading"
         @confirm="handleAiPopupConfirm"
         @cancel="handleAiPopupCancel"
       />
@@ -23,16 +29,34 @@
 
     <!-- 顶部导航栏 -->
     <div class="top-nav-bar">
-      <div class="nav-item">Reflect</div>
-      <div class="nav-item">Constellate</div>
-      <div class="nav-item">Resonance</div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Reflect' }"
+        @click="handleNavClick('Reflect')"
+      >
+        Reflect
+      </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Constellate' }"
+        @click="handleNavClick('Constellate')"
+      >
+        Constellate
+      </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Resonance' }"
+        @click="handleNavClick('Resonance')"
+      >
+        Resonance
+      </div>
       <div class="nav-icon">
         <el-icon><Search /></el-icon>
       </div>
     </div>
 
     <!-- 左下角按钮列表 -->
-    <ul class="bottom-btn-list">
+    <ul class="bottom-btn-list" style="display: none">
       <li>
         <el-tooltip content="添加文本" placement="right" effect="light">
           <el-button circle size="medium" @click="handleAddText">
@@ -47,33 +71,35 @@
           </el-button>
         </el-tooltip>
       </li> -->
-      <li>
+      <!-- <li>
         <el-tooltip content="AI辅助" placement="right" effect="light">
           <el-button circle size="medium" @click="handleAiAssistClick">
             AI
           </el-button>
         </el-tooltip>
-      </li>
-      <li>
-        <el-popover placement="right" :width="200" trigger="hover">
-          <template #reference>
-            <el-button circle size="medium">
-              <el-icon><Promotion /></el-icon>
-            </el-button>
-          </template>
-          <ul class="send-menu-list">
-            <li
-              v-for="(topic, index) in topicContainers"
-              :key="index"
-              class="send-menu-item"
-              @click="handleRenderNodes(index)"
-            >
-              发送到主题容器{{ index + 1 }}
-            </li>
-          </ul>
-        </el-popover>
-      </li>
+      </li> -->
     </ul>
+
+    <!-- 右上角按钮列表 -->
+    <div class="top-right-actions">
+      <el-popover placement="left" :width="200" trigger="hover">
+        <template #reference>
+          <el-button circle size="medium">
+            <el-icon><Promotion /></el-icon>
+          </el-button>
+        </template>
+        <ul class="send-menu-list">
+          <li
+            v-for="(topic, index) in topicContainers"
+            :key="index"
+            class="send-menu-item"
+            @click="handleRenderNodes(index)"
+          >
+            发送到主题容器{{ index + 1 }}
+          </li>
+        </ul>
+      </el-popover>
+    </div>
   </div>
 </template>
 
@@ -83,6 +109,7 @@ import { Edit, Promotion, Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
+import { gelReflectToolData } from "@/service/api";
 
 const props = defineProps({
   topicContainers: {
@@ -97,6 +124,8 @@ const memoryItems = ref([]);
 const konvaRef = ref(null);
 const wmContainer = ref(null);
 const selectedNodesData = ref([]);
+const currentNav = ref(""); // 当前选中的导航项
+const reflectSelectedNodes = ref(null); // Reflect 模式下选中的节点
 
 // 处理点击外部区域取消选中的逻辑
 const handleClickOutside = (event) => {
@@ -117,6 +146,11 @@ const handleClickOutside = (event) => {
     if (konvaRef.value.clearSelection) {
       konvaRef.value.clearSelection();
     }
+
+    // 如果处于 Reflect (AI) 模式，点击外部时是否要取消？
+    // 根据需求 "如果ai编辑取消了，就不点亮"，通常点击外部会取消 AI 辅助环
+    // 但这里可能需要更精细的判断，暂时保留 AI 辅助环的关闭逻辑由 KonvaComponent 内部处理
+    // 我们可以监听 AI 状态变化，或者在这里简单处理
   }
 };
 
@@ -136,6 +170,8 @@ const aiPopupData = ref({
   label: "",
   lineLength: 0,
   position: { x: 0, y: 0 },
+  questionList: [], // 新增：存储接口返回的问题列表
+  loading: false, // 新增：加载状态
 });
 
 const handleAddText = () => {
@@ -145,6 +181,17 @@ const handleAddText = () => {
 };
 
 const handleAiAssistClick = () => {
+  // 如果已经是 Reflect 状态，再次点击则取消
+  if (currentNav.value === "Reflect") {
+    // 主动点击按钮取消时，完全关闭 AI 辅助
+    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+      konvaRef.value.cancelAiAssist();
+    }
+    closeAiPopup();
+    currentNav.value = "";
+    return;
+  }
+
   if (!konvaRef.value || !konvaRef.value.triggerAiAssist) {
     ElMessage({
       message: "画布未准备好",
@@ -153,23 +200,82 @@ const handleAiAssistClick = () => {
     return;
   }
 
+  // 获取选中的节点并存储
+  const selectedNodes = konvaRef.value.getSelectedNodes();
+  if (selectedNodes && selectedNodes.length > 0) {
+    reflectSelectedNodes.value = konvaRef.value.resetNodesData(selectedNodes);
+  } else {
+    reflectSelectedNodes.value = null;
+  }
+
   const result = konvaRef.value.triggerAiAssist();
   if (!result?.success) {
     ElMessage({
       message: result?.message || "AI辅助启动失败",
       type: "warning",
     });
+  } else {
+    // 启动成功，点亮 Reflect
+    currentNav.value = "Reflect";
+  }
+};
+
+const handleNavClick = (navItem) => {
+  if (navItem === "Reflect") {
+    handleAiAssistClick();
+  } else {
+    // 其他导航项点击逻辑，切换时取消 Reflect 状态
+    if (currentNav.value === "Reflect") {
+      if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+        konvaRef.value.cancelAiAssist();
+      }
+      closeAiPopup();
+    }
+    currentNav.value = navItem;
   }
 };
 
 // 处理 AI 环点击事件
-const handleAiRingClick = (data) => {
+const handleAiRingClick = async (data) => {
   aiPopupData.value = {
     label: data.label,
     lineLength: data.lineLength,
     position: data.position,
+    questionList: [], // 重置问题列表
+    loading: true, // 开始加载
   };
   aiPopupVisible.value = true;
+
+  const parsedCanvasData = reflectSelectedNodes.value.map((jsonStr) =>
+    JSON.parse(jsonStr)
+  );
+
+  // 构建请求参数
+  const requestData = {
+    tag: data.label,
+    depth: data.lineLength,
+    nodeInfo: parsedCanvasData, // 使用 Reflect 开启时存储的节点
+  };
+  console.log("requestData", requestData);
+
+  try {
+    const res = await gelReflectToolData(requestData);
+    if (res && res.data && res.data.questionList) {
+      aiPopupData.value.questionList = res.data.questionList;
+    }
+  } catch (error) {
+    console.error("Failed to fetch reflect tool data:", error);
+    ElMessage.error("获取AI建议失败");
+  } finally {
+    aiPopupData.value.loading = false;
+  }
+};
+
+const handleAiModeChange = (isActive) => {
+  if (!isActive && currentNav.value === "Reflect") {
+    currentNav.value = "";
+    closeAiPopup();
+  }
 };
 
 const handleAiPopupConfirm = (data) => {
@@ -177,11 +283,15 @@ const handleAiPopupConfirm = (data) => {
     konvaRef.value.createAiContentNode(data.question);
   }
   closeAiPopup();
+  // AI操作完成后，取消高亮状态
+  currentNav.value = "";
 };
 
 const handleAiPopupCancel = () => {
-  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
-    konvaRef.value.cancelAiAssist();
+  // 仅仅关闭弹窗，不取消 AI 辅助（不关闭环，不熄灭 Reflect 按钮）
+  // 但是要清除引导线，以便用户重新选择
+  if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
+    konvaRef.value.clearAiGuideLine();
   }
   closeAiPopup();
 };
@@ -307,8 +417,9 @@ const handleRenderNodes = (canvasIndex) => {
 .top-nav-bar {
   position: absolute;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 50px;
+  // left: 50%;
+  // transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   padding: 8px 24px;
@@ -325,10 +436,19 @@ const handleRenderNodes = (canvasIndex) => {
     font-weight: 500;
     color: #333;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: all 0.2s;
+    padding: 6px 16px;
+    border-radius: 20px;
 
     &:hover {
       color: #1890ff;
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    &.active {
+      color: #1890ff;
+      background-color: #f0f2f5;
+      font-weight: 600;
     }
   }
 
@@ -345,5 +465,15 @@ const handleRenderNodes = (canvasIndex) => {
       color: #1890ff;
     }
   }
+}
+
+.top-right-actions {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 </style>

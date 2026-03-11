@@ -18,12 +18,12 @@
       <!-- <button class="tool-btn" @click="resetView">
                 重置视图
                 </button> -->
-      <button
+      <!-- <button
         :class="['tool-btn', { active: currentTool === 'text' }]"
         @click="setTool('text')"
       >
         文字
-      </button>
+      </button> -->
     </div>
     <div class="toolbar">
       <div class="tool-group">
@@ -155,7 +155,11 @@ import {
   initPCMBubbles,
 } from "@/utils/initPCM";
 
-const emit = defineEmits(["sendSelectedNodes", "ai-ring-click"]);
+const emit = defineEmits([
+  "sendSelectedNodes",
+  "ai-ring-click",
+  "ai-mode-change",
+]);
 
 // DOM 元素引用
 const container = ref<HTMLDivElement>(); // 画布容器
@@ -434,7 +438,10 @@ const clearAiAssist = () => {
   }
 
   // 重置状态
-  aiAssistState = null;
+  if (aiAssistState) {
+    aiAssistState = null;
+    emit("ai-mode-change", false);
+  }
 
   // 重绘图层
   if (layer) {
@@ -895,38 +902,21 @@ const createConnection = (node1: Konva.Node, node2: Konva.Node) => {
 
 // 取消 AI 辅助锁定状态，恢复交互
 const cancelAiAssist = () => {
+  console.log("cancelAiAssist called - destroying AI ring");
+  // 直接销毁 AI 辅助环
+  clearAiAssist();
+};
+
+const clearAiGuideLine = () => {
+  console.log("clearAiGuideLine called");
+  if (aiGuideLine) {
+    aiGuideLine.destroy();
+    aiGuideLine = null;
+  }
   if (aiAssistState) {
     aiAssistState.isLocked = false;
-
-    // 隐藏引导线
-    if (aiGuideLine) {
-      aiGuideLine.hide();
-    }
-
-    // 重置所有扇区高亮状态
-    aiRingSlices.forEach((group) => {
-      const slice = group.findOne(".slice") as Konva.Arc;
-      if (slice) {
-        slice.fill("rgba(24, 144, 255, 0.18)");
-      }
-
-      const labelGroup = group.findOne(".labelGroup") as Konva.Group;
-      if (labelGroup) {
-        const bg = labelGroup.findOne(".labelBg") as Konva.Rect;
-        const text = labelGroup.findOne(".labelText") as Konva.Text;
-        if (bg) {
-          bg.fill("rgba(255, 255, 255, 0.8)");
-          bg.stroke("#1890ff");
-        }
-        if (text) {
-          text.fill("#1890ff");
-        }
-        labelGroup.scale({ x: 1, y: 1 });
-      }
-    });
-
-    layer!.batchDraw();
   }
+  layer?.batchDraw();
 };
 
 // 触发 AI 辅助功能
@@ -1332,7 +1322,8 @@ const handleMouseDown = (
     }
 
     if (clickedOnEmpty && !isAiRingClick) {
-      clearAiAssist();
+      // 移除 clearAiAssist() 调用，使 AI 环在点击空白处时不消失
+      // clearAiAssist();
       // 先移除所有节点的选中样式
       selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
@@ -1993,6 +1984,10 @@ const exportElementInfo = () => {
     );
   });
 
+  return resetNodesData(nodes);
+};
+
+const resetNodesData = (nodes) => {
   return nodes.map((node) => {
     const json = JSON.parse(node.toJSON());
 
@@ -2177,14 +2172,14 @@ const handleDrop = (e: DragEvent) => {
             layer!.add(node);
           });
 
-          // 选中刚添加的图片
-          selectedNodes = nodes;
-          // 将图片和变换器移到最上层
-          transformer!.nodes(selectedNodes);
-          nodes.forEach((node) => {
-            node.moveToTop();
-          });
-          transformer!.moveToTop();
+          // // 选中刚添加的图片
+          // selectedNodes = nodes;
+          // // 将图片和变换器移到最上层
+          // transformer!.nodes(selectedNodes);
+          // nodes.forEach((node) => {
+          //   node.moveToTop();
+          // });
+          // transformer!.moveToTop();
 
           // 添加完图片后，自动切换回选择工具
           currentTool.value = "select";
@@ -2261,12 +2256,12 @@ const handleDrop = (e: DragEvent) => {
           });
 
           layer!.add(konvaText);
-          // 选中刚添加的文本
-          selectedNodes = [konvaText];
-          // 将文本和变换器移到最上层
-          transformer!.nodes(selectedNodes);
-          konvaText.moveToTop();
-          transformer!.moveToTop();
+          // // 选中刚添加的文本
+          // selectedNodes = [konvaText];
+          // // 将文本和变换器移到最上层
+          // transformer!.nodes(selectedNodes);
+          // konvaText.moveToTop();
+          // transformer!.moveToTop();
 
           // 添加完文本后，自动切换回选择工具
           currentTool.value = "select";
@@ -2585,6 +2580,8 @@ defineExpose({
   setTool,
   triggerAiAssist,
   clearSelection,
+  clearAiGuideLine,
+  resetNodesData,
 });
 </script>
 

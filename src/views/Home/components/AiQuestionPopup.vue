@@ -1,55 +1,57 @@
 <template>
   <div v-if="visible" class="ai-question-popup" :style="style">
     <div class="popup-header">
-      <span>Choose a question</span>
+      <span>AI 思考助手 Reflect</span>
       <el-icon class="close-icon" @click="handleCancel"><Close /></el-icon>
     </div>
-    <div class="popup-content">
-      <div class="question-card">
-        <div class="question-text">
-          氛围捕手：上海文创园的“雨前静谧”和你其他记忆中的哪些“氛围时刻”有关联？是厦门海边的潮湿，还是雪天屋内的温暖？它们之间是相似，还是互补？
-        </div>
-        <div class="image-row">
-          <img src="https://picsum.photos/80/80?random=1" alt="" />
-          <img src="https://picsum.photos/80/80?random=2" alt="" />
-          <img src="https://picsum.photos/80/80?random=3" alt="" />
-        </div>
-        <div class="selection-indicator"></div>
-      </div>
 
-      <div class="question-card active">
+    <div v-if="loading" class="loading-container">
+      <el-icon class="is-loading"><Loading /></el-icon>
+      <span>正在生成建议...</span>
+    </div>
+
+    <div
+      v-else-if="questionList && questionList.length > 0"
+      class="popup-content"
+    >
+      <div
+        v-for="(item, index) in questionList"
+        :key="index"
+        class="question-card"
+        :class="{ active: selectedIndex === index }"
+        @click="selectQuestion(index)"
+      >
         <div class="question-text">
-          你提到“{{
-            label
-          }}”——当时的环境里，你听到了什么？是风声、远处的交谈，还是纯粹的寂静？
-          <br />
-          <span class="highlight"
-            >距离中心点: {{ Math.round(lineLength) }}px</span
-          >
+          {{ item.question }}
         </div>
-        <div class="selection-indicator checked">
+        <div v-if="item.images && item.images.length" class="image-row">
+          <img v-for="(img, i) in item.images" :key="i" :src="img" alt="" />
+        </div>
+        <div v-if="selectedIndex === index" class="selection-indicator checked">
           <el-icon><Check /></el-icon>
         </div>
-      </div>
-
-      <div class="question-card">
-        <div class="question-text">
-          为什么你觉得下雨之前的时候是舒适的？为什么你期待下雨？
-        </div>
-        <div class="selection-indicator"></div>
+        <div v-else class="selection-indicator"></div>
       </div>
     </div>
+
+    <div v-else class="popup-content empty-state">暂无建议</div>
+
     <div class="popup-footer">
-      <el-button type="primary" size="small" @click="handleConfirm"
-        >确认</el-button
+      <el-button
+        type="primary"
+        size="small"
+        @click="handleConfirm"
+        :disabled="selectedIndex === -1"
       >
+        确认
+      </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { Check, Close } from "@element-plus/icons-vue";
+import { computed, ref, watch } from "vue";
+import { Check, Close, Loading } from "@element-plus/icons-vue";
 
 const props = defineProps({
   visible: Boolean,
@@ -65,21 +67,62 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  questionList: {
+    type: Array,
+    default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["confirm", "cancel"]);
 
+const selectedIndex = ref(-1);
+
+// 当弹窗显示或列表更新时，重置选择
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) selectedIndex.value = -1;
+  }
+);
+
+watch(
+  () => props.questionList,
+  (val) => {
+    if (val && val.length > 0) {
+      // 默认选中第一个? 或者不选中
+      // selectedIndex.value = 0;
+    }
+  }
+);
+
 const style = computed(() => {
+  // 简单的边界检查，防止弹出屏幕外 (可选优化)
+  const left = Math.min(props.position.x, window.innerWidth - 340);
+  const top = Math.min(props.position.y, window.innerHeight - 400);
+
   return {
-    left: `${props.position.x}px`,
-    top: `${props.position.y}px`,
+    left: `${Math.max(20, left)}px`,
+    top: `${Math.max(20, top)}px`,
   };
 });
 
+const selectQuestion = (index) => {
+  selectedIndex.value = index;
+};
+
 const handleConfirm = () => {
+  if (selectedIndex.value === -1) return;
+
+  const selectedItem = props.questionList[selectedIndex.value];
   emit("confirm", {
     label: props.label,
-    question: `你提到“${props.label}”——当时的环境里，你听到了什么？`,
+    question: selectedItem.question,
+    answer: selectedItem.answer, // 还可以传递 answer 或其他信息
+    ...selectedItem,
   });
 };
 
@@ -205,5 +248,23 @@ const handleCancel = () => {
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+  gap: 10px;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
 }
 </style>

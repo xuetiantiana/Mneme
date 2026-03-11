@@ -189,11 +189,12 @@ const handleGenerate = async () => {
             loading.value = false;
             return;
           }
-
+          console.log("canvasData", canvasData);
           // 将 JSON 字符串数组转换为解析后的对象数组
           const parsedCanvasData = canvasData.map((jsonStr) =>
             JSON.parse(jsonStr)
           );
+          console.log("parsedCanvasData", parsedCanvasData);
 
           result.push({
             screenshot: imageData,

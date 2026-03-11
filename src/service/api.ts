@@ -13,7 +13,7 @@ export const GetPCMList = (data: any): any => {
 };
 
 export const CreateStory = (data: any): any => {
-    return request.post("/api/story/create", data);
+  return request.post("/api/story/create", data);
 
   const response = {
     success: true,
@@ -27,6 +27,36 @@ export const CreateStory = (data: any): any => {
 走进日式风格的茶室，木质桌椅和柔和的灯光营造出一种怀旧温馨的氛围。墙上的画作和角落里的绿植，似乎在诉说着一个悠远的故事。那种文化氛围让人不禁想起童年时光，那些简单却充满意义的日子。舒适宁静的环境让心灵得到片刻的休憩，仿佛在这里，所有的烦恼都被轻轻地抚平。
  
 在这如梦般的时光里，我感受到一种久违的平和与安宁。每一个细节都在提醒我，生活的美好往往蕴藏在这些不起眼的瞬间。在这片陶瓷与木质的交融中，我找到了属于自己的片刻宁静，成为记忆中温暖的一部分。`,
+    },
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
+export const gelReflectToolData = (data: any): any => {
+  // return request.post("/api/story/create", data);
+
+  const response = {
+    success: true,
+    data: {
+      questionList: [
+        {
+          question: "你最近在做什么？",
+          answer: "我最近在学习React Native。",
+          images: [
+            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260305145501-bc432d/generated/S_text_F2.png",
+          ],
+        },
+        {
+          question: "你最近在学习什么？",
+          answer: "我最近在学习React Native。",
+        },
+      ],
     },
   };
 
