@@ -14,6 +14,7 @@
         ref="konvaRef"
         @ai-ring-click="handleAiRingClick"
         @ai-mode-change="handleAiModeChange"
+        @stage-transform="handleStageTransform"
       />
       <AiQuestionPopup
         :visible="aiPopupVisible"
@@ -143,14 +144,10 @@ const handleClickOutside = (event) => {
 
   // 如果点击在外部，且不是点击菜单
   if (!isClickInside && !isMenuClick) {
-    if (konvaRef.value.clearSelection) {
-      konvaRef.value.clearSelection();
-    }
-
-    // 如果处于 Reflect (AI) 模式，点击外部时是否要取消？
-    // 根据需求 "如果ai编辑取消了，就不点亮"，通常点击外部会取消 AI 辅助环
-    // 但这里可能需要更精细的判断，暂时保留 AI 辅助环的关闭逻辑由 KonvaComponent 内部处理
-    // 我们可以监听 AI 状态变化，或者在这里简单处理
+    // 点击外部不一定需要清除选择，这取决于用户体验需求
+    // if (konvaRef.value.clearSelection) {
+    //   konvaRef.value.clearSelection();
+    // }
   }
 };
 
@@ -172,6 +169,8 @@ const aiPopupData = ref({
   position: { x: 0, y: 0 },
   questionList: [], // 新增：存储接口返回的问题列表
   loading: false, // 新增：加载状态
+  targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
+  relativePos: { x: 0, y: 0 }, // 新增：记录点击点相对于舞台原点的坐标（未缩放）
 });
 
 const handleAddText = () => {
@@ -237,12 +236,43 @@ const handleNavClick = (navItem) => {
 
 // 处理 AI 环点击事件
 const handleAiRingClick = async (data) => {
+  // data.position 是屏幕坐标 (screenPos)
+  // 我们需要计算出它在 Stage 坐标系中的位置，以便后续缩放时重新计算屏幕坐标
+
+  // 假设 konvaComponent 暴露了 konvaData.stage
+  const stage = konvaRef.value?.konvaData?.stage;
+  let relativeX = 0;
+  let relativeY = 0;
+
+  if (stage) {
+    const transform = stage.getAbsoluteTransform().copy();
+    transform.invert();
+    // 这里的 data.position 是相对于 container 的坐标
+    // 但是 konvaComponent 传出来的是 clientRect 修正过的坐标
+    // 我们需要把 data.position 转换回 stage 坐标
+    // 实际上 data.position = stagePos * scale + stageOffset + containerOffset
+    // 简化处理：我们直接记录点击时的 stage transform，后续根据 diff 更新
+
+    // 更准确的做法：
+    // 获取点击点的 stage 坐标
+    const stagePos = transform.point({
+      x: data.position.x,
+      y: data.position.y - wmContainer.value.getBoundingClientRect().top,
+    });
+    relativeX = stagePos.x;
+    relativeY = stagePos.y;
+  }
+
   aiPopupData.value = {
     label: data.label,
     lineLength: data.lineLength,
-    position: data.position,
+    position: {
+      x: data.position.x,
+      y: data.position.y - wmContainer.value.getBoundingClientRect().top,
+    },
     questionList: [], // 重置问题列表
     loading: true, // 开始加载
+    relativePos: { x: relativeX, y: relativeY },
   };
   aiPopupVisible.value = true;
 
@@ -302,8 +332,23 @@ const closeAiPopup = () => {
   aiPopupVisible.value = false;
 };
 
+const handleStageTransform = () => {
+  if (aiPopupVisible.value) {
+    const stage = konvaRef.value?.konvaData?.stage;
+    if (stage) {
+      // 重新计算屏幕坐标
+      const transform = stage.getAbsoluteTransform();
+      const screenPos = transform.point(aiPopupData.value.relativePos);
+
+      aiPopupData.value.position = {
+        x: screenPos.x,
+        y: screenPos.y,
+      };
+    }
+  }
+};
+
 const handleRenderNodes = (canvasIndex) => {
-  // 先获取选中的节点信息
   selectedNodesData.value = konvaRef.value.getSelectedNodes();
   console.log("111", selectedNodesData.value);
   // 如果有选中的节点，则发送到主题画布

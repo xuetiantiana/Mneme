@@ -159,6 +159,7 @@ const emit = defineEmits([
   "sendSelectedNodes",
   "ai-ring-click",
   "ai-mode-change",
+  "stage-transform",
 ]);
 
 // DOM 元素引用
@@ -399,6 +400,13 @@ const handleScrollbarDragMove = (e: MouseEvent) => {
 
   stage.batchDraw();
   updateScrollbars();
+
+  // 触发 stage-transform 事件
+  emit("stage-transform", {
+    x: stage.x(),
+    y: stage.y(),
+    scale: stage.scaleX(),
+  });
 };
 
 const handleScrollbarDragEnd = () => {
@@ -415,6 +423,13 @@ const moveStage = (pos: { x: number; y: number }) => {
   stage.y(stage.y() + pos.y);
   stage.batchDraw();
   updateScrollbars();
+
+  // 触发事件，通知父组件舞台位置发生变化
+  emit("stage-transform", {
+    x: stage.x(),
+    y: stage.y(),
+    scale: stage.scaleX(),
+  });
 };
 
 // 清除 AI 辅助相关的图形和状态
@@ -1241,6 +1256,13 @@ const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     stage!.position(newPos);
     // 更新缩放比例的响应式变量
     scale.value = newScale;
+
+    // 触发 stage-transform 事件
+    emit("stage-transform", {
+      x: newPos.x,
+      y: newPos.y,
+      scale: newScale,
+    });
   } else {
     // 滚动画布
     // 如果按住 Shift 键，且垂直滚动，转换为水平滚动
@@ -1259,6 +1281,13 @@ const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
 
     stage!.position(newPos);
     stage!.batchDraw();
+
+    // 触发 stage-transform 事件
+    emit("stage-transform", {
+      x: newPos.x,
+      y: newPos.y,
+      scale: stage!.scaleX(),
+    });
   }
 
   updateScrollbars();
@@ -2419,6 +2448,7 @@ const getDropPosition = (e: DragEvent) => {
 
 // 将别的 canvas 的节点（多个）复制到当前画布中心，垂直水平居中
 const renderNodes = (nodesData) => {
+  console.log("nodesData:", nodesData);
   if (!layer || !nodesData || nodesData.length === 0) return;
 
   const isKonvaNodes = nodesData[0] instanceof Konva.Node;
@@ -2431,7 +2461,7 @@ const renderNodes = (nodesData) => {
   const clonedNodes = [];
   nodesData.forEach((node, index) => {
     const clonedNode = node.clone({
-      id: node.id() ? `${node.id()}_clone` : `clone_${index}`,
+      id: node.id(),
     });
     clonedNode.off();
     // 移除选中阴影

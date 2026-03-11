@@ -16,7 +16,7 @@
           @click="selectedStoryIndex = index"
         >
           <div class="story-title">{{ story.result.title }}</div>
-          <div class="story-time">{{ getStoryTime( story.createdAt) }}</div>
+          <div class="story-time">{{ getStoryTime(story.createdAt) }}</div>
         </div>
         <div v-if="storyStore.storyList.length === 0" class="no-story">
           暂无故事
@@ -65,7 +65,11 @@ watch(
   () => props.modelValue,
   (val) => {
     visible.value = val;
-    if (val && props.defaultIndex !== null && props.defaultIndex !== undefined) {
+    if (
+      val &&
+      props.defaultIndex !== null &&
+      props.defaultIndex !== undefined
+    ) {
       selectedStoryIndex.value = props.defaultIndex;
     }
   }
@@ -109,7 +113,7 @@ const handleClose = () => {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .story-list-container {
   display: flex;
   height: 500px;
@@ -170,6 +174,13 @@ const handleClose = () => {
         padding: 12px;
         border: 1px solid #eee;
         border-radius: 8px;
+
+        img {
+          border-radius: 8px;
+          max-width: 100%;
+          display: block;
+          margin: 0 auto;
+        }
 
         .item-title {
           font-size: 16px;

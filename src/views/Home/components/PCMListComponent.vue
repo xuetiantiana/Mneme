@@ -110,6 +110,7 @@ onMounted(async () => {
           segments: unit.segments || [],
           user_input: unit.user_input || {},
           layout: unit.layout || {},
+          type: unit.type || "pcm_unit",
         };
       });
 
