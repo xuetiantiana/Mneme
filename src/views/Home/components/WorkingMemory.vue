@@ -20,6 +20,7 @@
         :visible="aiPopupVisible"
         :position="aiPopupData.position"
         :label="aiPopupData.label"
+        :t="aiPopupData.t"
         :line-length="aiPopupData.lineLength"
         :question-list="aiPopupData.questionList"
         :loading="aiPopupData.loading"
@@ -110,7 +111,7 @@ import { Edit, Promotion, Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
-import { gelReflectToolData } from "@/service/api";
+import { gelReflectToolData, gelConstellateToolData } from "@/service/api";
 
 const props = defineProps({
   topicContainers: {
@@ -171,6 +172,7 @@ const aiPopupData = ref({
   loading: false, // 新增：加载状态
   targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
   relativePos: { x: 0, y: 0 }, // 新增：记录点击点相对于舞台原点的坐标（未缩放）
+  t: "AI Tool - Reflect", // 新增：弹窗标题
 });
 
 const handleAddText = () => {
@@ -179,16 +181,23 @@ const handleAddText = () => {
   }
 };
 
-const handleAiAssistClick = () => {
-  // 如果已经是 Reflect 状态，再次点击则取消
-  if (currentNav.value === "Reflect") {
-    // 主动点击按钮取消时，完全关闭 AI 辅助
+const handleAiAssistClick = (toolType = "Reflect") => {
+  // 如果当前点击的工具已经是激活状态，再次点击则取消
+  if (currentNav.value === toolType) {
     if (konvaRef.value && konvaRef.value.cancelAiAssist) {
       konvaRef.value.cancelAiAssist();
     }
     closeAiPopup();
     currentNav.value = "";
     return;
+  }
+
+  // 如果之前有其他工具处于激活状态，先取消之前的
+  if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
+    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+      konvaRef.value.cancelAiAssist();
+    }
+    closeAiPopup();
   }
 
   if (!konvaRef.value || !konvaRef.value.triggerAiAssist) {
@@ -214,17 +223,17 @@ const handleAiAssistClick = () => {
       type: "warning",
     });
   } else {
-    // 启动成功，点亮 Reflect
-    currentNav.value = "Reflect";
+    // 启动成功，设置当前工具状态
+    currentNav.value = toolType;
   }
 };
 
 const handleNavClick = (navItem) => {
-  if (navItem === "Reflect") {
-    handleAiAssistClick();
+  if (navItem === "Reflect" || navItem === "Constellate") {
+    handleAiAssistClick(navItem);
   } else {
-    // 其他导航项点击逻辑，切换时取消 Reflect 状态
-    if (currentNav.value === "Reflect") {
+    // 其他导航项点击逻辑，切换时取消 AI 状态
+    if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
       if (konvaRef.value && konvaRef.value.cancelAiAssist) {
         konvaRef.value.cancelAiAssist();
       }
@@ -265,6 +274,7 @@ const handleAiRingClick = async (data) => {
 
   aiPopupData.value = {
     label: data.label,
+    toolType: `${currentNav.value || "Reflect"}`, // 动态设置标题
     lineLength: data.lineLength,
     position: {
       x: data.position.x,
@@ -285,16 +295,23 @@ const handleAiRingClick = async (data) => {
     tag: data.label,
     depth: data.lineLength,
     nodeInfo: parsedCanvasData, // 使用 Reflect 开启时存储的节点
+    toolType: currentNav.value, // 增加工具类型参数
   };
   console.log("requestData", requestData);
 
   try {
-    const res = await gelReflectToolData(requestData);
+    let res;
+    if (currentNav.value === "Constellate") {
+      res = await gelConstellateToolData(requestData);
+    } else {
+      res = await gelReflectToolData(requestData);
+    }
+
     if (res && res.data && res.data.questionList) {
       aiPopupData.value.questionList = res.data.questionList;
     }
   } catch (error) {
-    console.error("Failed to fetch reflect tool data:", error);
+    console.error(`Failed to fetch ${currentNav.value} tool data:`, error);
     ElMessage.error("获取AI建议失败");
   } finally {
     aiPopupData.value.loading = false;
@@ -302,7 +319,10 @@ const handleAiRingClick = async (data) => {
 };
 
 const handleAiModeChange = (isActive) => {
-  if (!isActive && currentNav.value === "Reflect") {
+  if (
+    !isActive &&
+    (currentNav.value === "Reflect" || currentNav.value === "Constellate")
+  ) {
     currentNav.value = "";
     closeAiPopup();
   }
@@ -310,7 +330,8 @@ const handleAiModeChange = (isActive) => {
 
 const handleAiPopupConfirm = (data) => {
   if (konvaRef.value && konvaRef.value.createAiContentNode) {
-    konvaRef.value.createAiContentNode(data.question);
+    // 传入问题（作为标题/label）、图片列表
+    konvaRef.value.createAiContentNode(data.images, data.question);
   }
   closeAiPopup();
   // AI操作完成后，取消高亮状态
@@ -477,7 +498,7 @@ const handleRenderNodes = (canvasIndex) => {
   border: 1px solid rgba(0, 0, 0, 0.05);
 
   .nav-item {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     color: #333;
     cursor: pointer;

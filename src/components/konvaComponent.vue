@@ -18,12 +18,12 @@
       <!-- <button class="tool-btn" @click="resetView">
                 重置视图
                 </button> -->
-      <!-- <button
+      <button
         :class="['tool-btn', { active: currentTool === 'text' }]"
         @click="setTool('text')"
       >
         文字
-      </button> -->
+      </button>
     </div>
     <div class="toolbar">
       <div class="tool-group">
@@ -697,7 +697,7 @@ const handleStageClick = (
 };
 
 // 创建 AI 生成的内容节点（在确认后调用）
-const createAiContentNode = (content: string) => {
+const createAiContentNode = (images?: string[], label?: string) => {
   if (!aiAssistState || !aiGuideLine || !layer) return;
 
   // 获取引导线的起点和终点
@@ -712,24 +712,39 @@ const createAiContentNode = (content: string) => {
   const dy = endY - startY;
   const currentLength = Math.sqrt(dx * dx + dy * dy);
 
-  // 1. 先初步创建节点以获取其宽高
-  const textNode = new Konva.Text({
-    x: 0,
-    y: 0,
-    text: content,
-    fontSize: 14,
-    fontFamily: "Arial",
-    fill: "#333",
-    padding: 10,
-    width: 200, // 限制宽度自动换行
-    align: "left",
+  // 1. 创建节点内容
+  const group = new Konva.Group({
+    draggable: true,
+    name: "ai-content-node",
   });
 
+  let currentY = 0;
+  let maxWidth = 200;
+
+  // 如果有 label，先添加 label
+  if (label) {
+    const labelText = new Konva.Text({
+      x: 0,
+      y: currentY,
+      text: label,
+      fontSize: 16,
+      fontFamily: "Arial",
+      // fill: "#1890ff",
+      // fontStyle: "bold",
+      padding: 10,
+      width: maxWidth,
+      align: "left",
+    });
+    group.add(labelText);
+    currentY += labelText.height();
+  }
+
+  // 创建背景矩形，初始高度包含文本
   const bgNode = new Konva.Rect({
     x: 0,
     y: 0,
-    width: textNode.width(),
-    height: textNode.height(),
+    width: maxWidth,
+    height: currentY > 0 ? currentY : 50, // 初始高度
     fill: "#fff",
     stroke: "#8cc5ff",
     strokeWidth: 1,
@@ -739,60 +754,92 @@ const createAiContentNode = (content: string) => {
     shadowOffset: { x: 0, y: 4 },
   });
 
-  // 2. 计算从中心点到矩形边界在指定方向上的距离
-  // 设矩形半宽为 w, 半高为 h, 射线向量为 (dx, dy)
-  const w = bgNode.width() / 2;
-  const h = bgNode.height() / 2;
+  // 将背景移到最底层
+  group.add(bgNode);
+  bgNode.moveToBottom();
 
-  let finalCenterX = endX;
-  let finalCenterY = endY;
+  // 封装布局更新函数
+  const updateLayout = () => {
+    // 重新获取背景尺寸（因为可能已更新）
+    const w = bgNode.width() / 2;
+    const h = bgNode.height() / 2;
 
-  if (currentLength > 0) {
-    const unitX = dx / currentLength;
-    const unitY = dy / currentLength;
+    // 计算单位向量
+    let unitX = 0;
+    let unitY = 0;
+    if (currentLength > 0) {
+      unitX = dx / currentLength;
+      unitY = dy / currentLength;
+    }
 
-    // 计算射线与矩形四边交点的距离 d
-    // 根据相似三角形原理：
-    // 如果 unitX 不为 0，与左右边交点距离 d1 = w / |unitX|
-    // 如果 unitY 不为 0，与上下边交点距离 d2 = h / |unitY|
-    // 取其中的最小值即为中心到边界的真实距离
+    // 计算射线与矩形四边交点的距离 d (从中心向外)
     const d1 = unitX !== 0 ? Math.abs(w / unitX) : Infinity;
     const d2 = unitY !== 0 ? Math.abs(h / unitY) : Infinity;
     const distanceToEdge = Math.min(d1, d2);
 
-    // 最终中心点 = 引导线终点 + 方向向量 * 距离边界的长度
-    finalCenterX = endX + unitX * distanceToEdge;
-    finalCenterY = endY + unitY * distanceToEdge;
+    // 计算 group 的中心坐标
+    const groupCenterX = endX + unitX * distanceToEdge;
+    const groupCenterY = endY + unitY * distanceToEdge;
+
+    group.position({
+      x: groupCenterX,
+      y: groupCenterY,
+    });
+
+    // 设置偏移量，使 groupCenterX/Y 对应节点的中心位置
+    group.offset({
+      x: w,
+      y: h,
+    });
+
+    // 强制重绘
+    layer?.batchDraw();
+  };
+
+  // 初始布局
+  updateLayout();
+
+  // 如果有图片，添加图片
+  if (images && images.length > 0) {
+    let imageY = currentY + 5;
+    images.forEach((src) => {
+      const imageObj = new Image();
+      imageObj.onload = () => {
+        // 计算图片尺寸，保持宽度适配
+        const imgWidth = maxWidth - 20; // 留白
+        const scale = imgWidth / imageObj.width;
+        const imgHeight = imageObj.height * scale;
+
+        const konvaImage = new Konva.Image({
+          x: 10,
+          y: imageY,
+          image: imageObj,
+          width: imgWidth,
+          height: imgHeight,
+          cornerRadius: 4,
+        });
+        group.add(konvaImage);
+
+        // 更新背景高度
+        imageY += imgHeight + 10;
+        bgNode.height(Math.max(bgNode.height(), imageY));
+
+        // 每次图片加载完都要重新计算位置，因为高度变了，中心点变了
+        updateLayout();
+      };
+      imageObj.src = src;
+    });
   }
-
-  // 3. 创建内容组
-  const group = new Konva.Group({
-    x: finalCenterX,
-    y: finalCenterY,
-    draggable: true,
-    name: "ai-content-node",
-  });
-  group.add(bgNode);
-  group.add(textNode);
-
-  // 设置偏移量，使 finalCenterX/Y 对应节点的中心位置
-  group.offset({
-    x: w,
-    y: h,
-  });
 
   layer.add(group);
 
-  // 获取源节点
+  // 获取源节点并创建连线
   const sourceNode = aiAssistState.target;
-
   if (sourceNode) {
-    // 创建持久化连线
     createConnection(sourceNode, group);
   } else {
-    // 降级：如果找不到源节点（极少情况），使用静态坐标
     const persistentLine = new Konva.Line({
-      points: [startX, startY, endX, endY], // 静态连线连到边界点
+      points: [startX, startY, endX, endY],
       stroke: "#8cc5ff",
       strokeWidth: 2,
       dash: [10, 5],
@@ -802,8 +849,7 @@ const createAiContentNode = (content: string) => {
     persistentLine.moveToBottom();
   }
 
-  // 清除 AI 辅助环，但保留这个新创建的内容和连线
-  // clearAiAssist 会销毁 aiGuideLine，所以上面我们已经读取了 points
+  // 清除 AI 辅助环
   clearAiAssist();
 
   // 重新绘制

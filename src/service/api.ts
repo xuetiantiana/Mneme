@@ -49,12 +49,39 @@ export const gelReflectToolData = (data: any): any => {
           answer: "我最近在学习React Native。",
           images: [
             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260305145501-bc432d/generated/S_text_F2.png",
           ],
         },
         {
           question: "你最近在学习什么？",
           answer: "我最近在学习React Native。",
+        },
+      ],
+    },
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
+export const gelConstellateToolData = (data: any): any => {
+  // return request.post("/api/story/create", data);
+
+  const response = {
+    success: true,
+    data: {
+      questionList: [
+        {
+          images: [
+            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+          ],
+        },
+        {
+          images: [
+            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260305145501-bc432d/generated/S_text_F2.png",
+          ],
         },
       ],
     },

@@ -1,7 +1,7 @@
 <template>
   <div v-if="visible" class="ai-question-popup" :style="style">
     <div class="popup-header">
-      <span>AI Tool - Reflect</span>
+      <span>AI Tool - {{ toolType }}</span>
       <el-icon class="close-icon" @click="handleCancel"><Close /></el-icon>
     </div>
 
@@ -62,6 +62,10 @@ const props = defineProps({
   label: {
     type: String,
     default: "",
+  },
+  toolType: {
+    type: String,
+    default: "Reflect",
   },
   lineLength: {
     type: Number,

@@ -1,5 +1,5 @@
 <template>
-  <div class="layout-container">
+  <div class="layout-container no-copy">
     <el-button
       style="position: absolute; right: 10px; top: 10px"
       @click="showStoryListDialog = true"
