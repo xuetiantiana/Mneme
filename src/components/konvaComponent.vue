@@ -147,6 +147,7 @@ import {
   createTextNode,
   createInterpretationTextNodes,
   createConnection,
+  DEFAULT_FONT_FAMILY,
 } from "@/utils/canvasPositionUtils";
 import {
   initMainImages,
@@ -728,7 +729,7 @@ const createAiContentNode = (images?: string[], label?: string) => {
       y: currentY,
       text: label,
       fontSize: 16,
-      fontFamily: "Arial",
+      fontFamily: DEFAULT_FONT_FAMILY,
       // fill: "#1890ff",
       // fontStyle: "bold",
       padding: 10,
@@ -1090,7 +1091,7 @@ const triggerAiAssist = () => {
       name: "labelText",
       text: aiRingLabels[index],
       fontSize: 14,
-      fontFamily: "Arial",
+      fontFamily: DEFAULT_FONT_FAMILY,
       fill: "#999", // 默认灰色
       align: "center",
       verticalAlign: "middle",
@@ -1148,7 +1149,35 @@ onMounted(() => {
     anchorFill: "#ffffff",
     anchorSize: 10,
     rotateAnchorOffset: 20,
+    boundBoxFunc: (oldBox, newBox) => {
+      // 检查当前选中的节点是否是文本节点
+      if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
+        // 对于文本节点，只允许通过拖拽改变宽度，不允许缩放高度
+        // 如果缩放导致宽度太小，限制最小宽度的改变
+        const minWidth = 20;
+        if (Math.abs(newBox.width) < minWidth) {
+          return oldBox;
+        }
+      }
+      return newBox;
+    },
   });
+  
+  // 监听 Transformer 的缩放事件，专门处理被选中为一个 Text 时的情况
+  transformer.on('transform', function () {
+    if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
+      const textNode = selectedNodes[0] as Konva.Text;
+      // 重置文本节点的 scale 为 1，并用计算出来的宽度重新赋值
+      // 如此做到拖拽点只改变 width 属性，而保持字体本身不被压扁/拉长
+      const scaleX = textNode.scaleX();
+      const newWidth = Math.max(textNode.width() * scaleX, 20); // 最小宽度设为 20
+      
+      textNode.width(newWidth);
+      textNode.scaleX(1);
+      textNode.scaleY(1);
+    }
+  });
+
   layer.add(transformer);
 
   selectionBox = new Konva.Rect({
@@ -1186,6 +1215,7 @@ onMounted(() => {
       rightMouseDownPos = { ...rightMouseStartPos };
       previousTool = currentTool.value;
       setTool("pan");
+      stage!.container().style.cursor = "grabbing";
     }
   });
 
@@ -1204,14 +1234,14 @@ onMounted(() => {
   stage.on("mouseup", (e) => {
     if (e.evt.button === 2) {
       isRightMouseDown = false;
-      setTool("select");
+      setTool(previousTool as any);
     }
   });
 
   stage.on("mouseleave", () => {
     if (isRightMouseDown) {
       isRightMouseDown = false;
-      setTool("select");
+      setTool(previousTool as any);
     }
   });
 
@@ -1258,6 +1288,14 @@ const handleResize = () => {
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
+  // 如果当前正在编辑文本（有 textarea 存在并且被聚焦），则不触发全局删除快捷键
+  if (
+    document.activeElement?.tagName === "TEXTAREA" ||
+    document.activeElement?.tagName === "INPUT"
+  ) {
+    return;
+  }
+  
   if (e.key === "Delete" || e.key === "Backspace") {
     deleteSelectedNodes();
   }
@@ -1588,6 +1626,9 @@ const handleNodeClick = (
   // 阻止事件冒泡，避免触发其他点击事件
   e.cancelBubble = true;
 
+  // 只按绑定时传入的节点选中；对于 Group，不再穿透选中子节点
+  const targetNode: Konva.Node = node;
+
   // 检查是否按下了修饰键（Shift、Ctrl 或 Meta），用于多选
   const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
 
@@ -1597,21 +1638,21 @@ const handleNodeClick = (
     selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
     // 如果点击的节点不在已选列表中，则只选中该节点
-    if (selectedNodes.indexOf(node) === -1) {
-      selectedNodes = [node];
+    if (selectedNodes.indexOf(targetNode) === -1) {
+      selectedNodes = [targetNode];
     } else {
       // 如果点击的节点已在已选列表中，保持选中
-      selectedNodes = [node];
+      selectedNodes = [targetNode];
     }
   } else {
     // 如果按下了修饰键，执行多选/取消选择操作
-    const isSelected = selectedNodes.indexOf(node) >= 0;
+    const isSelected = selectedNodes.indexOf(targetNode) >= 0;
     if (!isSelected) {
       // 如果节点未被选中，则添加到选中列表
-      selectedNodes.push(node);
+      selectedNodes.push(targetNode);
     } else {
       // 如果节点已被选中，则从选中列表中移除
-      selectedNodes.splice(selectedNodes.indexOf(node), 1);
+      selectedNodes.splice(selectedNodes.indexOf(targetNode), 1);
     }
   }
 
@@ -1620,6 +1661,15 @@ const handleNodeClick = (
 
   // 更新变换器的选中节点列表
   transformer!.nodes(selectedNodes);
+  
+  // 针对只有文字节点被选中的情况：禁用垂直方向的调整点
+  if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
+    transformer!.enabledAnchors(['middle-left', 'middle-right']);
+  } else {
+    // 其他情况恢复所有的调整锚点
+    transformer!.enabledAnchors(['top-left',  'top-right', 'bottom-left', 'bottom-right']);
+  }
+  
   // 将所有选中的节点移到图层顶部
   selectedNodes.forEach((n) => n.moveToTop());
   // 将变换器移到最顶部，确保选择框可见
@@ -1685,17 +1735,17 @@ const handleTextClick = (
   // 获取点击位置在舞台坐标系中的坐标
   const pos = getPointerPos(e);
 
-  // 直接创建文本节点，使用默认文字
-  const defaultText = "双击编辑文字";
+  // 直接创建空的文本节点
+  const defaultText = "";
   const textNode = new Konva.Text({
     x: pos.x,
     y: pos.y,
     text: defaultText,
     fontSize: fontSize.value,
-    fontFamily: "Arial",
+    fontFamily: DEFAULT_FONT_FAMILY,
     fill: brushColor.value,
     draggable: true,
-    width: 150, // 设置文本宽度，超出自动换行
+    width: 200, // 设置一个具体的基础宽度
     wrap: "word", // 按单词换行
   });
 
@@ -1708,15 +1758,22 @@ const handleTextClick = (
   layer!.add(textNode);
   currentTool.value = "select";
 
+  // 恢复光标状态
+  stage?.container().style.setProperty("cursor", "default", "important");
+
   // 选中新创建的文字节点
   selectedNodes = [textNode];
   transformer!.nodes(selectedNodes);
   textNode.moveToTop();
   transformer!.moveToTop();
   addNodeSelectStyle(textNode);
+  layer!.batchDraw();
 
   // 保持文字工具模式，方便继续添加文字
   // 不自动切换回选择工具
+  setTimeout(() => {
+    enterTextEditMode(textNode);
+  }, 100);
 };
 
 // 处理双击事件
@@ -1726,98 +1783,130 @@ const handleDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
   const target = e.target;
   // 检查双击的目标是否是文字节点
   if (target instanceof Konva.Text) {
-    const textNodeKonva = target;
-    const stage = textNodeKonva.getStage();
-    const textPosition = textNodeKonva.absolutePosition();
-    const stageBox = stage!.container().getBoundingClientRect();
-
-    const areaPosition = {
-      x: stageBox.left + textPosition.x,
-      y: stageBox.top + textPosition.y,
-    };
-
-    const textarea = document.createElement("textarea");
-    document.body.appendChild(textarea);
-
-    textarea.value = textNodeKonva.text();
-    textarea.style.position = "absolute";
-    textarea.style.top = areaPosition.y + "px";
-    textarea.style.left = areaPosition.x + "px";
-    textarea.style.width =
-      textNodeKonva.width() - textNodeKonva.padding() * 2 + "px";
-    textarea.style.height =
-      textNodeKonva.height() - textNodeKonva.padding() * 2 + 5 + "px";
-    textarea.style.fontSize = textNodeKonva.fontSize() + "px";
-    textarea.style.border = "none";
-    textarea.style.padding = "0px";
-    textarea.style.margin = "0px";
-    textarea.style.overflow = "hidden";
-    textarea.style.background = "none";
-    textarea.style.outline = "none";
-    textarea.style.resize = "none";
-    textarea.style.lineHeight = textNodeKonva.lineHeight();
-    textarea.style.fontFamily = textNodeKonva.fontFamily();
-    textarea.style.transformOrigin = "left top";
-    textarea.style.textAlign = textNodeKonva.align();
-    textarea.style.color = textNodeKonva.fill();
-    textarea.style.zIndex = "1001";
-
-    const rotation = textNodeKonva.rotation();
-    let transform = "";
-    if (rotation) {
-      transform += "rotateZ(" + rotation + "deg)";
-    }
-    textarea.style.transform = transform;
-
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + 3 + "px";
-
-    textNodeKonva.visible(false);
-    textarea.focus();
-
-    function removeTextarea() {
-      textarea.parentNode.removeChild(textarea);
-      window.removeEventListener("click", handleOutsideClick);
-      window.removeEventListener("touchstart", handleOutsideClick);
-      textNodeKonva.visible(true);
-    }
-
-    function setTextareaWidth(newWidth) {
-      if (!newWidth) {
-        newWidth = textNodeKonva.placeholder?.length * textNodeKonva.fontSize();
-      }
-      textarea.style.width = newWidth + "px";
-    }
-
-    textarea.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !e.shiftKey) {
-        textNodeKonva.text(textarea.value);
-        removeTextarea();
-      }
-      if (e.key === "Escape") {
-        removeTextarea();
-      }
-    });
-
-    textarea.addEventListener("input", function () {
-      const scale = textNodeKonva.getAbsoluteScale().x;
-      setTextareaWidth(textNodeKonva.width() * scale);
-      textarea.style.height = "auto";
-      textarea.style.height =
-        textarea.scrollHeight + textNodeKonva.fontSize() + "px";
-    });
-
-    function handleOutsideClick(e) {
-      if (e.target !== textarea) {
-        textNodeKonva.text(textarea.value);
-        removeTextarea();
-      }
-    }
-    setTimeout(() => {
-      window.addEventListener("click", handleOutsideClick);
-      window.addEventListener("touchstart", handleOutsideClick);
-    });
+    enterTextEditMode(target);
   }
+};
+
+// 进入文字编辑模式
+const enterTextEditMode = (textNodeKonva: Konva.Text) => {
+  const stage = textNodeKonva.getStage();
+  const textPosition = textNodeKonva.absolutePosition();
+  const stageBox = stage!.container().getBoundingClientRect();
+
+  const areaPosition = {
+    x: stageBox.left + textPosition.x,
+    y: stageBox.top + textPosition.y,
+  };
+
+  const textarea = document.createElement("textarea");
+  document.body.appendChild(textarea);
+
+  textarea.value = textNodeKonva.text();
+  textarea.style.position = "absolute";
+  textarea.style.top = areaPosition.y + "px";
+  textarea.style.left = areaPosition.x + "px";
+  textarea.style.width =
+    (textNodeKonva.width() || 200) - textNodeKonva.padding() * 2 + "px";
+  // 确保初始高度，即使文字为空也有一行高度
+  const initialHeight = textNodeKonva.text() ? textNodeKonva.height() : textNodeKonva.fontSize() * 1.2;
+  textarea.style.height =
+    initialHeight - textNodeKonva.padding() * 2 + 5 + "px";
+  textarea.style.fontSize = textNodeKonva.fontSize() + "px";
+  textarea.style.border = "1px solid #1890ff"; // 添加边框更容易看见
+  textarea.style.padding = "0px";
+  textarea.style.margin = "0px";
+  textarea.style.overflow = "hidden";
+  textarea.style.background = "white"; // 背景全白
+  textarea.style.outline = "none";
+  textarea.style.resize = "none";
+  textarea.style.lineHeight = textNodeKonva.lineHeight().toString();
+  textarea.style.fontFamily = textNodeKonva.fontFamily();
+  textarea.style.transformOrigin = "left top";
+  textarea.style.textAlign = textNodeKonva.align();
+  textarea.style.color = textNodeKonva.fill().toString();
+  textarea.style.zIndex = "1001";
+
+  const rotation = textNodeKonva.rotation();
+  const absScale = textNodeKonva.getAbsoluteScale();
+  let transform = "";
+  if (rotation) {
+    transform += `rotateZ(${rotation}deg) `;
+  }
+  // 使用 CSS transform 将绝对缩放也附加在 textarea 上，保证大小完全对齐画布和 node
+  transform += `scaleX(${absScale.x}) scaleY(${absScale.y}) `;
+  textarea.style.transform = transform;
+  textarea.style.transformOrigin = "left top";
+
+  // 使用 setTimeout 确保 DOM 渲染后再 focus
+  setTimeout(() => {
+    textarea.focus();
+    textarea.style.height = "auto";
+    textarea.style.height = (textarea.scrollHeight || initialHeight) + 3 + "px";
+  }, 0);
+
+  textNodeKonva.visible(false);
+
+  let isRemoving = false;
+
+  function removeTextarea() {
+    if (isRemoving) return;
+    isRemoving = true;
+    if (textarea.parentNode) {
+      textarea.parentNode.removeChild(textarea);
+    }
+    window.removeEventListener("mousedown", handleOutsideClick);
+    window.removeEventListener("touchstart", handleOutsideClick);
+    textNodeKonva.visible(true);
+  }
+
+  function setTextareaWidth(newWidth: number) {
+    if (!newWidth) {
+      newWidth = Math.max((textNodeKonva.text() || "").length * textNodeKonva.fontSize(), textNodeKonva.width(), 200);
+    }
+    textarea.style.width = newWidth + "px";
+  }
+
+  textarea.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      textNodeKonva.text(textarea.value);
+      removeTextarea();
+      if (!textarea.value.trim()) {
+        textNodeKonva.destroy();
+        transformer!.nodes([]);
+      }
+    }
+    if (e.key === "Escape") {
+      removeTextarea();
+      if (!textarea.value.trim()) {
+        textNodeKonva.destroy();
+        transformer!.nodes([]);
+      }
+    }
+  });
+
+  textarea.addEventListener("input", function () {
+    setTextareaWidth(textNodeKonva.width());
+    textarea.style.height = "auto";
+    textarea.style.height =
+      textarea.scrollHeight + textNodeKonva.fontSize() + "px";
+  });
+
+  function handleOutsideClick(e: MouseEvent | TouchEvent) {
+    if (e.target !== textarea) {
+      textNodeKonva.text(textarea.value);
+      removeTextarea();
+      if (!textarea.value.trim()) {
+        textNodeKonva.destroy();
+        transformer!.nodes([]);
+      }
+    }
+  }
+  
+  // 使用 setTimeout 并在 mousedown 事件处理点击外部，避免因 click 冒泡直接触发
+  setTimeout(() => {
+    window.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("touchstart", handleOutsideClick);
+  }, 100);
 };
 
 // 触发图片上传
@@ -1912,6 +2001,18 @@ const setTool = (
     selectedNodes = [];
     transformer.nodes([]);
   }
+  
+  // 设置鼠标指针样式
+  if (stage) {
+    if (tool === "text") {
+      stage.container().style.cursor = "text";
+    } else if (tool === "pan") {
+      stage.container().style.cursor = "grab";
+    } else {
+      stage.container().style.cursor = "default";
+    }
+  }
+  
   // 更新所有节点的可拖拽状态
   updateDraggableState();
 };
@@ -2320,7 +2421,7 @@ const handleDrop = (e: DragEvent) => {
           startY: dropPos.y,
           ...dragData.style,
           center: true,
-          isBubble: true,
+          isBubble: false,
           align: "center",
           width: 60,
         }

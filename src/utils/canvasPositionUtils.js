@@ -1,5 +1,7 @@
 import Konva from "konva";
 
+export const DEFAULT_FONT_FAMILY = 'sans-serif, "Microsoft YaHei"';
+
 /**
  * 获取气泡颜色，根据类型和个人特异性数值返回渐变颜色
  * @param {string} type - 类型：aesthetic（审美）, emotion（情感）, sensory（感官）, value（价值&个人意义）
@@ -77,7 +79,7 @@ export const createImageAndTextNodes = (
     mainImageHeight = 200,
     titleGap = 10,
     fontSize = 14,
-    fontFamily = "Arial",
+    fontFamily = DEFAULT_FONT_FAMILY,
     fill = "#333",
     backgroundColor,
     padding = 5,
@@ -210,7 +212,7 @@ export const createTextNode = ({ text, id, customType }, options = {}) => {
     startX = 0,
     startY = 0,
     fontSize = 13,
-    fontFamily = "Arial",
+    fontFamily = DEFAULT_FONT_FAMILY,
     fill = "#333",
     backgroundColor,
     padding = 5,
@@ -265,18 +267,33 @@ export const createTextNode = ({ text, id, customType }, options = {}) => {
         group.add(background);
         group.add(konvaText);
 
-        konvaText.x((setWidth - textWidth) / 2);
-        konvaText.y((setHeight - textHeight) / 2);
+        if (isBubble) {
+          konvaText.x((setWidth - textWidth) / 2);
+          konvaText.y((setHeight - textHeight) / 2);
+        } else {
+          konvaText.x(padding);
+          konvaText.y(padding);
+        }
 
-        konvaText.on("textChange", () => {
-          const newWidth = konvaText.width();
-          const newHeight = konvaText.height();
-          const newSize = Math.max(newWidth, newHeight) + padding * 2;
-          background.width(newSize);
-          background.height(newSize);
-          background.cornerRadius(newSize / 2);
-          konvaText.x((newSize - newWidth) / 2);
-          konvaText.y((newSize - newHeight) / 2);
+        konvaText.on("textChange widthChange", () => {
+          const newTextWidth = konvaText.width();
+          const newTextHeight = konvaText.height();
+          
+          if (isBubble) {
+            const newSize = Math.max(newTextWidth, newTextHeight) + padding * 2;
+            background.width(newSize);
+            background.height(newSize);
+            background.cornerRadius(newSize / 2);
+            konvaText.x((newSize - newTextWidth) / 2);
+            konvaText.y((newSize - newTextHeight) / 2);
+          } else {
+            const newWidth = newTextWidth + padding * 2;
+            const newHeight = newTextHeight + padding * 2;
+            background.width(newWidth);
+            background.height(newHeight);
+            konvaText.x(padding);
+            konvaText.y(padding);
+          }
         });
 
         if (center) {
@@ -339,7 +356,7 @@ export const createInterpretationTextNodes = (
     horizontalGap = 15,
     verticalGap = 70,
     fontSize = 12,
-    fontFamily = "Arial",
+    fontFamily = DEFAULT_FONT_FAMILY,
     fill = "#333",
     backgroundColor,
     padding = 5,

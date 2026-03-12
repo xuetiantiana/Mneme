@@ -9,7 +9,7 @@
       position: relative;
     "
   >
-    <div style="height: 100%" @click.self="closeAiPopup">
+    <div style="height: 100%" @click.self="handleAiPopupCancel">
       <KonvaComponent
         ref="konvaRef"
         @ai-ring-click="handleAiRingClick"
@@ -333,18 +333,24 @@ const handleAiPopupConfirm = (data) => {
     // 传入问题（作为标题/label）、图片列表
     konvaRef.value.createAiContentNode(data.images, data.question);
   }
+  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+    konvaRef.value.cancelAiAssist();
+  }
   closeAiPopup();
-  // AI操作完成后，取消高亮状态
+  // AI操作完成后，取消高亮状态/工具状态
   currentNav.value = "";
 };
 
 const handleAiPopupCancel = () => {
-  // 仅仅关闭弹窗，不取消 AI 辅助（不关闭环，不熄灭 Reflect 按钮）
-  // 但是要清除引导线，以便用户重新选择
+  // 关闭弹窗时同步退出 AI 工具，并清理引导线
   if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
     konvaRef.value.clearAiGuideLine();
   }
+  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+    konvaRef.value.cancelAiAssist();
+  }
   closeAiPopup();
+  currentNav.value = "";
 };
 
 // 点击画布其他地方关闭弹窗 (需要在 KonvaComponent 中透传或全局监听，这里简化处理)

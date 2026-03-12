@@ -3,6 +3,7 @@ import {
   createImageAndTextNodes,
   createTextNode,
   getBubbleColor,
+  DEFAULT_FONT_FAMILY,
 } from "./canvasPositionUtils";
 
 export const getImageProxyUrl = (url) => {
@@ -367,7 +368,7 @@ const createTitleNode = (title, mainImages, offsetX, offsetY) => {
     x: centerX,
     y: titleY,
     fontSize: 14,
-    fontFamily: "Arial",
+    fontFamily: DEFAULT_FONT_FAMILY,
     fill: "#333",
     // fontStyle: 'bold',
     align: "center",
@@ -417,7 +418,7 @@ export const initSegmentImagesItem = (segment, options = {}) => {
         mainImageHeight: h,
         rotation,
         fontSize: 14,
-        fontFamily: "Arial",
+        fontFamily: DEFAULT_FONT_FAMILY,
         fill: "#333",
         center: true,
       }
@@ -562,15 +563,15 @@ export const initPCMBubbles = (bubbles, options = {}) => {
               startX: x,
               startY: y,
               fontSize: bubble.fontSize || 14,
-              fontFamily: bubble.fontFamily || "Arial",
+              fontFamily: bubble.fontFamily || DEFAULT_FONT_FAMILY,
               backgroundColor: bubble.textBackgroundColor,
               padding: bubble.textPadding || 5,
               cornerRadius: bubble.textCornerRadius || 4,
               center: true,
               backgroundColor: getBubbleColor(bubble.kind, bubble.specificity),
-              isBubble: true,
+              isBubble: false,
               align: "center",
-              width: 60,
+              // width: 60,
             }
           )
             .then((textNode) => {

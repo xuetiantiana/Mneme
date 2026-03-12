@@ -111,6 +111,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, reactive } from "vue";
+import { DEFAULT_FONT_FAMILY } from "@/utils/canvasPositionUtils";
 import image1 from "@/assets/images/1691549357221680.png";
 import image2 from "@/assets/images/OIP-C.png";
 import image3 from "@/assets/images/OIP-C2.png";
@@ -411,7 +412,7 @@ const drawElement = (element) => {
       break;
 
     case "text":
-      ctx.value.font = `${16 * appState.scale}px Arial`;
+      ctx.value.font = `${16 * appState.scale}px ${DEFAULT_FONT_FAMILY}`;
       ctx.value.fillStyle = strokeColor;
       ctx.value.fillText(element.text || "文本", viewportPos.x, viewportPos.y);
       break;
@@ -781,7 +782,7 @@ const drawElementToContext = (context, element, scale) => {
       break;
 
     case "text":
-      context.font = `${16 * scale}px Arial`;
+      context.font = `${16 * scale}px ${DEFAULT_FONT_FAMILY}`;
       context.fillStyle = strokeColor;
       context.fillText(text || "文本", x, y);
       break;
