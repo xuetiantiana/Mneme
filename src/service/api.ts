@@ -93,3 +93,114 @@ export const gelConstellateToolData = (data: any): any => {
     }, 1000);
   });
 };
+
+export const ReflectHint = (data: any): any => {
+  console.log("ReflectHint data:", data);
+  return request.post("/api/reflect/hint", data);
+
+  const response = {
+    success: true,
+    data: {
+  "depths": [
+    "描述层",
+    "感受层",
+    "评价层",
+    "分析层",
+    "结论层",
+    "行动层"
+  ],
+  "perspectives": [
+    {
+      "id": "perspective-YYYY***-***", 
+      "name": "过去的你"
+    },
+    {
+      "id": "perspective-YYYY***-***",
+      "name": "诗人"
+    },
+    {
+      "id": "perspective-YYYY***-***",
+      "name": "人类学家"
+    }
+  ]
+}
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
+
+
+export const ConstellateHint = (data: any): any => {
+  console.log("ConstellateHint data:", data);
+  // return request.post("/api/reflect/hint", data);
+
+  const response = {
+    success: true,
+    data: {
+  "depths": [
+    "描述层",
+    "感受层",
+    "评价层",
+    "分析层",
+    "结论层",
+    "行动层"
+  ],
+  "perspectives": [
+    {
+      "id": "perspective-YYYY***-***", 
+      "name": "过去的你11222"
+    },
+    {
+      "id": "perspective-YYYY***-***",
+      "name": "诗人"
+    },
+    {
+      "id": "perspective-YYYY***-***",
+      "name": "人类学家"
+    }
+  ]
+}
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
+
+export const ReflectQuestions = (data: any): any => {
+  return request.post("/api/reflect/questions", data);
+
+  const response = {
+    success: true,
+    data: {
+    "id": "question-xxx-xxx",
+    "text": "",
+    "type": "question",
+    "depth": "传入的深度值",
+    "memory":[{
+        "id": "",
+        "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+        "text": "111111"
+    },
+  {
+        "id": "",
+        "image_url": "",
+        "text": "111111"
+    }]
+}
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};

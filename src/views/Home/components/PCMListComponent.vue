@@ -5,7 +5,9 @@
       <input type="checkbox" v-model="selectAll" @change="handleSelectAll" />
     </div> -->
 
-    <ul class="cards-grid">
+    <div v-if="isLoading" class="loading-tip">Loading PCM list...</div>
+
+    <ul v-else class="cards-grid">
       <li
         v-for="(item, index) in memoryItems"
         :key="index"
@@ -81,8 +83,10 @@ const canvasPopupPosition = ref({ top: 0, left: 0 });
 const currentCanvasItem = ref({});
 
 const memoryItems = ref([]);
+const isLoading = ref(false);
 
 onMounted(async () => {
+  isLoading.value = true;
   try {
     const response = await GetPCMList();
     console.log("response", response);
@@ -123,6 +127,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("加载 PCM 数据失败:", error);
+  } finally {
+    isLoading.value = false;
   }
 });
 
@@ -247,6 +253,19 @@ const handleCloseCanvasPopup = () => {
   flex-direction: column;
   padding: 0.875rem;
   overflow: hidden;
+
+  .loading-tip {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95em;
+    color: #666;
+    background: #f7f7f7;
+    border: 1px dashed #d9d9d9;
+    border-radius: 10px;
+    margin: 0.5em;
+  }
 
   .select-all-bar {
     display: flex;

@@ -185,7 +185,9 @@ let lastLine: Konva.Line | null = null; // 当前正在绘制的线条
 
 // AI 辅助功能状态变量
 let aiRingSlices: Konva.Group[] = []; // 存储环形分区的四个扇形（包含文字）
+let aiRightClockLabels: Konva.Text[] = []; // 存储 3 点钟方向固定提示文案
 let aiGuideLine: Konva.Line | null = null; // 存储中心到鼠标的引导线
+let aiGuideEndCircle: Konva.Circle | null = null; // 引导线最外端圆点
 let aiAssistState: {
   centerX: number;
   centerY: number;
@@ -196,7 +198,195 @@ let aiAssistState: {
 } | null = null; // 存储 AI 辅助环的几何状态信息
 
 // 环形分区标签配置
-const aiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
+// defaultAiRingLabels: 兜底标签，ReflectHint 接口失败或返回空时回退到这组默认值。
+// aiRingLabels: 当前真正用于绘制环形扇区的标签数组，支持在运行时动态替换。
+const defaultAiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
+let aiRingLabels = [...defaultAiRingLabels];
+
+// 供外部（如 WorkingMemory）设置环形标签。
+// 规则：
+// 1) 传空或非数组 -> 恢复默认标签。
+// 2) 传入后会做 trim + 过滤空字符串，避免出现空文案扇区。
+// 3) 过滤后若为空，仍回退到默认标签，保证至少有 1 个扇区。
+const setAiRingLabels = (labels?: string[]) => {
+  if (!Array.isArray(labels) || labels.length === 0) {
+    aiRingLabels = [...defaultAiRingLabels];
+    return;
+  }
+
+  const normalized = labels.map((item) => String(item || "").trim()).filter(Boolean);
+  aiRingLabels = normalized.length > 0 ? normalized : [...defaultAiRingLabels];
+};
+
+// 统一计算环形几何参数，避免多处重复计算导致规则不一致。
+// 返回值说明：
+// - sliceCount: 扇区数量（与标签数量一致，最少为 1）
+// - perSliceRadian: 每个扇区在弧度制下的角宽
+// - sliceAngle: 每个扇区在角度制下的角宽（用于 Konva.Arc）
+// - rotationOffset: 扇区旋转偏移，让分割线与视觉中心对齐
+// - startOffset: 索引命中时的角度偏移（与绘制偏移保持一致）
+const getAiRingGeometry = () => {
+  const sliceCount = aiRingLabels.length || 1;
+  const perSliceRadian = (Math.PI * 2) / sliceCount;
+  const sliceAngle = 360 / sliceCount;
+  const rotationOffset = sliceAngle / 2;
+  const startOffset = perSliceRadian / 2;
+
+  return {
+    sliceCount,
+    perSliceRadian,
+    sliceAngle,
+    rotationOffset,
+    startOffset,
+  };
+};
+
+// 根据“点相对圆心向量 (dx, dy)”计算当前落在哪个扇区。
+// 这个函数用于：
+// 1) 鼠标悬停时高亮扇区。
+// 2) 点击时确定触发哪个标签。
+// 采用统一几何参数，确保“看见的扇区”和“命中的扇区”完全一致。
+// 最后的取模归一化用于防止边界角度导致的负索引或越界。
+const getAiRingSliceIndex = (dx: number, dy: number) => {
+  const { sliceCount, perSliceRadian, startOffset } = getAiRingGeometry();
+  const normalized =
+    (Math.atan2(dy, dx) + Math.PI * 2 - startOffset) % (Math.PI * 2);
+  const rawIndex = Math.floor(normalized / perSliceRadian);
+  return ((rawIndex % sliceCount) + sliceCount) % sliceCount;
+};
+
+// 圆环背景改为灰色毛玻璃风格
+const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.34)";
+const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.52)";
+const AI_RING_STROKE = "rgba(255, 255, 255, 0.38)";
+const AI_RIGHT_LABELS = ["反思细节", "反思转化"];
+let aiRightLabels = [...AI_RIGHT_LABELS];
+const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
+const AI_GUIDE_START_COLOR = "#3FA7FF";
+const AI_GUIDE_END_COLOR = "#FF4D4F";
+const AI_RIGHT_INNER_DARK = "#6E727A";
+const AI_RIGHT_INNER_LIGHT = "#BFC5CF";
+const AI_RIGHT_OUTER_LIGHT = "#AAB3C1";
+const AI_RIGHT_OUTER_DARK = "#4E5A6B";
+
+const updateAiRightClockLabelsPosition = () => {
+  if (!aiAssistState || aiRightClockLabels.length < 2) return;
+
+  const angle = Math.PI / 6; // 4 点钟方向（相对 3 点钟顺时针 30°）
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+  const edgeGap = 2;
+  const innerR = aiAssistState.innerRadius + edgeGap;
+  const outerR = aiAssistState.outerRadius;
+
+  const innerX = aiAssistState.centerX + innerR * cosA;
+  const innerY = aiAssistState.centerY + innerR * sinA;
+
+  // 第二个标签要求与第一个标签同 y，且 x 起始点贴外环线：
+  // 在 y = innerY 的水平线上，求与外圆右侧边界交点 x。
+  const dyFromCenter = innerY - aiAssistState.centerY;
+  const safeSquare = Math.max(0, outerR * outerR - dyFromCenter * dyFromCenter);
+  const outerRingXOnSameY = aiAssistState.centerX + Math.sqrt(safeSquare);
+  const outerX = outerRingXOnSameY + edgeGap;
+  const outerY = innerY;
+
+  aiRightClockLabels[0].position({ x: innerX, y: innerY });
+  aiRightClockLabels[1].position({ x: outerX, y: outerY });
+};
+
+// 根据“引导线长度 - 内环半径”动态调节右侧两个标签颜色：
+// 线越长（越靠外），外侧标签颜色越深，内侧标签颜色越浅。
+const updateAiRightClockLabelsColorByGuideLength = (distanceFromCenter: number) => {
+  if (!aiAssistState || aiRightClockLabels.length < 2) return;
+
+  const guideLength = Math.max(0, distanceFromCenter - aiAssistState.innerRadius);
+  const ringSpan = Math.max(1, aiAssistState.outerRadius - aiAssistState.innerRadius);
+  const t = Math.max(0, Math.min(1, guideLength / ringSpan));
+
+  const innerColor = mixHexColor(AI_RIGHT_INNER_DARK, AI_RIGHT_INNER_LIGHT, t);
+  const outerColor = mixHexColor(AI_RIGHT_OUTER_LIGHT, AI_RIGHT_OUTER_DARK, t);
+
+  aiRightClockLabels[0].fill(innerColor);
+  aiRightClockLabels[1].fill(outerColor);
+};
+
+const resetAiRightClockLabelsDefaultColor = () => {
+  if (aiRightClockLabels.length < 2) return;
+  aiRightClockLabels[0].fill(AI_RIGHT_DEFAULT_COLOR);
+  aiRightClockLabels[1].fill(AI_RIGHT_DEFAULT_COLOR);
+};
+
+const setAiRightLabels = (labels?: string[]) => {
+  if (!Array.isArray(labels) || labels.length < 2) {
+    aiRightLabels = [...AI_RIGHT_LABELS];
+    return;
+  }
+
+  const normalized = labels
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  aiRightLabels = normalized.length === 2 ? normalized : [...AI_RIGHT_LABELS];
+};
+
+const mixHexColor = (startHex: string, endHex: string, t: number) => {
+  const clampT = Math.max(0, Math.min(1, t));
+  const s = startHex.replace("#", "");
+  const e = endHex.replace("#", "");
+  const sr = parseInt(s.slice(0, 2), 16);
+  const sg = parseInt(s.slice(2, 4), 16);
+  const sb = parseInt(s.slice(4, 6), 16);
+  const er = parseInt(e.slice(0, 2), 16);
+  const eg = parseInt(e.slice(2, 4), 16);
+  const eb = parseInt(e.slice(4, 6), 16);
+
+  const r = Math.round(sr + (er - sr) * clampT);
+  const g = Math.round(sg + (eg - sg) * clampT);
+  const b = Math.round(sb + (eb - sb) * clampT);
+
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+// 引导线渐变：起点（圆心）蓝色，朝向外环最外侧逐步过渡到红色。
+// 这样当鼠标位置越靠外，线段末端会显示更多偏红色的部分。
+const updateAiGuideLineGradient = (
+  line: Konva.Line,
+  endPos: { x: number; y: number }
+) => {
+  if (!aiAssistState) return;
+
+  const startX = aiAssistState.centerX;
+  const startY = aiAssistState.centerY;
+  const dx = endPos.x - startX;
+  const dy = endPos.y - startY;
+  const length = Math.sqrt(dx * dx + dy * dy);
+
+  if (length <= 0) {
+    line.stroke(AI_GUIDE_START_COLOR);
+    return AI_GUIDE_START_COLOR;
+  }
+
+  const unitX = dx / length;
+  const unitY = dy / length;
+  const gradientEndX = startX + unitX * aiAssistState.outerRadius;
+  const gradientEndY = startY + unitY * aiAssistState.outerRadius;
+  const endColorRatio = Math.max(0, Math.min(1, length / aiAssistState.outerRadius));
+  const endColor = mixHexColor(
+    AI_GUIDE_START_COLOR,
+    AI_GUIDE_END_COLOR,
+    endColorRatio
+  );
+
+  line.setAttrs({
+    stroke: AI_GUIDE_START_COLOR,
+    strokeLinearGradientStartPoint: { x: startX, y: startY },
+    strokeLinearGradientEndPoint: { x: gradientEndX, y: gradientEndY },
+    strokeLinearGradientColorStops: [0, AI_GUIDE_START_COLOR, 1, AI_GUIDE_END_COLOR],
+  });
+
+  return endColor;
+};
 
 // 工具和配置选项
 const currentTool = ref<
@@ -440,10 +630,19 @@ const clearAiAssist = () => {
   aiRingSlices.forEach((slice) => slice.destroy());
   aiRingSlices = [];
 
+  // 销毁 3 点钟方向固定文案
+  aiRightClockLabels.forEach((label) => label.destroy());
+  aiRightClockLabels = [];
+
   // 销毁引导线
   if (aiGuideLine) {
     aiGuideLine.destroy();
     aiGuideLine = null;
+  }
+
+  if (aiGuideEndCircle) {
+    aiGuideEndCircle.destroy();
+    aiGuideEndCircle = null;
   }
 
   // 移除事件监听
@@ -516,9 +715,14 @@ const updateAiAssistPosition = () => {
     }
   });
 
+  updateAiRightClockLabelsPosition();
+
   // 如果引导线存在，隐藏它（因为位置变了，需要鼠标移动触发更新）
   if (aiGuideLine) {
     aiGuideLine.hide();
+  }
+  if (aiGuideEndCircle) {
+    aiGuideEndCircle.hide();
   }
 
   layer!.batchDraw();
@@ -546,12 +750,11 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
   // 计算鼠标所在的象限（扇区索引）
   let activeIndex = -1;
   if (inRing) {
-    // 将角度标准化为 0 到 2PI，并减去起始偏移量 45 度（PI/4）
-    // 这样 45-135 度对应 index 0，以此类推
-    const normalized =
-      (Math.atan2(dy, dx) + Math.PI * 2 - Math.PI / 4) % (Math.PI * 2);
-    // 每个扇区 90 度 (PI/2)，计算当前索引
-    activeIndex = Math.floor(normalized / (Math.PI / 2));
+    activeIndex = getAiRingSliceIndex(dx, dy);
+    updateAiRightClockLabelsColorByGuideLength(distance);
+  } else {
+    // 没有引导线时，两侧标签保持相同默认色
+    resetAiRightClockLabelsDefaultColor();
   }
 
   // 更新所有扇区的样式
@@ -562,9 +765,7 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
     const slice = group.findOne(".slice") as Konva.Arc;
     if (slice) {
       slice.fill(
-        isActive
-          ? "rgba(24, 144, 255, 0.2)" // 高亮颜色 (加深一点)
-          : "rgba(24, 144, 255, 0.05)" // 默认颜色 (很浅)
+        isActive ? AI_RING_ACTIVE_FILL : AI_RING_BASE_FILL
       );
     }
 
@@ -575,9 +776,29 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       const text = labelGroup.findOne(".labelText") as Konva.Text;
 
       if (bg) {
-        // 激活时浅蓝色背景，非激活时透明
-        bg.fill(isActive ? "#e6f7ff" : "transparent");
-        // 激活时无边框，非激活时也无边框
+        if (isActive) {
+          // 激活态：浅蓝胶囊背景 + 轻阴影
+          bg.setAttrs({
+            fill: "#91D5FF",
+            shadowColor: "rgba(60, 140, 196, 0.35)",
+            shadowBlur: 10,
+            shadowOffset: { x: 0, y: 2 },
+            shadowOpacity: 1,
+          });
+          bg.cornerRadius(Math.max(bg.height() / 2, 4));
+        } else {
+          // 非激活态：透明背景
+          bg.setAttrs({
+            fill: "#eee",
+            shadowColor: "transparent",
+            shadowBlur: 10,
+            shadowOffset: { x: 0, y: 2 },
+            shadowOpacity: 1,
+          });
+          bg.cornerRadius(Math.max(bg.height() / 2, 4));
+        }
+
+        // 保持无边框
         bg.stroke(null);
       }
 
@@ -587,7 +808,7 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       }
 
       // 激活时稍微放大
-      labelGroup.scale({ x: isActive ? 1.1 : 1, y: isActive ? 1.1 : 1 });
+      // labelGroup.scale({ x: isActive ? 1.1 : 1, y: isActive ? 1.1 : 1 });
     }
   });
 
@@ -597,13 +818,26 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       // 如果引导线不存在，创建新线条
       aiGuideLine = new Konva.Line({
         points: [aiAssistState.centerX, aiAssistState.centerY, pos.x, pos.y],
-        stroke: "#8cc5ff", // 浅蓝色
+        stroke: AI_GUIDE_START_COLOR,
         strokeWidth: 2,
         dash: [10, 5], // 虚线
         listening: false, // 不响应鼠标事件
       });
+      const endColor = updateAiGuideLineGradient(aiGuideLine, pos);
       layer.add(aiGuideLine);
       aiGuideLine.moveToTop();
+
+      aiGuideEndCircle = new Konva.Circle({
+        x: pos.x,
+        y: pos.y,
+        radius: 5,
+        fill: endColor || AI_GUIDE_START_COLOR,
+        stroke: "rgba(255, 255, 255, 0.9)",
+        strokeWidth: 1.5,
+        listening: false,
+      });
+      layer.add(aiGuideEndCircle);
+      aiGuideEndCircle.moveToTop();
     } else {
       // 如果引导线已存在，更新终点坐标
       aiGuideLine.points([
@@ -612,12 +846,37 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
         pos.x,
         pos.y,
       ]);
+      const endColor = updateAiGuideLineGradient(aiGuideLine, pos);
       aiGuideLine.show();
       aiGuideLine.moveToTop();
+
+      if (!aiGuideEndCircle) {
+        aiGuideEndCircle = new Konva.Circle({
+          x: pos.x,
+          y: pos.y,
+          radius: 5,
+          fill: endColor || AI_GUIDE_START_COLOR,
+          stroke: "rgba(255, 255, 255, 0.9)",
+          strokeWidth: 1.5,
+          listening: false,
+        });
+        layer.add(aiGuideEndCircle);
+      } else {
+        aiGuideEndCircle.position({ x: pos.x, y: pos.y });
+        aiGuideEndCircle.fill(endColor || AI_GUIDE_START_COLOR);
+      }
+      aiGuideEndCircle.show();
+      aiGuideEndCircle.moveToTop();
     }
   } else if (aiGuideLine) {
     // 如果鼠标不在圆环内，且未锁定，则隐藏引导线
     aiGuideLine.hide();
+    if (aiGuideEndCircle) {
+      aiGuideEndCircle.hide();
+    }
+    resetAiRightClockLabelsDefaultColor();
+  } else {
+    resetAiRightClockLabelsDefaultColor();
   }
 
   // 确保变换器始终在最上层
@@ -654,9 +913,7 @@ const handleStageClick = (
     if (aiAssistState.isLocked) return;
 
     // 计算点击的扇区索引
-    const normalized =
-      (Math.atan2(dy, dx) + Math.PI * 2 - Math.PI / 4) % (Math.PI * 2);
-    const index = Math.floor(normalized / (Math.PI / 2));
+    const index = getAiRingSliceIndex(dx, dy);
 
     // 获取标签和连线长度
     const label = aiRingLabels[index];
@@ -682,7 +939,27 @@ const handleStageClick = (
         pos.x,
         pos.y,
       ]);
+      const endColor = updateAiGuideLineGradient(aiGuideLine, pos);
+      updateAiRightClockLabelsColorByGuideLength(distance);
       aiGuideLine.show(); // 确保显示
+
+      if (!aiGuideEndCircle) {
+        aiGuideEndCircle = new Konva.Circle({
+          x: pos.x,
+          y: pos.y,
+          radius: 5,
+          fill: endColor || AI_GUIDE_START_COLOR,
+          stroke: "rgba(255, 255, 255, 0.9)",
+          strokeWidth: 1.5,
+          listening: false,
+        });
+        layer.add(aiGuideEndCircle);
+      } else {
+        aiGuideEndCircle.position({ x: pos.x, y: pos.y });
+        aiGuideEndCircle.fill(endColor || AI_GUIDE_START_COLOR);
+      }
+      aiGuideEndCircle.show();
+      aiGuideEndCircle.moveToTop();
       layer.batchDraw();
     }
 
@@ -975,6 +1252,10 @@ const clearAiGuideLine = () => {
     aiGuideLine.destroy();
     aiGuideLine = null;
   }
+  if (aiGuideEndCircle) {
+    aiGuideEndCircle.destroy();
+    aiGuideEndCircle = null;
+  }
   if (aiAssistState) {
     aiAssistState.isLocked = false;
   }
@@ -1035,8 +1316,10 @@ const triggerAiAssist = () => {
   target.on("dragmove", updateAiAssistPosition);
   target.on("transform", updateAiAssistPosition);
 
-  // 创建四个扇形分区
-  for (let index = 0; index < 4; index++) {
+  // 根据标签数量创建扇形分区
+  const { sliceCount, sliceAngle, rotationOffset } = getAiRingGeometry();
+
+  for (let index = 0; index < sliceCount; index++) {
     const group = new Konva.Group({
       x: aiAssistState.centerX,
       y: aiAssistState.centerY,
@@ -1063,11 +1346,15 @@ const triggerAiAssist = () => {
       name: "slice",
       innerRadius: aiAssistState.innerRadius,
       outerRadius: aiAssistState.outerRadius,
-      angle: 90, // 每个扇形 90 度
-      rotation: index * 90 + 45, // 旋转 45 度，使扇区分割线呈 X 型
-      fill: "rgba(24, 144, 255, 0.05)", // 初始颜色更浅
-      stroke: null, // 移除描边，使扇区之间无分界线
-      strokeWidth: 0,
+      angle: sliceAngle,
+      rotation: index * sliceAngle + rotationOffset,
+      fill: AI_RING_BASE_FILL,
+      // stroke: AI_RING_STROKE,
+      // strokeWidth: 1,
+      stroke: null, // 默认无边框
+      shadowColor: "rgba(120, 126, 138, 0.22)",
+      shadowBlur: 8,
+      shadowOffset: { x: 0, y: 1 },
       listening: true, // 开启监听
     });
     group.add(slice);
@@ -1079,8 +1366,7 @@ const triggerAiAssist = () => {
     });
 
     // 计算文字位置 (扇形中心)
-    // 扇形起始角度为 index*90 + 45，中心线再加 45 度，即 index*90 + 90
-    const angle = (index * 90 + 90) * (Math.PI / 180);
+    const angle = (index * sliceAngle + sliceAngle) * (Math.PI / 180);
     const radius = (aiAssistState.innerRadius + aiAssistState.outerRadius) / 2;
     const labelX = Math.cos(angle) * radius;
     const labelY = Math.sin(angle) * radius;
@@ -1121,6 +1407,25 @@ const triggerAiAssist = () => {
     layer.add(group);
     group.moveToTop();
   }
+
+  aiRightClockLabels = aiRightLabels.map(
+    (textValue) =>
+      new Konva.Text({
+        text: textValue,
+        fontSize: 14,
+        fontFamily: DEFAULT_FONT_FAMILY,
+        fill: AI_RIGHT_DEFAULT_COLOR,
+        listening: false,
+      })
+  );
+
+  aiRightClockLabels.forEach((labelNode) => {
+    labelNode.offset({ x: 0, y: labelNode.height() / 2 });
+    layer!.add(labelNode);
+    labelNode.moveToTop();
+  });
+  updateAiRightClockLabelsPosition();
+  resetAiRightClockLabelsDefaultColor();
 
   // 确保变换器在辅助图形之上
   if (transformer) {
@@ -2735,6 +3040,176 @@ const createKonvaRect = (nodeData) => {
   });
 };
 
+const addTextAtPosition = (
+  text: string,
+  position: { x: number; y: number }
+) => {
+  if (!layer || !transformer || !position) return;
+
+  const value = (text || "").trim();
+  if (!value) return;
+
+  // 先清理旧选中样式
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  const textNode = new Konva.Text({
+    x: position.x,
+    y: position.y,
+    text: value,
+    fontSize: fontSize.value,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: brushColor.value,
+    draggable: true,
+    width: 220,
+    wrap: "word",
+  });
+
+  // 以点击点作为文本节点中心，而不是左上角
+  textNode.offset({
+    x: textNode.width() / 2,
+    y: textNode.height() / 2,
+  });
+
+  textNode.on("click tap", (evt) => {
+    handleNodeClick(evt, textNode);
+  });
+
+  layer.add(textNode);
+
+  selectedNodes = [textNode];
+  transformer.nodes(selectedNodes);
+  addNodeSelectStyle(textNode);
+  textNode.moveToTop();
+  transformer.moveToTop();
+
+  layer.batchDraw();
+  updateScrollbars();
+};
+
+const addMemoryAtPosition = (
+  text: string,
+  imageSrc: string,
+  position: { x: number; y: number }
+) => {
+  if (!layer || !transformer || !position) return;
+
+  const value = (text || "").trim();
+  if (!value) return;
+
+  if (!imageSrc) {
+    addTextAtPosition(value, position);
+    return;
+  }
+
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  createImageAndTextNodes(
+    {
+      imageSrc,
+      text: value,
+      id: "",
+    },
+    {
+      startX: position.x,
+      startY: position.y,
+      center: true,
+      group: true,
+    }
+  )
+    .then((nodes) => {
+      const createdNodes = nodes instanceof Konva.Group ? [nodes] : nodes;
+
+      createdNodes.forEach((node) => {
+        node.on("click tap", (evt) => {
+          handleNodeClick(evt, node);
+        });
+        layer!.add(node);
+      });
+
+      selectedNodes = createdNodes;
+      transformer!.nodes(selectedNodes);
+      selectedNodes.forEach((n) => addNodeSelectStyle(n));
+      selectedNodes.forEach((n) => n.moveToTop());
+      transformer!.moveToTop();
+
+      layer!.batchDraw();
+      updateScrollbars();
+    })
+    .catch((error) => {
+      console.error("Failed to add memory node:", error);
+    });
+};
+
+const replaceImageNodeSource = (targetNode: Konva.Node, imageSrc: string) => {
+  if (!layer || !targetNode || !imageSrc) return;
+  if (!(targetNode instanceof Konva.Image)) return;
+
+  const imgObj = new Image();
+  imgObj.crossOrigin = "anonymous";
+  imgObj.onload = () => {
+    targetNode.image(imgObj);
+    layer!.batchDraw();
+    updateScrollbars();
+  };
+  imgObj.onerror = () => {
+    console.error("Failed to load cropped image source");
+  };
+  imgObj.src = imageSrc;
+};
+
+const addImageNodeRightOfTarget = (targetNode: Konva.Node, imageSrc: string) => {
+  if (!layer || !transformer || !targetNode || !imageSrc) return;
+  if (!(targetNode instanceof Konva.Image)) return;
+
+  const imgObj = new Image();
+  imgObj.crossOrigin = "anonymous";
+  imgObj.onload = () => {
+    selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+    const targetRect = targetNode.getClientRect({
+      relativeTo: layer,
+      skipShadow: true,
+      skipStroke: true,
+    });
+    const gap = 24;
+    const originId = targetNode.id() || "";
+    const newId = `crop-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const newNode = new Konva.Image({
+      id: newId,
+      x: targetRect.x + targetRect.width + gap,
+      y: targetRect.y,
+      image: imgObj,
+      width: imgObj.width,
+      height: imgObj.height,
+      draggable: true,
+      customType: "crop-image",
+    });
+    newNode.setAttr("originId", originId);
+
+    newNode.on("click tap", (evt) => {
+      handleNodeClick(evt, newNode);
+    });
+
+    layer!.add(newNode);
+
+    selectedNodes = [newNode];
+    transformer!.nodes(selectedNodes);
+    addNodeSelectStyle(newNode);
+    newNode.moveToTop();
+    transformer!.moveToTop();
+
+    layer!.batchDraw();
+    updateScrollbars();
+  };
+
+  imgObj.onerror = () => {
+    console.error("Failed to load cropped image source");
+  };
+
+  imgObj.src = imageSrc;
+};
+
 const clearSelection = () => {
   if (!transformer) return;
 
@@ -2759,6 +3234,12 @@ defineExpose({
   clearSelection,
   clearAiGuideLine,
   resetNodesData,
+  addTextAtPosition,
+  addMemoryAtPosition,
+  replaceImageNodeSource,
+  addImageNodeRightOfTarget,
+  setAiRingLabels,
+  setAiRightLabels,
 });
 </script>
 

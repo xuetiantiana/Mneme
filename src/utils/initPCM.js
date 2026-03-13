@@ -54,7 +54,7 @@ const createHoverButtonGroup = (layer) => {
   });
 
   const text = new Konva.Text({
-    text: "操作",
+    text: "Expend",
     fontSize: 12,
     fill: "white",
     width: 60,

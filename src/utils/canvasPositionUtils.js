@@ -85,7 +85,7 @@ export const createImageAndTextNodes = (
     padding = 5,
     cornerRadius = 4,
     center = false,
-    group: isGroup = true,
+    group: isGroup = false,
   } = options;
 
   return new Promise((resolve, reject) => {

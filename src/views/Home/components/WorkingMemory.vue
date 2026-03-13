@@ -1,6 +1,7 @@
 <template>
   <div
     ref="wmContainer"
+    :class="{ 'whisper-mode': currentNav === 'Whisper' || currentNav === 'Add Memory' }"
     style="
       width: 100%;
       height: 100%;
@@ -27,33 +28,80 @@
         @confirm="handleAiPopupConfirm"
         @cancel="handleAiPopupCancel"
       />
+      <WhisperInputPopup
+        :visible="whisperPopupVisible"
+        :position="whisperPopupData.position"
+        :title="whisperPopupData.toolType || 'Whisper'"
+        :tool-type="whisperPopupData.toolType || 'Whisper'"
+        @submit="handleWhisperSubmit"
+        @cancel="handleWhisperPopupCancel"
+      />
+      <CropImagePopup
+        :visible="cropPopupVisible"
+        :image-src="cropPopupData.imageSrc"
+        @confirm="handleCropConfirm"
+        @cancel="handleCropCancel"
+      />
     </div>
 
     <!-- 顶部导航栏 -->
     <div class="top-nav-bar">
+      <!-- <div v-if="hintLoading" class="nav-loading-tip">提示词加载中，请稍候...</div> -->
       <div
         class="nav-item"
-        :class="{ active: currentNav === 'Reflect' }"
+        :class="{ active: currentNav === 'Reflect', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Reflect' }"
         @click="handleNavClick('Reflect')"
       >
         Reflect
+        <el-icon v-if="hintLoading && pendingAiTool === 'Reflect'" class="nav-loading-inline is-loading">
+          <Loading />
+        </el-icon>
       </div>
       <div
         class="nav-item"
-        :class="{ active: currentNav === 'Constellate' }"
+        :class="{ active: currentNav === 'Constellate', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Constellate' }"
         @click="handleNavClick('Constellate')"
       >
         Constellate
+        <el-icon v-if="hintLoading && pendingAiTool === 'Constellate'" class="nav-loading-inline is-loading">
+          <Loading />
+        </el-icon>
       </div>
       <div
         class="nav-item"
-        :class="{ active: currentNav === 'Resonance' }"
+        :class="{ active: currentNav === 'Resonance', disabled: hintLoading }"
         @click="handleNavClick('Resonance')"
       >
         Resonance
       </div>
-      <div class="nav-icon">
-        <el-icon><Search /></el-icon>
+      <div class="nav-separator">|</div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Whisper', disabled: hintLoading }"
+        @click="handleNavClick('Whisper')"
+      >
+        💭  Whisper
+      </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Add Memory', disabled: hintLoading }"
+        @click="handleNavClick('Add Memory')"
+      >
+        📷 Add Memory
+      </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Crop', disabled: hintLoading }"
+        @click="handleNavClick('Crop')"
+      >
+        ✂️ Crop
+      </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Group', disabled: hintLoading }"
+        @click="handleNavClick('Group')"
+      >
+        🔗 Group
       </div>
     </div>
 
@@ -106,12 +154,19 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted, onUnmounted } from "vue";
-import { Edit, Promotion, Search } from "@element-plus/icons-vue";
+import { ref, defineProps, onMounted, onUnmounted, nextTick } from "vue";
+import { Edit, Promotion, Search, Loading } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
-import { gelReflectToolData, gelConstellateToolData } from "@/service/api";
+import WhisperInputPopup from "./WhisperInputPopup.vue";
+import CropImagePopup from "./CropImagePopup.vue";
+import {
+  gelConstellateToolData,
+  ReflectHint,
+  ConstellateHint,
+  ReflectQuestions,
+} from "@/service/api";
 
 const props = defineProps({
   topicContainers: {
@@ -128,6 +183,25 @@ const wmContainer = ref(null);
 const selectedNodesData = ref([]);
 const currentNav = ref(""); // 当前选中的导航项
 const reflectSelectedNodes = ref(null); // Reflect 模式下选中的节点
+const currentHintPerspectives = ref([]); // 当前 hint 返回的 perspective 列表
+const hintLoading = ref(false); // ReflectHint/ConstellateHint 请求中
+const pendingAiTool = ref(""); // 当前正在请求提示词的工具
+const whisperPopupVisible = ref(false);
+const whisperPopupData = ref({
+  position: { x: 0, y: 0 },
+  stagePos: { x: 0, y: 0 },
+  toolType: "Whisper",
+});
+const AI_RIGHT_LABELS_BY_TOOL = {
+  Reflect: ["反思细节", "反思转化"],
+  Constellate: ["直接检索", "远距离启发"],
+};
+const cropPopupVisible = ref(false);
+const cropPopupData = ref({
+  imageSrc: "",
+  targetNode: null,
+});
+let whisperCanvasEl = null;
 
 // 处理点击外部区域取消选中的逻辑
 const handleClickOutside = (event) => {
@@ -156,10 +230,26 @@ onMounted(() => {
   // 使用 mousedown 可以在点击开始时就触发，体验可能更好，或者 click
   // 这里使用 click 配合 capture 或者注意冒泡
   document.addEventListener("mousedown", handleClickOutside);
+
+  nextTick(() => {
+    const stage = konvaRef.value?.konvaData?.stage;
+    whisperCanvasEl = stage?.container?.() || null;
+    if (whisperCanvasEl) {
+      whisperCanvasEl.addEventListener("click", handleCanvasClick);
+      whisperCanvasEl.addEventListener("mousemove", handleCanvasMouseMove);
+      whisperCanvasEl.addEventListener("mouseleave", handleCanvasMouseLeave);
+    }
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside);
+  if (whisperCanvasEl) {
+    whisperCanvasEl.removeEventListener("click", handleCanvasClick);
+    whisperCanvasEl.removeEventListener("mousemove", handleCanvasMouseMove);
+    whisperCanvasEl.removeEventListener("mouseleave", handleCanvasMouseLeave);
+    whisperCanvasEl = null;
+  }
 });
 
 // AI 弹窗状态
@@ -181,7 +271,110 @@ const handleAddText = () => {
   }
 };
 
-const handleAiAssistClick = (toolType = "Reflect") => {
+// 组装 ReflectHint / ReflectQuestions 的基础 UNIT 入参。
+// 输入: resetNodesData 返回的选中节点数组（元素通常是 JSON 字符串）。
+// 规则:
+// 1) 默认使用第一个选中节点作为当前操作节点。
+// 2) id 优先取 attrs.id，其次取节点顶层 id。
+// 3) type 优先取 attrs.customType，其次 className/type。
+// 4) content 为完整节点对象；若解析失败则回退为空对象。
+// 5) user_id / session_id / operation_logs 先占位空字符串。
+const buildHintPayload = (nodeJsonList) => {
+  const firstRaw = Array.isArray(nodeJsonList) && nodeJsonList.length > 0 ? nodeJsonList[0] : null;
+  let firstNode = null;
+
+  if (typeof firstRaw === "string") {
+    try {
+      firstNode = JSON.parse(firstRaw);
+    } catch (e) {
+      firstNode = null;
+    }
+  } else if (firstRaw && typeof firstRaw === "object") {
+    firstNode = firstRaw;
+  }
+
+  const attrs = firstNode?.attrs || {};
+  const id = attrs.id || firstNode?.id || "";
+  const type = attrs.customType || firstNode?.className || firstNode?.type || "";
+
+  return {
+    id,
+    type,
+    content: firstNode || {},
+    user_id: "",
+    session_id: "",
+    operation_logs: "",
+  };
+};
+
+const applyHintRingLabels = async (toolType = "Reflect") => {
+  if (!konvaRef.value?.setAiRingLabels) {
+    return false;
+  }
+
+  hintLoading.value = true;
+  try {
+    const hintApi = toolType === "Constellate" ? ConstellateHint : ReflectHint;
+    const hintRes = await hintApi(buildHintPayload(reflectSelectedNodes.value));
+    const perspectives = hintRes?.data?.perspectives || [];
+    currentHintPerspectives.value = Array.isArray(perspectives) ? perspectives : [];
+    const labels = perspectives
+      .map((item) => item?.name)
+      .filter((name) => typeof name === "string" && name.trim().length > 0);
+    konvaRef.value.setAiRingLabels(labels);
+    return true;
+  } catch (error) {
+    currentHintPerspectives.value = [];
+    konvaRef.value.setAiRingLabels();
+    ElMessage({
+      message:
+        toolType === "Constellate"
+          ? "ConstellateHint 获取失败，已使用默认标签"
+          : "ReflectHint 获取失败，已使用默认标签",
+      type: "warning",
+    });
+    return false;
+  } finally {
+    hintLoading.value = false;
+  }
+};
+
+const getPerspectivePayloadByLabel = (label) => {
+  const matched = (currentHintPerspectives.value || []).find(
+    (item) => item?.name === label
+  );
+
+  if (matched) {
+    return matched;
+  }
+
+  return {
+    id: "",
+    name: label || "",
+    type: "perspective",
+    short_prompt: "",
+    created_at: "",
+  };
+};
+
+const applyToolRightLabels = (toolType = "Reflect") => {
+  if (!konvaRef.value?.setAiRightLabels) {
+    return;
+  }
+
+  const labels = AI_RIGHT_LABELS_BY_TOOL[toolType] || AI_RIGHT_LABELS_BY_TOOL.Reflect;
+  konvaRef.value.setAiRightLabels(labels);
+};
+
+const handleAiAssistClick = async (toolType = "Reflect") => {
+  if (hintLoading.value) {
+    ElMessage({
+      message: "提示词仍在加载中，请稍候",
+      type: "info",
+    });
+    return;
+  }
+
   // 如果当前点击的工具已经是激活状态，再次点击则取消
   if (currentNav.value === toolType) {
     if (konvaRef.value && konvaRef.value.cancelAiAssist) {
@@ -216,6 +409,20 @@ const handleAiAssistClick = (toolType = "Reflect") => {
     reflectSelectedNodes.value = null;
   }
 
+  if (toolType === "Reflect" || toolType === "Constellate") {
+    pendingAiTool.value = toolType;
+    const hintSuccess = await applyHintRingLabels(toolType);
+    pendingAiTool.value = "";
+    if (!hintSuccess) {
+      currentNav.value = "";
+      return;
+    }
+    applyToolRightLabels(toolType);
+  } else if (konvaRef.value?.setAiRingLabels) {
+    konvaRef.value.setAiRingLabels();
+    applyToolRightLabels("Reflect");
+  }
+
   const result = konvaRef.value.triggerAiAssist();
   if (!result?.success) {
     ElMessage({
@@ -229,9 +436,34 @@ const handleAiAssistClick = (toolType = "Reflect") => {
 };
 
 const handleNavClick = (navItem) => {
+  if (hintLoading.value) {
+    ElMessage({
+      message: "提示词仍在加载中，请稍候",
+      type: "info",
+    });
+    return;
+  }
+
   if (navItem === "Reflect" || navItem === "Constellate") {
+    closeWhisperPopup();
     handleAiAssistClick(navItem);
   } else {
+    if (navItem === "Whisper" || navItem === "Add Memory") {
+      if (currentNav.value === navItem) {
+        currentNav.value = "";
+        closeWhisperPopup();
+        return;
+      }
+
+      if (konvaRef.value && konvaRef.value.setTool) {
+        konvaRef.value.setTool("select");
+      }
+
+      currentNav.value = navItem;
+      closeWhisperPopup();
+      return;
+    }
+
     // 其他导航项点击逻辑，切换时取消 AI 状态
     if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
       if (konvaRef.value && konvaRef.value.cancelAiAssist) {
@@ -239,8 +471,234 @@ const handleNavClick = (navItem) => {
       }
       closeAiPopup();
     }
+    closeWhisperPopup();
     currentNav.value = navItem;
+
+    const stage = konvaRef.value?.konvaData?.stage;
+    if (stage && navItem !== "Crop") {
+      stage.container().style.cursor = "default";
+    }
   }
+};
+
+const handleWhisperCanvasClick = (event) => {
+  if (currentNav.value !== "Whisper" && currentNav.value !== "Add Memory") {
+    return;
+  }
+
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage || !wmContainer.value) {
+    return;
+  }
+
+  const stageRect = stage.container().getBoundingClientRect();
+  const wmRect = wmContainer.value.getBoundingClientRect();
+
+  const localX = event.clientX - stageRect.left;
+  const localY = event.clientY - stageRect.top;
+
+  const stagePos = {
+    x: (localX - stage.x()) / stage.scaleX(),
+    y: (localY - stage.y()) / stage.scaleY(),
+  };
+
+  whisperPopupData.value = {
+    position: {
+      x: event.clientX - wmRect.left,
+      y: event.clientY - wmRect.top,
+    },
+    stagePos,
+    toolType: currentNav.value,
+  };
+
+  whisperPopupVisible.value = true;
+};
+
+const getImageTargetAtPointer = (event) => {
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage) {
+    return null;
+  }
+
+  const rect = stage.container().getBoundingClientRect();
+  const pointer = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+
+  const target = stage.getIntersection(pointer);
+  if (!target || target.className !== "Image") {
+    return null;
+  }
+
+  const img = target.image?.();
+  const imageSrc = img?.src || "";
+  if (!imageSrc) {
+    return null;
+  }
+
+  return target;
+};
+
+const handleCropCanvasHover = (event) => {
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage) {
+    return;
+  }
+
+  if (currentNav.value !== "Crop") {
+    stage.container().style.cursor = "default";
+    return;
+  }
+
+  const target = getImageTargetAtPointer(event);
+  stage.container().style.cursor = target ? "pointer" : "default";
+};
+
+const handleCropCanvasClick = (event) => {
+  if (currentNav.value !== "Crop") {
+    return;
+  }
+
+  const target = getImageTargetAtPointer(event);
+  if (!target) return;
+
+  const img = target.image?.();
+  const imageSrc = img?.src || "";
+
+  cropPopupData.value = {
+    imageSrc,
+    targetNode: target,
+  };
+  cropPopupVisible.value = true;
+};
+
+const handleCanvasMouseMove = (event) => {
+  handleCropCanvasHover(event);
+};
+
+const handleCanvasMouseLeave = () => {
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage) {
+    return;
+  }
+  if (currentNav.value === "Crop") {
+    stage.container().style.cursor = "default";
+  }
+};
+
+const handleCanvasClick = (event) => {
+  handleWhisperCanvasClick(event);
+  handleCropCanvasClick(event);
+};
+
+const closeWhisperPopup = () => {
+  whisperPopupVisible.value = false;
+};
+
+const handleWhisperPopupCancel = () => {
+  closeWhisperPopup();
+  if (currentNav.value === "Whisper" || currentNav.value === "Add Memory") {
+    currentNav.value = "";
+  }
+};
+
+const handleCropConfirm = ({ dataUrl }) => {
+  const node = cropPopupData.value.targetNode;
+  if (!node || !dataUrl) {
+    return;
+  }
+
+  if (!konvaRef.value || !konvaRef.value.addImageNodeRightOfTarget) {
+    ElMessage({
+      message: "裁剪更新功能未准备好",
+      type: "warning",
+    });
+    return;
+  }
+
+  konvaRef.value.addImageNodeRightOfTarget(node, dataUrl);
+  cropPopupVisible.value = false;
+  cropPopupData.value = {
+    imageSrc: "",
+    targetNode: null,
+  };
+
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (stage) {
+    stage.container().style.cursor = "default";
+  }
+
+  currentNav.value = "";
+};
+
+const handleCropCancel = () => {
+  cropPopupVisible.value = false;
+  cropPopupData.value = {
+    imageSrc: "",
+    targetNode: null,
+  };
+
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (stage) {
+    stage.container().style.cursor = "default";
+  }
+
+  if (currentNav.value === "Crop") {
+    currentNav.value = "";
+  }
+};
+
+const handleWhisperSubmit = (payload) => {
+  const content = (payload?.text || "").trim();
+  const imageDataUrl = payload?.imageDataUrl || "";
+
+  if (!content) {
+    ElMessage({
+      message: "请输入或录入文字后再提交",
+      type: "warning",
+    });
+    return;
+  }
+
+  if (!konvaRef.value) {
+    ElMessage({
+      message: "画布未准备好",
+      type: "warning",
+    });
+    return;
+  }
+
+  if (whisperPopupData.value.toolType === "Add Memory" && imageDataUrl) {
+    if (!konvaRef.value.addMemoryAtPosition) {
+      ElMessage({
+        message: "图文添加功能未准备好",
+        type: "warning",
+      });
+      return;
+    }
+
+    konvaRef.value.addMemoryAtPosition(
+      content,
+      imageDataUrl,
+      whisperPopupData.value.stagePos
+    );
+    closeWhisperPopup();
+    currentNav.value = "";
+    return;
+  }
+
+  if (!konvaRef.value.addTextAtPosition) {
+    ElMessage({
+      message: "文字添加功能未准备好",
+      type: "warning",
+    });
+    return;
+  }
+
+  konvaRef.value.addTextAtPosition(content, whisperPopupData.value.stagePos);
+  closeWhisperPopup();
+  currentNav.value = "";
 };
 
 // 处理 AI 环点击事件
@@ -290,11 +748,19 @@ const handleAiRingClick = async (data) => {
     JSON.parse(jsonStr)
   );
 
+  const reflectBasePayload = buildHintPayload(reflectSelectedNodes.value);
+
   // 构建请求参数
   const requestData = {
+    ...reflectBasePayload,
+    perspective: getPerspectivePayloadByLabel(data.label),
+    depth: {
+      min: 0,
+      max: 500,
+      value: Math.max(0, Math.round(data.lineLength || 0)),
+    },
     tag: data.label,
-    depth: data.lineLength,
-    nodeInfo: parsedCanvasData, // 使用 Reflect 开启时存储的节点
+    nodeInfo: parsedCanvasData, // 保留旧字段，避免影响现有后端兼容
     toolType: currentNav.value, // 增加工具类型参数
   };
   console.log("requestData", requestData);
@@ -303,12 +769,18 @@ const handleAiRingClick = async (data) => {
     let res;
     if (currentNav.value === "Constellate") {
       res = await gelConstellateToolData(requestData);
+      if (res && res.data && res.data.questionList) {
+        aiPopupData.value.questionList = res.data.questionList;
+      }
     } else {
-      res = await gelReflectToolData(requestData);
-    }
-
-    if (res && res.data && res.data.questionList) {
-      aiPopupData.value.questionList = res.data.questionList;
+      res = await ReflectQuestions(requestData);
+      const memoryList = Array.isArray(res?.data?.memory) ? res.data.memory : [];
+      aiPopupData.value.questionList = memoryList.map((item, index) => ({
+        id: item?.id || "",
+        question: item?.text || `记忆 ${index + 1}`,
+        images: item?.image_url ? [item.image_url] : [],
+        answer: item?.text || "",
+      }));
     }
   } catch (error) {
     console.error(`Failed to fetch ${currentNav.value} tool data:`, error);
@@ -359,18 +831,36 @@ const closeAiPopup = () => {
   aiPopupVisible.value = false;
 };
 
+// 复用：将 stage 坐标转换为 WorkingMemory 容器内的弹窗坐标
+const getPopupPositionFromStagePos = (stagePos) => {
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage || !wmContainer.value || !stagePos) {
+    return null;
+  }
+
+  const stageRect = stage.container().getBoundingClientRect();
+  const wmRect = wmContainer.value.getBoundingClientRect();
+  const transform = stage.getAbsoluteTransform();
+  const localPos = transform.point(stagePos);
+
+  return {
+    x: stageRect.left - wmRect.left + localPos.x,
+    y: stageRect.top - wmRect.top + localPos.y,
+  };
+};
+
 const handleStageTransform = () => {
   if (aiPopupVisible.value) {
-    const stage = konvaRef.value?.konvaData?.stage;
-    if (stage) {
-      // 重新计算屏幕坐标
-      const transform = stage.getAbsoluteTransform();
-      const screenPos = transform.point(aiPopupData.value.relativePos);
+    const aiPos = getPopupPositionFromStagePos(aiPopupData.value.relativePos);
+    if (aiPos) {
+      aiPopupData.value.position = aiPos;
+    }
+  }
 
-      aiPopupData.value.position = {
-        x: screenPos.x,
-        y: screenPos.y,
-      };
+  if (whisperPopupVisible.value) {
+    const whisperPos = getPopupPositionFromStagePos(whisperPopupData.value.stagePos);
+    if (whisperPos) {
+      whisperPopupData.value.position = whisperPos;
     }
   }
 };
@@ -498,12 +988,14 @@ const handleRenderNodes = (canvasIndex) => {
   border-radius: 24px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 20px;
+  flex-wrap: nowrap;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 100;
   border: 1px solid rgba(0, 0, 0, 0.05);
 
   .nav-item {
+    position: relative;
     font-size: 16px;
     font-weight: 500;
     color: #333;
@@ -522,6 +1014,34 @@ const handleRenderNodes = (canvasIndex) => {
       background-color: #f0f2f5;
       font-weight: 600;
     }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .nav-loading-inline {
+      position: absolute;
+      right: -1px;
+      top: calc(50% - 5px);
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #999;
+      display: inline-flex;
+      align-items: center;
+      pointer-events: none;
+    }
+  }
+
+  .nav-loading-tip {
+    font-size: 12px;
+    color: #666;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: #f5f7fa;
+    border: 1px solid #e5eaf3;
+    white-space: nowrap;
   }
 
   .nav-icon {
@@ -537,6 +1057,13 @@ const handleRenderNodes = (canvasIndex) => {
       color: #1890ff;
     }
   }
+
+  .nav-separator {
+    color: #999;
+    font-size: 16px;
+    line-height: 1;
+    user-select: none;
+  }
 }
 
 .top-right-actions {
@@ -547,5 +1074,10 @@ const handleRenderNodes = (canvasIndex) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.whisper-mode :deep(.canvas-container),
+:deep(.working-memory-container.whisper-mode .canvas-container) {
+  cursor: crosshair !important;
 }
 </style>
