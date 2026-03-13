@@ -37,34 +37,7 @@ export const CreateStory = (data: any): any => {
   });
 };
 
-export const gelReflectToolData = (data: any): any => {
-  // return request.post("/api/story/create", data);
 
-  const response = {
-    success: true,
-    data: {
-      questionList: [
-        {
-          question: "你最近在做什么？",
-          answer: "我最近在学习React Native。",
-          images: [
-            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-          ],
-        },
-        {
-          question: "你最近在学习什么？",
-          answer: "我最近在学习React Native。",
-        },
-      ],
-    },
-  };
-
-  return new Promise(function (resolve) {
-    setTimeout(function () {
-      resolve(response);
-    }, 1000);
-  });
-};
 
 export const gelConstellateToolData = (data: any): any => {
   // return request.post("/api/story/create", data);
@@ -72,16 +45,19 @@ export const gelConstellateToolData = (data: any): any => {
   const response = {
     success: true,
     data: {
-      questionList: [
+      ttt:"constellate text",
+      mmm: [
         {
-          images: [
-            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-          ],
+          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+          id: "memory-20260313050838889-937a186605",
+          type: "memory",
+          text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
         },
-        {
-          images: [
-            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260305145501-bc432d/generated/S_text_F2.png",
-          ],
+         {
+          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+          id: "memory-20260313050838889-937a186605",
+          type: "memory",
+          text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
         },
       ],
     },
@@ -180,22 +156,61 @@ export const ReflectQuestions = (data: any): any => {
 
   const response = {
     success: true,
-    data: {
-    "id": "question-xxx-xxx",
-    "text": "",
-    "type": "question",
-    "depth": "传入的深度值",
-    "memory":[{
+    data: [
+    {
+        "id": "question-20260313050838889-937a186605",
+        "text": "这段记忆中，最先浮现在你脑海里的细节是什么？",
+        "type": "question",
+        "depth": "感受层",
+        "perspective": {
+            "id": "perspective-20260313050635727-6f33954444",
+            "name": "人类学家",
+            "type": "perspective",
+            "short_prompt": "探寻深圳都市商场日常中的文化符号与仪式感。",
+            "created_at": "2026-03-13T05:06:35.727392Z"
+        },
+        "memory": [
+          {
         "id": "",
         "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-        "text": "111111"
+        "text": ""
     },
-  {
+    {
         "id": "",
-        "image_url": "",
-        "text": "111111"
-    }]
-}
+        "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+        "text": ""
+    }
+        ]
+    },
+    {
+        "id": "question-20260313050838889-1c49d24668",
+        "text": "如果要用一种颜色来形容此刻的感受，你会选什么？",
+        "type": "question",
+        "depth": "感受层",
+        "perspective": {
+            "id": "perspective-20260313050635727-6f33954444",
+            "name": "人类学家",
+            "type": "perspective",
+            "short_prompt": "探寻深圳都市商场日常中的文化符号与仪式感。",
+            "created_at": "2026-03-13T05:06:35.727392Z"
+        },
+        "memory": []
+    },
+    {
+        "id": "question-20260313050838889-2a85315616",
+        "text": "这段记忆让你想起了生活中的哪个时刻？",
+        "type": "question",
+        "depth": "感受层",
+        "perspective": {
+            "id": "perspective-20260313050635727-6f33954444",
+            "name": "人类学家",
+            "type": "perspective",
+            "short_prompt": "探寻深圳都市商场日常中的文化符号与仪式感。",
+            "created_at": "2026-03-13T05:06:35.727392Z"
+        },
+        "memory": []
+    }
+]
   };
 
   return new Promise(function (resolve) {

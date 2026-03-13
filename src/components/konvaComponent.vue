@@ -975,7 +975,11 @@ const handleStageClick = (
 };
 
 // 创建 AI 生成的内容节点（在确认后调用）
-const createAiContentNode = (images?: string[], label?: string) => {
+const createAiContentNode = (
+  images?: string[],
+  label?: string,
+  nodeMeta?: { id?: string; customType?: string }
+) => {
   if (!aiAssistState || !aiGuideLine || !layer) return;
 
   // 获取引导线的起点和终点
@@ -994,6 +998,8 @@ const createAiContentNode = (images?: string[], label?: string) => {
   const group = new Konva.Group({
     draggable: true,
     name: "ai-content-node",
+    id: nodeMeta?.id || undefined,
+    customType: nodeMeta?.customType || undefined,
   });
 
   let currentY = 0;
