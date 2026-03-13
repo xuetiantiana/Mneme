@@ -15,9 +15,8 @@ import { createPinia } from 'pinia'
 
 const app = createApp(App);
 app.component('SvgIcon', SvgIcon)
-app.use(router)
-
 app.use(createPinia())
+app.use(router)
 app.use(VueKonva)
 
 app.mount('#app')
