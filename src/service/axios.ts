@@ -21,8 +21,21 @@ export const createAxios = (
     //添加请求拦截器
     instance.interceptors.request.use(
         config => {
-            // console.log("请求拦截器config:", config);
-            // config.headers.TASKMATRIX_KEY = TASKMATRIX_KEY   //设置请求头token
+            const userId = (localStorage.getItem("user_id") || "").trim();
+            const sessionId = (localStorage.getItem("session_id") || "").trim();
+
+            if (!userId) {
+                ElMessage.warning("user_id 不能为空，请先登录");
+                return Promise.reject(new Error("Missing required user_id for request header X-User-Id"));
+            }
+
+            config.headers = config.headers || {};
+            (config.headers as any)["X-User-Id"] = userId;
+            if (sessionId) {
+                (config.headers as any)["X-Session-Id"] = sessionId;
+            } else {
+                delete (config.headers as any)["X-Session-Id"];
+            }
 
             return config;
         },

@@ -48,13 +48,13 @@ export const gelConstellateToolData = (data: any): any => {
       ttt:"constellate text",
       mmm: [
         {
-          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+          imageUrl: "http://localhost:8000/api/images/test_user/pcm/PCM-20260314052402579-b4600d8558/uploads/20260314132402_0_1aacaf23e158.png",
           id: "memory-20260313050838889-937a186605",
           type: "memory",
           text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
         },
          {
-          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+          imageUrl: "http://localhost:8000/api/images/test_user/pcm/PCM-20260314052402579-b4600d8558/uploads/20260314132402_0_1aacaf23e158.png",
           id: "memory-20260313050838889-937a186605",
           type: "memory",
           text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
@@ -72,7 +72,7 @@ export const gelConstellateToolData = (data: any): any => {
 
 export const ReflectHint = (data: any): any => {
   console.log("ReflectHint data:", data);
-  return request.post("/api/reflect/hint", data);
+  // return request.post("/api/reflect/hint", data);
 
   const response = {
     success: true,
@@ -152,7 +152,7 @@ export const ConstellateHint = (data: any): any => {
 
 
 export const ReflectQuestions = (data: any): any => {
-  return request.post("/api/reflect/questions", data);
+  // return request.post("/api/reflect/questions", data);
 
   const response = {
     success: true,

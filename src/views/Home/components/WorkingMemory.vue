@@ -160,7 +160,6 @@ import { ref, defineProps, onMounted, onUnmounted, nextTick } from "vue";
 import { Edit, Promotion, Search, Loading } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import konvaComponent from "@/components/konvaComponent.vue";
-import { useStoryStore } from "@/stores/storyStore";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
 import CropImagePopup from "./CropImagePopup.vue";
@@ -179,7 +178,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["renderNodesToTopic"]);
-const storyStore = useStoryStore();
 
 const memoryItems = ref([]);
 const konvaRef = ref(null);
@@ -283,7 +281,7 @@ const handleAddText = () => {
 // 2) id 优先取 attrs.id，其次取节点顶层 id。
 // 3) type 优先取 attrs.customType，其次 className/type。
 // 4) content 为完整节点对象；若解析失败则回退为空对象。
-// 5) user_id / session_id / operation_logs 先占位空字符串。
+// 5) user_id / session_id 通过请求头传递，不再放在 body 内。
 const buildHintPayload = (nodeJsonList) => {
   const firstRaw = Array.isArray(nodeJsonList) && nodeJsonList.length > 0 ? nodeJsonList[0] : null;
   let firstNode = null;
@@ -306,8 +304,6 @@ const buildHintPayload = (nodeJsonList) => {
     id,
     type,
     content: firstNode || {},
-    user_id: storyStore.user_id || "",
-    session_id: storyStore.session_id || "",
     operation_logs: null,
   };
 };
@@ -1042,6 +1038,7 @@ const handleRenderNodes = (canvasIndex) => {
     transition: all 0.2s;
     padding: 6px 16px;
     border-radius: 20px;
+    white-space: nowrap;
 
     &:hover {
       color: #1890ff;

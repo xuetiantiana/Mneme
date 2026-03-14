@@ -1995,6 +1995,11 @@ const setNodeShadow = (node: Konva.Node, isSelected: boolean) => {
   }
 
   const applyShadow = (n: Konva.Node) => {
+    // 仅对 Shape 处理，避免 Group/Node 运行时报错
+    if (!(n instanceof Konva.Shape)) {
+      return;
+    }
+
     if (isSelected) {
       if (!n.getAttr("_originalShadowColor")) {
         n.setAttr("_originalShadowColor", n.shadowColor());
@@ -2007,7 +2012,7 @@ const setNodeShadow = (node: Konva.Node, isSelected: boolean) => {
       n.shadowOffset({ x: 0, y: 0 });
       n.shadowOpacity(0.3);
     } else {
-      n.shadowColor(n.getAttr("_originalShadowColor") || null);
+      n.shadowColor(n.getAttr("_originalShadowColor") || undefined);
       n.shadowBlur(n.getAttr("_originalShadowBlur") || 0);
       n.shadowOffset(n.getAttr("_originalShadowOffset") || { x: 0, y: 0 });
       n.shadowOpacity(n.getAttr("_originalShadowOpacity") || 0);
@@ -2101,12 +2106,24 @@ const handleDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
 // 进入文字编辑模式
 const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   const stage = textNodeKonva.getStage();
-  const textPosition = textNodeKonva.absolutePosition();
+  if (!stage) return;
+
+  const textPosition = textNodeKonva.getAbsolutePosition(stage);
   const stageBox = stage!.container().getBoundingClientRect();
+  const stageScaleX = stage.scaleX() || 1;
+  const stageScaleY = stage.scaleY() || 1;
+  const absScale = textNodeKonva.getAbsoluteScale();
+  // Whisper 文本会以中心点作为 offset，编辑器定位需要换算为可见文本左上角
+  const nodeScaleX = absScale.x / stageScaleX;
+  const nodeScaleY = absScale.y / stageScaleY;
+  const textTopLeft = {
+    x: textPosition.x - textNodeKonva.offsetX() * nodeScaleX,
+    y: textPosition.y - textNodeKonva.offsetY() * nodeScaleY,
+  };
 
   const areaPosition = {
-    x: stageBox.left + textPosition.x,
-    y: stageBox.top + textPosition.y,
+    x: stageBox.left + stage.x() + textTopLeft.x * stageScaleX,
+    y: stageBox.top + stage.y() + textTopLeft.y * stageScaleY,
   };
 
   const textarea = document.createElement("textarea");
@@ -2138,13 +2155,11 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   textarea.style.zIndex = "1001";
 
   const rotation = textNodeKonva.rotation();
-  const absScale = textNodeKonva.getAbsoluteScale();
   let transform = "";
   if (rotation) {
     transform += `rotateZ(${rotation}deg) `;
   }
-  // 使用 CSS transform 将绝对缩放也附加在 textarea 上，保证大小完全对齐画布和 node
-  transform += `scaleX(${absScale.x}) scaleY(${absScale.y}) `;
+  transform += `scaleX(${nodeScaleX}) scaleY(${nodeScaleY}) `;
   textarea.style.transform = transform;
   textarea.style.transformOrigin = "left top";
 
@@ -3070,12 +3085,6 @@ const addTextAtPosition = (
     wrap: "word",
   });
 
-  // 以点击点作为文本节点中心，而不是左上角
-  textNode.offset({
-    x: textNode.width() / 2,
-    y: textNode.height() / 2,
-  });
-
   textNode.on("click tap", (evt) => {
     handleNodeClick(evt, textNode);
   });
@@ -3118,8 +3127,8 @@ const addMemoryAtPosition = (
     {
       startX: position.x,
       startY: position.y,
-      center: true,
-      group: true,
+      center: false,
+      group: false,
     }
   )
     .then((nodes) => {

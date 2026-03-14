@@ -231,7 +231,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .whisper-input-popup {
   position: absolute;
-  transform: translate(-50%, -50%);
   z-index: 1200;
 }
 
