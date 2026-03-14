@@ -176,6 +176,8 @@ let resizeObserver: ResizeObserver | null = null; // 容器大小变化监听器
 
 // 状态变量
 let selectedNodes: Konva.Node[] = []; // 当前选中的节点列表
+let clipboardNodes: Konva.Node[] = []; // 复制缓存的节点快照
+let lastPasteOffset = { x: 24, y: 24 }; // 无鼠标位置时的递增偏移
 let isDrawing = ref(false); // 是否正在绘制
 let isSelecting = ref(false); // 是否正在框选
 let isPanning = ref(false); // 是否正在平移
@@ -1598,12 +1600,111 @@ const handleResize = () => {
   }
 };
 
+const getStagePointerPos = () => {
+  if (!stage) return null;
+  const pointer = stage.getPointerPosition();
+  if (!pointer) return null;
+
+  const transform = stage.getAbsoluteTransform().copy();
+  transform.invert();
+  return transform.point(pointer);
+};
+
+const getNodesTopLeft = (nodes: Konva.Node[]) => {
+  let minX = Infinity;
+  let minY = Infinity;
+
+  nodes.forEach((node) => {
+    const rect = node.getClientRect({ skipShadow: true });
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+  });
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) {
+    return { x: 0, y: 0 };
+  }
+
+  return { x: minX, y: minY };
+};
+
+const copySelectedNodes = () => {
+  if (selectedNodes.length === 0) return;
+
+  clipboardNodes = selectedNodes.map((node) =>
+    node.clone({ listening: true })
+  );
+  lastPasteOffset = { x: 24, y: 24 };
+};
+
+const pasteCopiedNodes = () => {
+  if (!layer || !transformer || clipboardNodes.length === 0) return;
+  const currentLayer = layer;
+
+  const pointerPos = getStagePointerPos();
+  const sourceTopLeft = getNodesTopLeft(clipboardNodes);
+
+  const dx = pointerPos
+    ? pointerPos.x - sourceTopLeft.x
+    : lastPasteOffset.x;
+  const dy = pointerPos
+    ? pointerPos.y - sourceTopLeft.y
+    : lastPasteOffset.y;
+
+  clearAiAssist();
+  selectedNodes.forEach((node) => removeNodeSelectStyle(node));
+
+  const pastedNodes: Konva.Node[] = clipboardNodes.map((sourceNode) => {
+    const pastedNode = sourceNode.clone({ listening: true });
+    pastedNode.position({
+      x: sourceNode.x() + dx,
+      y: sourceNode.y() + dy,
+    });
+    pastedNode.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      handleNodeClick(evt, pastedNode);
+    });
+    currentLayer.add(pastedNode);
+    return pastedNode;
+  });
+
+  selectedNodes = pastedNodes;
+  selectedNodes.forEach((node) => addNodeSelectStyle(node));
+  transformer.nodes(selectedNodes);
+  selectedNodes.forEach((node) => node.moveToTop());
+  transformer.moveToTop();
+
+  currentLayer.batchDraw();
+  updateScrollbars();
+
+  if (!pointerPos) {
+    lastPasteOffset = {
+      x: lastPasteOffset.x + 24,
+      y: lastPasteOffset.y + 24,
+    };
+  } else {
+    lastPasteOffset = { x: 24, y: 24 };
+  }
+};
+
 const handleKeyDown = (e: KeyboardEvent) => {
   // 如果当前正在编辑文本（有 textarea 存在并且被聚焦），则不触发全局删除快捷键
   if (
     document.activeElement?.tagName === "TEXTAREA" ||
     document.activeElement?.tagName === "INPUT"
   ) {
+    return;
+  }
+
+  const isCopy = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c";
+  if (isCopy) {
+    e.preventDefault();
+    copySelectedNodes();
+    return;
+  }
+
+  const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v";
+  if (isPaste) {
+    e.preventDefault();
+    pasteCopiedNodes();
     return;
   }
   
