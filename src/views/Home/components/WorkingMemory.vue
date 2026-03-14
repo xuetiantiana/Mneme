@@ -117,6 +117,14 @@
       >
         🔗Group
       </div>
+      <div
+        class="nav-item"
+        :class="{ active: currentNav === 'Ungroup', disabled: hintLoading }"
+        :data-tip="getNavHint('Ungroup')"
+        @click="handleNavClick('Ungroup')"
+      >
+        🔓Ungroup
+      </div>
     </div>
 
     <!-- 左下角按钮列表 -->
@@ -247,6 +255,7 @@ const NAV_HINTS = {
   Crop: "点击之后选择主图进行裁剪",
   "Add Memory": "点击画布位置后上传图文",
   Group: "选中多个节点后使用",
+  Ungroup: "选中一个 group 后使用",
 };
 
 const getNavHint = (navItem) => NAV_HINTS[navItem] || "";
@@ -552,6 +561,54 @@ const handleNavClick = (navItem) => {
     closeWhisperPopup();
     handleAiAssistClick(navItem);
   } else {
+    if (navItem === "Ungroup") {
+      if (konvaRef.value?.ungroupSelectedNodes) {
+        const result = konvaRef.value.ungroupSelectedNodes();
+        if (!result?.success) {
+          ElMessage({
+            message: result?.message || "解组失败",
+            type: "warning",
+          });
+        } else {
+          ElMessage({
+            message: `解组成功，已恢复 ${result.count || 0} 个节点`,
+            type: "success",
+          });
+        }
+      } else {
+        ElMessage({
+          message: "解组功能未准备好",
+          type: "warning",
+        });
+      }
+      currentNav.value = "";
+      return;
+    }
+
+    if (navItem === "Group") {
+      if (konvaRef.value?.groupSelectedNodes) {
+        const result = konvaRef.value.groupSelectedNodes();
+        if (!result?.success) {
+          ElMessage({
+            message: result?.message || "分组失败",
+            type: "warning",
+          });
+        } else {
+          ElMessage({
+            message: `分组成功，已圈住 ${result.count || 0} 个节点`,
+            type: "success",
+          });
+        }
+      } else {
+        ElMessage({
+          message: "分组功能未准备好",
+          type: "warning",
+        });
+      }
+      currentNav.value = "";
+      return;
+    }
+
     if (navItem === "Whisper" || navItem === "Add Memory") {
       if (currentNav.value === navItem) {
         currentNav.value = "";

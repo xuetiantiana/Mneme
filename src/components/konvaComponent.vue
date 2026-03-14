@@ -1735,9 +1735,17 @@ const getNodesTopLeft = (nodes: Konva.Node[]) => {
 const copySelectedNodes = () => {
   if (selectedNodes.length === 0) return;
 
-  clipboardNodes = selectedNodes.map((node) =>
+  // 复制前临时移除选中态，避免把蓝色选中阴影一并克隆到剪贴板。
+  const snapshotNodes = [...selectedNodes];
+  snapshotNodes.forEach((node) => removeNodeSelectStyle(node));
+
+  clipboardNodes = snapshotNodes.map((node) =>
     node.clone({ listening: true })
   );
+
+  // 恢复画布上当前选中节点的视觉状态。
+  snapshotNodes.forEach((node) => addNodeSelectStyle(node));
+  layer?.batchDraw();
   lastPasteOffset = { x: 24, y: 24 };
 };
 
@@ -3592,6 +3600,286 @@ const clearSelection = () => {
   layer?.batchDraw();
 };
 
+const groupSelectedNodes = () => {
+  if (!layer || !transformer) {
+    return { success: false, message: "画布未准备好" };
+  }
+
+  if (!Array.isArray(selectedNodes) || selectedNodes.length < 2) {
+    return { success: false, message: "请先选中至少两个节点后再分组" };
+  }
+
+  const nodesToGroup = selectedNodes.filter((node) => {
+    if (!node) return false;
+    if (node === transformer || node === selectionBox) return false;
+    if (node.listening() === false) return false;
+    return node.getLayer() === layer;
+  });
+
+  if (nodesToGroup.length < 2) {
+    return { success: false, message: "当前选中节点不支持分组" };
+  }
+
+  clearAiAssist();
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  nodesToGroup.forEach((node) => {
+    const rect = node.getClientRect({
+      relativeTo: layer,
+      skipShadow: true,
+      skipStroke: false,
+    });
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    maxY = Math.max(maxY, rect.y + rect.height);
+  });
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) {
+    return { success: false, message: "分组范围计算失败" };
+  }
+
+  const padding = 16;
+  const groupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const group = new Konva.Group({
+    id: groupId,
+    name: "wm-group",
+    draggable: true,
+    customType: "group",
+  });
+
+  const bgRect = new Konva.Rect({
+    x: minX - padding,
+    y: minY - padding,
+    width: Math.max(1, maxX - minX + padding * 2),
+    height: Math.max(1, maxY - minY + padding * 2),
+    fill: "rgba(140, 140, 140, 0.18)",
+    stroke: "rgba(120, 120, 120, 0.65)",
+    strokeWidth: 1.5,
+    cornerRadius: 12,
+    // 背景需要参与命中，才能选中/拖动整个 group。
+    listening: true,
+    draggable: false,
+    name: "group-bg",
+  });
+
+  layer.add(group);
+  group.add(bgRect);
+
+  const ungroupBtnWidth = 64;
+  const ungroupBtnHeight = 22;
+  const ungroupBtnGap = 6;
+  const ungroupBtn = new Konva.Group({
+    x: 0,
+    y: 0,
+    name: "group-ungroup-btn",
+    listening: true,
+    draggable: false,
+  });
+  ungroupBtn.setAttr("targetGroupId", groupId);
+
+  const ungroupBtnBg = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: ungroupBtnWidth,
+    height: ungroupBtnHeight,
+    cornerRadius: 6,
+    fill: "rgba(255, 255, 255, 0.92)",
+    stroke: "rgba(120, 120, 120, 0.7)",
+    strokeWidth: 1,
+    listening: false,
+  });
+
+  const ungroupBtnText = new Konva.Text({
+    x: 0,
+    y: 0,
+    width: ungroupBtnWidth,
+    height: ungroupBtnHeight,
+    text: "Ungroup",
+    fontSize: 12,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: "#333",
+    align: "center",
+    verticalAlign: "middle",
+    listening: false,
+  });
+
+  const updateUngroupBtnPosition = () => {
+    if (!layer) return;
+    const rect = group.getClientRect({
+      relativeTo: layer,
+      skipShadow: true,
+      skipStroke: false,
+    });
+    ungroupBtn.position({
+      x: rect.x + rect.width - ungroupBtnWidth - ungroupBtnGap,
+      y: rect.y + ungroupBtnGap,
+    });
+    ungroupBtn.moveToTop();
+  };
+
+  ungroupBtn.add(ungroupBtnBg);
+  ungroupBtn.add(ungroupBtnText);
+  layer.add(ungroupBtn);
+  updateUngroupBtnPosition();
+  ungroupBtn.on("mousedown touchstart", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    // 防止事件冒泡到 group，避免被当成拖拽起点。
+    evt.cancelBubble = true;
+  });
+
+  ungroupBtn.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    evt.cancelBubble = true;
+    const result = ungroupSelectedNodes(group);
+    if (!result?.success) {
+      console.warn("Ungroup from group button failed:", result?.message || "unknown");
+    }
+  });
+
+  ungroupBtn.on("mouseenter", () => {
+    if (stage) {
+      stage.container().style.cursor = "pointer";
+    }
+    ungroupBtnBg.fill("rgba(240, 240, 240, 0.98)");
+    layer?.batchDraw();
+  });
+
+  ungroupBtn.on("mouseleave", () => {
+    if (stage) {
+      stage.container().style.cursor = "default";
+    }
+    ungroupBtnBg.fill("rgba(255, 255, 255, 0.92)");
+    layer?.batchDraw();
+  });
+
+  nodesToGroup.forEach((node) => {
+    // 进入 group 后只允许整体操作，子节点不再单独拖拽/命中。
+    node.draggable(false);
+    node.listening(false);
+    node.moveTo(group);
+  });
+
+  group.on("click tap", (evt) => {
+    handleNodeClick(evt, group);
+  });
+  group.on("dragmove transform", () => {
+    updateUngroupBtnPosition();
+    layer?.batchDraw();
+  });
+
+  selectedNodes = [group];
+  transformer.nodes(selectedNodes);
+  addNodeSelectStyle(group);
+  group.moveToTop();
+  transformer.moveToTop();
+  ungroupBtn.moveToTop();
+
+  layer.batchDraw();
+  setTimeout(() => updateScrollbars(), 200);
+
+  return { success: true, groupId, count: nodesToGroup.length };
+};
+
+const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
+  if (!layer || !transformer) {
+    return { success: false, message: "画布未准备好" };
+  }
+
+  const selected =
+    groupCandidate ||
+    (Array.isArray(selectedNodes) && selectedNodes.length === 1
+      ? selectedNodes[0]
+      : null);
+
+  if (!selected) {
+    return { success: false, message: "请先选中一个 group 后再解组" };
+  }
+
+  const target =
+    selected instanceof Konva.Group
+      ? selected
+      : selected?.name?.() === "group-bg"
+      ? selected.getParent()
+      : selected?.name?.() === "group-ungroup-btn"
+      ? layer?.findOne(`#${String(selected.getAttr("targetGroupId") || "")}`) || null
+      : null;
+
+  if (!(target instanceof Konva.Group) || target.getAttr("customType") !== "group") {
+    return { success: false, message: "当前选中项不是可解组的 group" };
+  }
+
+  const groupNode = target as Konva.Group;
+  const groupId = groupNode.id?.() || "";
+  if (groupId && layer) {
+    const floatingBtns = layer.find(".group-ungroup-btn");
+    floatingBtns.forEach((node: Konva.Node) => {
+      if (String(node.getAttr("targetGroupId") || "") === groupId) {
+        node.destroy();
+      }
+    });
+  }
+
+  const rawChildren: any = groupNode.getChildren();
+  // 先做快照，避免边遍历边 move 导致集合变化而漏节点。
+  const children: Konva.Node[] =
+    typeof rawChildren?.each === "function"
+      ? (() => {
+          const snapshot: Konva.Node[] = [];
+          rawChildren.each((child: Konva.Node) => snapshot.push(child));
+          return snapshot;
+        })()
+      : Array.isArray(rawChildren)
+      ? [...rawChildren]
+      : typeof rawChildren?.toArray === "function"
+      ? [...rawChildren.toArray()]
+      : Array.from(rawChildren || []);
+  const restoredNodes: Konva.Node[] = [];
+
+  children.forEach((child) => {
+    if (child.name() === "group-bg" || child.name() === "group-ungroup-btn") {
+      child.destroy();
+      return;
+    }
+
+    const absPos = child.getAbsolutePosition();
+    const absRotation = child.getAbsoluteRotation();
+    const absScale = child.getAbsoluteScale();
+
+    child.moveTo(layer!);
+    child.absolutePosition(absPos);
+    child.rotation(absRotation);
+    child.scale({ x: absScale.x, y: absScale.y });
+    child.draggable(currentTool.value === "select");
+    child.listening(true);
+
+    if (!child.hasName("ungrouped-node")) {
+      child.addName("ungrouped-node");
+    }
+
+    restoredNodes.push(child);
+  });
+
+  // 只有在子节点全部迁移后再销毁 group，避免误删未迁移节点。
+  groupNode.destroy();
+
+  selectedNodes = restoredNodes;
+  transformer.nodes(selectedNodes);
+  selectedNodes.forEach((n) => {
+    addNodeSelectStyle(n);
+    n.moveToTop();
+  });
+  transformer.moveToTop();
+
+  layer.batchDraw();
+  setTimeout(() => updateScrollbars(), 200);
+
+  return { success: true, count: restoredNodes.length };
+};
+
 defineExpose({
   createAiContentNode,
   cancelAiAssist,
@@ -3614,6 +3902,8 @@ defineExpose({
   addBubblesAroundTarget,
   setAiRingLabels,
   setAiRightLabels,
+  groupSelectedNodes,
+  ungroupSelectedNodes,
 });
 </script>
 
