@@ -3499,6 +3499,83 @@ const addSegmentsAroundTarget = async (
   return createdNodes.length;
 };
 
+const addBubblesAroundTarget = async (
+  targetNode: Konva.Node,
+  bubblesInput: any
+) => {
+  // 在目标节点周边渲染一组泡泡文本节点，用于 Whisper/Crop 结果回填。
+  if (!layer || !targetNode) {
+    return 0;
+  }
+
+  const bubbles = Array.isArray(bubblesInput)
+    ? bubblesInput.filter(Boolean)
+    : bubblesInput
+    ? [bubblesInput]
+    : [];
+
+  if (bubbles.length === 0) {
+    return 0;
+  }
+
+  const targetRect = targetNode.getClientRect({
+    relativeTo: layer,
+    skipShadow: true,
+    skipStroke: true,
+  });
+  const targetCenterX = targetRect.x + targetRect.width / 2;
+  const targetCenterY = targetRect.y + targetRect.height / 2;
+
+  const normalizedBubbles = bubbles.map((bubble: any, index: number) => {
+    const rawX = Number(bubble?.x);
+    const rawY = Number(bubble?.y);
+    const hasXY = Number.isFinite(rawX) && Number.isFinite(rawY);
+
+    // 后端缺失坐标时，默认做环绕排布，保证每个泡泡都有落点。
+    const theta = (index / Math.max(bubbles.length, 1)) * Math.PI * 2;
+    const fallbackRadius = 92;
+
+    return {
+      ...bubble,
+      x: hasXY ? rawX : Math.round(Math.cos(theta) * fallbackRadius),
+      y: hasXY ? rawY : Math.round(Math.sin(theta) * fallbackRadius),
+      radius: Number(bubble?.radius) || Number(bubble?.r) || 30,
+    };
+  });
+
+  const bubbleNodes = await initPCMBubbles(normalizedBubbles, {
+    offsetX: targetCenterX,
+    offsetY: targetCenterY,
+  }).catch(() => []);
+
+  if (!Array.isArray(bubbleNodes) || bubbleNodes.length === 0) {
+    return 0;
+  }
+
+  // 替换选中态到新泡泡，方便用户继续拖拽或二次操作。
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  bubbleNodes.forEach((node: Konva.Node) => {
+    node.on("click tap", (evt) => {
+      handleNodeClick(evt, node);
+    });
+    layer!.add(node);
+  });
+
+  selectedNodes = bubbleNodes;
+  transformer?.nodes(selectedNodes);
+  selectedNodes.forEach((n) => {
+    addNodeSelectStyle(n);
+    n.moveToTop();
+  });
+  transformer?.moveToTop();
+
+  layer.batchDraw();
+  setTimeout(() => updateScrollbars(), 300);
+
+  return bubbleNodes.length;
+};
+
 const clearSelection = () => {
   if (!transformer) return;
 
@@ -3529,6 +3606,7 @@ defineExpose({
   replaceImageNodeSource,
   addImageNodeRightOfTarget,
   addSegmentsAroundTarget,
+  addBubblesAroundTarget,
   setAiRingLabels,
   setAiRightLabels,
 });

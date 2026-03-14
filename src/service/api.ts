@@ -843,122 +843,7 @@ export const whisperUpdate = (data: any): any => {
   const response = {
     success: true,
     data: {
-                    "signifier_ref": "PCM-20260314055223235-372f15e117-signifier-1",
-                    "id": "PCM-20260314055223235-372f15e117-segment-1",
-                    "type": "segment",
-                    "label": "宠物店小狗趴在玻璃柜",
-                    "category": "text_image_overlap",
-                    "source": [
-                        "author_text",
-                        "image"
-                    ],
-                    "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314055223235-372f15e117/crops/crop-20260314055301895-9fc9af16f2.png",
-                    "interpretations": {
-                        "meaning": [
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-3",
-                                "type": "interpretation",
-                                "text": "宠物陪伴",
-                                "kind": "meaning",
-                                "t": 3,
-                                "specificity": 4,
-                                "status": "user_provided",
-                                "source": [
-                                    "author_text",
-                                    "image"
-                                ],
-                                "modality": null,
-                                "ai_confidence": null
-                            }
-                        ],
-                        "emotion": [
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-5",
-                                "type": "interpretation",
-                                "text": "怀念温暖",
-                                "kind": "emotion",
-                                "t": 3,
-                                "specificity": 5,
-                                "status": "user_provided",
-                                "source": [
-                                    "author_text"
-                                ],
-                                "modality": null,
-                                "ai_confidence": null
-                            },
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-4",
-                                "type": "interpretation",
-                                "text": "放松愉悦",
-                                "kind": "emotion",
-                                "t": 0,
-                                "specificity": 4,
-                                "status": "user_provided",
-                                "source": [
-                                    "author_text",
-                                    "image"
-                                ],
-                                "modality": null,
-                                "ai_confidence": null
-                            }
-                        ],
-                        "sensory": [
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-6",
-                                "type": "interpretation",
-                                "text": "毛软蓬松",
-                                "kind": "sensory",
-                                "t": 0,
-                                "specificity": 2,
-                                "status": "ai_recommended",
-                                "source": [
-                                    "image"
-                                ],
-                                "modality": "tactile",
-                                "ai_confidence": 2
-                            }
-                        ],
-                        "aesthetic": [
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-8",
-                                "type": "interpretation",
-                                "text": "温馨柔和",
-                                "kind": "aesthetic",
-                                "t": 0,
-                                "specificity": 3,
-                                "status": "ai_recommended",
-                                "source": [
-                                    "image"
-                                ],
-                                "modality": null,
-                                "ai_confidence": 3
-                            },
-                            {
-                                "id": "PCM-20260314055223235-372f15e117-interp-9",
-                                "type": "interpretation",
-                                "text": "画面静谧",
-                                "kind": "aesthetic",
-                                "t": 3,
-                                "specificity": 3,
-                                "status": "ai_recommended",
-                                "source": [
-                                    "image"
-                                ],
-                                "modality": null,
-                                "ai_confidence": 2
-                            }
-                        ]
-                    },
-                    "image_index": 0,
-                    "image_width": 164,
-                    "image_height": 247,
-                    "layout": {
-                        "x": -411,
-                        "y": 0,
-                        "w": 198,
-                        "h": 217,
-                        "group_ref": "PCM-20260314055223235-372f15e117-group-1",
-                        "bubbles": [
+      "bubbles": [
                             {
                                 "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-3",
                                 "text": "宠物陪伴",
@@ -1026,8 +911,7 @@ export const whisperUpdate = (data: any): any => {
                                 "type": "bubble"
                             }
                         ]
-                    }
-                },
+    }
   };
 
   return new Promise(function (resolve) {

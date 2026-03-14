@@ -1,7 +1,7 @@
 <template>
   <div
     ref="wmContainer"
-    :class="{ 'whisper-mode': currentNav === 'Whisper' || currentNav === 'Add Memory' }"
+    :class="{ 'whisper-mode': currentNav === 'Add Memory' }"
     style="
       width: 100%;
       height: 100%;
@@ -27,6 +27,7 @@
         :question-list="aiPopupData.questionList"
         :constellate-data="aiPopupData.constellateData"
         :loading="aiPopupData.loading"
+        :quick-tools="aiQuickTools"
         @confirm="handleAiPopupConfirm"
         @tool-click="handleAiPopupToolClick"
         @cancel="handleAiPopupCancel"
@@ -36,6 +37,7 @@
         :position="whisperPopupData.position"
         :title="whisperPopupData.toolType || 'Whisper'"
         :tool-type="whisperPopupData.toolType || 'Whisper'"
+        :submit-loading="whisperSubmitting"
         @submit="handleWhisperSubmit"
         @cancel="handleWhisperPopupCancel"
       />
@@ -166,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, defineProps, onMounted, onUnmounted, nextTick } from "vue";
 import { Edit, Promotion, Search, Loading } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import konvaComponent from "@/components/konvaComponent.vue";
@@ -180,6 +182,7 @@ import {
   ConstellateHint,
   ReflectQuestions,
   cropUpdate,
+  whisperUpdate,
 } from "@/service/api";
 import { usePCMStore } from "@/stores/pcmStore";
 
@@ -199,6 +202,9 @@ const wmContainer = ref(null);
 const selectedNodesData = ref([]);
 const currentNav = ref(""); // 当前选中的导航项
 const reflectSelectedNodes = ref(null); // Reflect 模式下选中的节点
+const reflectTargetNode = ref(null); // Reflect 对应的真实 Konva 节点
+const reflectTargetType = ref(""); // Reflect 对应节点类型
+const reflectPopupTargetNode = ref(null); // 弹窗生命周期内用于 QuickTools 的目标节点
 const currentHintPerspectives = ref([]); // 当前 hint 返回的 perspective 列表
 const hintLoading = ref(false); // ReflectHint/ConstellateHint 请求中
 const pendingAiTool = ref(""); // 当前正在请求提示词的工具
@@ -207,11 +213,32 @@ const whisperPopupData = ref({
   position: { x: 0, y: 0 },
   stagePos: { x: 0, y: 0 },
   toolType: "Whisper",
+  targetNode: null,
 });
+const whisperSubmitting = ref(false);
 const AI_RIGHT_LABELS_BY_TOOL = {
   Reflect: ["反思细节", "反思转化"],
   Constellate: ["直接检索", "远距离启发"],
 };
+const aiQuickTools = computed(() => {
+  const quickType = aiPopupData.value?.reflectTargetType || reflectTargetType.value;
+
+  if (quickType === "pcm_unit") {
+    return [
+      { label: "✂️  Crop", value: "Crop" },
+      { label: "📷 Add Memory", value: "Add Memory" },
+    ];
+  }
+
+  if (quickType === "segment") {
+    return [
+      { label: "💭  Whisper", value: "Whisper" },
+      { label: "📷 Add Memory", value: "Add Memory" },
+    ];
+  }
+
+  return [{ label: "📷 Add Memory", value: "Add Memory" }];
+});
 const NAV_HINTS = {
   Reflect: "先选中一个主图/子图再点击",
   Constellate: "先选中一个主图/子图/泡泡节点再点击",
@@ -291,6 +318,9 @@ const aiPopupData = ref({
   loading: false, // 新增：加载状态
   targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
   relativePos: { x: 0, y: 0 }, // 新增：记录点击点相对于舞台原点的坐标（未缩放）
+  reflectTargetType: "", // Reflect 目标类型，用于弹窗内 QuickTools 持续显示
+  reflectTargetId: "", // Reflect 目标节点 id
+  reflectRequestData: null, // Reflect 请求参数快照
   t: "AI Tool - Reflect", // 新增：弹窗标题
 });
 
@@ -450,7 +480,21 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     }
   }
 
+  if (toolType === "Reflect") {
+    const selectedType = selectedNodes[0]?.getAttr?.("customType") || "";
+    if (selectedType !== "pcm_unit" && selectedType !== "segment") {
+      ElMessage({
+        message: 'Reflect 仅支持选中 type 为 "pcm_unit" 或 "segment" 的节点',
+        type: "warning",
+      });
+      currentNav.value = "";
+      return;
+    }
+  }
+
   reflectSelectedNodes.value = konvaRef.value.resetNodesData(selectedNodes);
+  reflectTargetNode.value = selectedNodes[0] || null;
+  reflectTargetType.value = selectedNodes[0]?.getAttr?.("customType") || "";
 
   if (toolType === "Reflect" || toolType === "Constellate") {
     pendingAiTool.value = toolType;
@@ -504,6 +548,12 @@ const handleNavClick = (navItem) => {
 
       currentNav.value = navItem;
       closeWhisperPopup();
+
+      const stage = konvaRef.value?.konvaData?.stage;
+      if (stage && navItem === "Whisper") {
+        stage.container().style.cursor = "default";
+        stage.container().removeAttribute("title");
+      }
       return;
     }
 
@@ -518,7 +568,7 @@ const handleNavClick = (navItem) => {
     currentNav.value = navItem;
 
     const stage = konvaRef.value?.konvaData?.stage;
-    if (stage && navItem !== "Crop") {
+    if (stage && navItem !== "Crop" && navItem !== "Whisper") {
       stage.container().style.cursor = "default";
       stage.container().removeAttribute("title");
     }
@@ -545,14 +595,34 @@ const handleWhisperCanvasClick = (event) => {
     y: (localY - stage.y()) / stage.scaleY(),
   };
 
-  whisperPopupData.value = {
-    position: {
-      x: event.clientX,
-      y: event.clientY,
-    },
-    stagePos,
-    toolType: currentNav.value,
-  };
+  if (currentNav.value === "Whisper") {
+    const targetNode = getSegmentTargetAtPointer(event);
+    if (!targetNode) {
+      return;
+    }
+
+    const popupAnchor = getPopupPositionRightOfNode(targetNode);
+    if (!popupAnchor) {
+      return;
+    }
+
+    whisperPopupData.value = {
+      position: popupAnchor.position,
+      stagePos: popupAnchor.stagePos,
+      toolType: currentNav.value,
+      targetNode,
+    };
+  } else {
+    whisperPopupData.value = {
+      position: {
+        x: event.clientX,
+        y: event.clientY,
+      },
+      stagePos,
+      toolType: currentNav.value,
+      targetNode: null,
+    };
+  }
 
   whisperPopupVisible.value = true;
 };
@@ -585,6 +655,157 @@ const getImageTargetAtPointer = (event) => {
   }
 
   return target;
+};
+
+const getSegmentTargetAtPointer = (event) => {
+  // Whisper 仅允许命中 segment 节点，避免误触主图或泡泡。
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage) {
+    return null;
+  }
+
+  const rect = stage.container().getBoundingClientRect();
+  const pointer = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+
+  const target = stage.getIntersection(pointer);
+  if (!target) {
+    return null;
+  }
+
+  if (target.getAttr("customType") !== "segment") {
+    return null;
+  }
+
+  return target;
+};
+
+const getPopupPositionRightOfNode = (targetNode) => {
+  // 弹窗锚定在 segment 右侧；用舞台 transform 换算成屏幕坐标。
+  const stage = konvaRef.value?.konvaData?.stage;
+  const layer = konvaRef.value?.konvaData?.layer;
+  if (!stage || !layer || !targetNode) {
+    return null;
+  }
+
+  const nodeRect = targetNode.getClientRect({
+    relativeTo: layer,
+    skipShadow: true,
+    skipStroke: true,
+  });
+
+  const anchorStagePos = {
+    x: nodeRect.x + nodeRect.width + 16,
+    y: nodeRect.y,
+  };
+
+  const stageRect = stage.container().getBoundingClientRect();
+  const transform = stage.getAbsoluteTransform();
+  const localPos = transform.point(anchorStagePos);
+
+  return {
+    stagePos: anchorStagePos,
+    position: {
+      x: stageRect.left + localPos.x,
+      y: stageRect.top + localPos.y,
+    },
+  };
+};
+
+const exitReflectMode = () => {
+  // 工具跳转时仅退出 Reflect 交互态，不主动关闭已打开的 AI 弹窗。
+  currentNav.value = "";
+
+  if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
+    konvaRef.value.clearAiGuideLine();
+  }
+  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+    konvaRef.value.cancelAiAssist();
+  }
+
+  if (konvaRef.value && konvaRef.value.clearSelection) {
+    konvaRef.value.clearSelection();
+  }
+
+  // 清空 Reflect 目标与序列化数据，避免后续仍按旧节点分流 QuickTools。
+  reflectSelectedNodes.value = null;
+  reflectTargetNode.value = null;
+  reflectTargetType.value = "";
+};
+
+const openCropPopupForNode = (targetNode) => {
+  if (!targetNode || targetNode.getAttr?.("customType") !== "pcm_unit") {
+    ElMessage({
+      message: "当前 Reflect 节点不支持 Crop",
+      type: "warning",
+    });
+    return;
+  }
+
+  const img = targetNode.image?.();
+  const imageSrc = img?.src || "";
+  if (!imageSrc) {
+    ElMessage({
+      message: "当前节点缺少可裁剪图片",
+      type: "warning",
+    });
+    return;
+  }
+
+  cropPopupData.value = {
+    imageSrc,
+    targetNode,
+  };
+  cropPopupVisible.value = true;
+};
+
+const openWhisperPopupForNode = (targetNode) => {
+  if (!targetNode || targetNode.getAttr?.("customType") !== "segment") {
+    ElMessage({
+      message: "当前 Reflect 节点不支持 Whisper",
+      type: "warning",
+    });
+    return;
+  }
+
+  const popupAnchor = getPopupPositionRightOfNode(targetNode);
+  if (!popupAnchor) {
+    ElMessage({
+      message: "Whisper 弹窗定位失败",
+      type: "warning",
+    });
+    return;
+  }
+
+  whisperPopupData.value = {
+    position: popupAnchor.position,
+    stagePos: popupAnchor.stagePos,
+    toolType: "Whisper",
+    targetNode,
+  };
+  whisperPopupVisible.value = true;
+};
+
+const handleWhisperCanvasHover = (event) => {
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (!stage) {
+    return;
+  }
+
+  if (currentNav.value !== "Whisper") {
+    return;
+  }
+
+  // 仅 segment 显示“可点击并分析”的提示语。
+  const target = getSegmentTargetAtPointer(event);
+  stage.container().style.cursor = target ? "pointer" : "default";
+  if (target) {
+    stage.container().setAttribute("title", "点击后输入文本，重新分析该 segment");
+  } else {
+    stage.container().removeAttribute("title");
+  }
 };
 
 const handleCropCanvasHover = (event) => {
@@ -627,7 +848,22 @@ const handleCropCanvasClick = (event) => {
 };
 
 const handleCanvasMouseMove = (event) => {
-  handleCropCanvasHover(event);
+  // 按当前工具分流 hover 逻辑，避免 Whisper 与 Crop 的提示互相覆盖。
+  if (currentNav.value === "Whisper") {
+    handleWhisperCanvasHover(event);
+    return;
+  }
+
+  if (currentNav.value === "Crop") {
+    handleCropCanvasHover(event);
+    return;
+  }
+
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (stage) {
+    stage.container().style.cursor = "default";
+    stage.container().removeAttribute("title");
+  }
 };
 
 const handleCanvasMouseLeave = () => {
@@ -635,7 +871,7 @@ const handleCanvasMouseLeave = () => {
   if (!stage) {
     return;
   }
-  if (currentNav.value === "Crop") {
+  if (currentNav.value === "Crop" || currentNav.value === "Whisper") {
     stage.container().style.cursor = "default";
     stage.container().removeAttribute("title");
   }
@@ -648,9 +884,24 @@ const handleCanvasClick = (event) => {
 
 const closeWhisperPopup = () => {
   whisperPopupVisible.value = false;
+  // 关闭时清理节点引用，防止复用上一次的 segment。
+  whisperPopupData.value = {
+    ...whisperPopupData.value,
+    targetNode: null,
+  };
 };
 
 const handleWhisperPopupCancel = () => {
+  if (whisperSubmitting.value) {
+    return;
+  }
+
+  const stage = konvaRef.value?.konvaData?.stage;
+  if (stage) {
+    stage.container().style.cursor = "default";
+    stage.container().removeAttribute("title");
+  }
+
   closeWhisperPopup();
   if (currentNav.value === "Whisper" || currentNav.value === "Add Memory") {
     currentNav.value = "";
@@ -826,6 +1077,76 @@ const handleWhisperSubmit = async (payload) => {
     return;
   }
 
+  if (whisperPopupData.value.toolType === "Whisper") {
+    // Whisper 分支：提交文本 + 当前 segment，返回 bubbles 后回填到该 segment 周边。
+    const targetNode = whisperPopupData.value.targetNode;
+    if (!targetNode) {
+      ElMessage({
+        message: "请点击一个 segment 后再进行分析",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (!konvaRef.value.addBubblesAroundTarget) {
+      ElMessage({
+        message: "泡泡渲染功能未准备好",
+        type: "warning",
+      });
+      return;
+    }
+
+    whisperSubmitting.value = true;
+    try {
+      const response = await whisperUpdate({
+        text: content,
+        segment: {
+          id: targetNode.id?.() || "",
+          type: targetNode.getAttr?.("customType") || "segment",
+        },
+      });
+
+      const result = response?.data?.data ?? response?.data ?? {};
+      const bubbles = Array.isArray(result?.bubbles)
+        ? result.bubbles
+        : Array.isArray(result)
+        ? result
+        : [];
+
+      if (!bubbles.length) {
+        throw new Error("whisperUpdate 未返回 bubbles");
+      }
+
+      const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles);
+      if (!count) {
+        throw new Error("bubbles 渲染失败");
+      }
+
+      const stage = konvaRef.value?.konvaData?.stage;
+      if (stage) {
+        stage.container().style.cursor = "default";
+        stage.container().removeAttribute("title");
+      }
+
+      closeWhisperPopup();
+      currentNav.value = "";
+      ElMessage({
+        message: "分析完成，已在该 segment 周边生成泡泡",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("whisperUpdate failed:", error);
+      ElMessage({
+        message: "Whisper 分析失败，请稍后重试",
+        type: "error",
+      });
+    } finally {
+      whisperSubmitting.value = false;
+    }
+
+    return;
+  }
+
   if (!konvaRef.value.addTextAtPosition) {
     ElMessage({
       message: "文字添加功能未准备好",
@@ -880,7 +1201,13 @@ const handleAiRingClick = async (data) => {
     constellateData: { ttt: "", mmm: [] },
     loading: true, // 开始加载
     relativePos: { x: relativeX, y: relativeY },
+    reflectTargetType: reflectTargetType.value || "",
+    reflectTargetId: reflectTargetNode.value?.id?.() || "",
+    reflectRequestData: null,
   };
+
+  // 弹窗侧缓存 Reflect 目标节点，供 QuickTools 在退出圆环后继续使用。
+  reflectPopupTargetNode.value = reflectTargetNode.value || null;
   aiPopupVisible.value = true;
 
   const reflectBasePayload = buildHintPayload(reflectSelectedNodes.value);
@@ -895,6 +1222,7 @@ const handleAiRingClick = async (data) => {
       value: Math.max(0, Math.round(data.lineLength || 0)),
     },
   };
+  aiPopupData.value.reflectRequestData = requestData;
   console.log("requestData", requestData);
 
   try {
@@ -964,6 +1292,31 @@ const handleAiPopupConfirm = (data) => {
 const handleAiPopupToolClick = ({ tool }) => {
   if (!tool) return;
 
+  const inReflectPopup = aiPopupData.value?.toolType === "Reflect";
+  if (inReflectPopup) {
+    const popupNode = reflectPopupTargetNode.value || reflectTargetNode.value;
+
+    if (tool === "Crop") {
+      const node = popupNode;
+      exitReflectMode();
+      openCropPopupForNode(node);
+      return;
+    }
+
+    if (tool === "Whisper") {
+      const node = popupNode;
+      exitReflectMode();
+      openWhisperPopupForNode(node);
+      return;
+    }
+
+    if (tool === "Add Memory") {
+      exitReflectMode();
+      handleNavClick(tool);
+      return;
+    }
+  }
+
   // if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
   //   if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
   //     konvaRef.value.clearAiGuideLine();
@@ -994,6 +1347,12 @@ const handleAiPopupCancel = () => {
 // 实际可以给 AiQuestionPopup 添加 click-outside 指令或遮罩层
 const closeAiPopup = () => {
   aiPopupVisible.value = false;
+  reflectTargetNode.value = null;
+  reflectTargetType.value = "";
+  reflectPopupTargetNode.value = null;
+  aiPopupData.value.reflectTargetType = "";
+  aiPopupData.value.reflectTargetId = "";
+  aiPopupData.value.reflectRequestData = null;
 };
 
 // 复用：将 stage 坐标转换为 WorkingMemory 容器内的弹窗坐标

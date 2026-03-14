@@ -28,14 +28,18 @@
       <div v-if="imagePreviewUrl" class="preview-wrap">
         <img :src="imagePreviewUrl" alt="memory" class="preview-image" />
       </div>
+      <!-- Whisper 模式下明确提示：本次提交会触发 segment 重分析 -->
+      <div v-if="toolType === 'Whisper'" class="tool-hint">
+        输入文字后会重新分析该 segment 图片，确认后将更新该图附近的泡泡。
+      </div>
       <div class="popup-actions">
-        <button class="action-btn" type="button" @click="toggleRecording">
+        <button class="action-btn" type="button" :disabled="submitLoading" @click="toggleRecording">
           {{ isRecording ? "停止录音" : "开始录音" }}
         </button>
-        <button class="action-btn primary" type="button" @click="handleSubmit">
-          提交
+        <button class="action-btn primary" type="button" :disabled="submitLoading" @click="handleSubmit">
+          {{ submitLoading ? "分析中..." : (toolType === 'Whisper' ? '确定分析' : '提交') }}
         </button>
-        <button class="action-btn" type="button" @click="$emit('cancel')">
+        <button class="action-btn" type="button" :disabled="submitLoading" @click="$emit('cancel')">
           取消
         </button>
       </div>
@@ -71,6 +75,10 @@ const props = defineProps({
   toolType: {
     type: String,
     default: "Whisper",
+  },
+  submitLoading: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -302,6 +310,17 @@ onBeforeUnmount(() => {
   border-radius: 6px;
 }
 
+.tool-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #606266;
+  background: #f5f7fa;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 .action-btn {
   border: 1px solid #d0d4dc;
   border-radius: 8px;
@@ -316,6 +335,11 @@ onBeforeUnmount(() => {
   border-color: #409eff;
   background: #409eff;
   color: #fff;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .popup-hint {
