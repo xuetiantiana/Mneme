@@ -42,6 +42,7 @@
       <CropImagePopup
         :visible="cropPopupVisible"
         :image-src="cropPopupData.imageSrc"
+        :confirm-loading="cropSubmitting"
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
       />
@@ -178,6 +179,7 @@ import {
   ReflectHint,
   ConstellateHint,
   ReflectQuestions,
+  cropUpdate,
 } from "@/service/api";
 import { usePCMStore } from "@/stores/pcmStore";
 
@@ -226,6 +228,7 @@ const cropPopupData = ref({
   imageSrc: "",
   targetNode: null,
 });
+const cropSubmitting = ref(false);
 let whisperCanvasEl = null;
 
 // 处理点击外部区域取消选中的逻辑
@@ -517,6 +520,7 @@ const handleNavClick = (navItem) => {
     const stage = konvaRef.value?.konvaData?.stage;
     if (stage && navItem !== "Crop") {
       stage.container().style.cursor = "default";
+      stage.container().removeAttribute("title");
     }
   }
 };
@@ -570,6 +574,10 @@ const getImageTargetAtPointer = (event) => {
     return null;
   }
 
+  if (target.getAttr("customType") !== "pcm_unit") {
+    return null;
+  }
+
   const img = target.image?.();
   const imageSrc = img?.src || "";
   if (!imageSrc) {
@@ -587,11 +595,17 @@ const handleCropCanvasHover = (event) => {
 
   if (currentNav.value !== "Crop") {
     stage.container().style.cursor = "default";
+    stage.container().removeAttribute("title");
     return;
   }
 
   const target = getImageTargetAtPointer(event);
   stage.container().style.cursor = target ? "pointer" : "default";
+  if (target) {
+    stage.container().setAttribute("title", "点击裁剪并分析主图");
+  } else {
+    stage.container().removeAttribute("title");
+  }
 };
 
 const handleCropCanvasClick = (event) => {
@@ -623,6 +637,7 @@ const handleCanvasMouseLeave = () => {
   }
   if (currentNav.value === "Crop") {
     stage.container().style.cursor = "default";
+    stage.container().removeAttribute("title");
   }
 };
 
@@ -642,13 +657,13 @@ const handleWhisperPopupCancel = () => {
   }
 };
 
-const handleCropConfirm = ({ dataUrl }) => {
+const handleCropConfirm = async ({ dataUrl }) => {
   const node = cropPopupData.value.targetNode;
   if (!node || !dataUrl) {
     return;
   }
 
-  if (!konvaRef.value || !konvaRef.value.addImageNodeRightOfTarget) {
+  if (!konvaRef.value || !konvaRef.value.addSegmentsAroundTarget) {
     ElMessage({
       message: "裁剪更新功能未准备好",
       type: "warning",
@@ -656,22 +671,67 @@ const handleCropConfirm = ({ dataUrl }) => {
     return;
   }
 
-  konvaRef.value.addImageNodeRightOfTarget(node, dataUrl);
-  cropPopupVisible.value = false;
-  cropPopupData.value = {
-    imageSrc: "",
-    targetNode: null,
-  };
+  cropSubmitting.value = true;
+  try {
+    const response = await cropUpdate({
+      imageDataUrl: dataUrl,
+      target: {
+        id: node.id?.() || "",
+        type: node.getAttr?.("customType") || "",
+      },
+    });
 
-  const stage = konvaRef.value?.konvaData?.stage;
-  if (stage) {
-    stage.container().style.cursor = "default";
+    const payload = response?.data?.data ?? response?.data ?? null;
+    const segments = Array.isArray(payload?.segments)
+      ? payload.segments
+      : Array.isArray(payload)
+      ? payload
+      : payload && typeof payload === "object"
+      ? [payload]
+      : [];
+
+    if (!segments.length) {
+      throw new Error("cropUpdate 未返回可渲染的 segment");
+    }
+
+    const count = await konvaRef.value.addSegmentsAroundTarget(node, segments);
+    if (!count) {
+      throw new Error("segment 渲染失败");
+    }
+
+    cropPopupVisible.value = false;
+    cropPopupData.value = {
+      imageSrc: "",
+      targetNode: null,
+    };
+
+    const stage = konvaRef.value?.konvaData?.stage;
+    if (stage) {
+      stage.container().style.cursor = "default";
+      stage.container().removeAttribute("title");
+    }
+
+    currentNav.value = "";
+    ElMessage({
+      message: "图片分析完成，已在主图周边生成 segment 与泡泡",
+      type: "success",
+    });
+  } catch (error) {
+    console.error("cropUpdate failed:", error);
+    ElMessage({
+      message: "裁剪分析失败，请稍后重试",
+      type: "error",
+    });
+  } finally {
+    cropSubmitting.value = false;
   }
-
-  currentNav.value = "";
 };
 
 const handleCropCancel = () => {
+  if (cropSubmitting.value) {
+    return;
+  }
+
   cropPopupVisible.value = false;
   cropPopupData.value = {
     imageSrc: "",
@@ -681,6 +741,7 @@ const handleCropCancel = () => {
   const stage = konvaRef.value?.konvaData?.stage;
   if (stage) {
     stage.container().style.cursor = "default";
+    stage.container().removeAttribute("title");
   }
 
   if (currentNav.value === "Crop") {

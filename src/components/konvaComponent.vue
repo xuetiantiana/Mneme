@@ -3418,6 +3418,87 @@ const addImageNodeRightOfTarget = (targetNode: Konva.Node, imageSrc: string) => 
   imgObj.src = imageSrc;
 };
 
+const addSegmentsAroundTarget = async (
+  targetNode: Konva.Node,
+  segmentsInput: any
+) => {
+  if (!layer || !targetNode || !(targetNode instanceof Konva.Image)) {
+    return 0;
+  }
+
+  const segments = Array.isArray(segmentsInput)
+    ? segmentsInput.filter(Boolean)
+    : segmentsInput
+    ? [segmentsInput]
+    : [];
+
+  if (segments.length === 0) {
+    return 0;
+  }
+
+  const targetCenterX = targetNode.x() + targetNode.width() / 2;
+  const targetCenterY = targetNode.y() + targetNode.height() / 2;
+
+  const segmentResults = await Promise.all(
+    segments.map((segment: any, index: number) => {
+      const rawX = Number(segment?.layout?.x);
+      const rawY = Number(segment?.layout?.y);
+
+      // 后端若未返回布局坐标，使用主图右侧的兜底布局。
+      const fallbackAbsX =
+        targetCenterX + targetNode.width() / 2 + 44 + (index % 2) * 28;
+      const fallbackAbsY = targetCenterY + Math.floor(index / 2) * 48;
+
+      const normalizedSegment = {
+        ...segment,
+        layout: {
+          ...(segment?.layout || {}),
+          x: Number.isFinite(rawX) ? rawX : fallbackAbsX - targetCenterX,
+          y: Number.isFinite(rawY) ? rawY : fallbackAbsY - targetCenterY,
+        },
+      };
+
+      return initSegmentImagesItem(normalizedSegment, {
+        offsetX: targetCenterX,
+        offsetY: targetCenterY,
+        initBubbles: true,
+      }).catch(() => ({ images: [], bubbles: [] }));
+    })
+  );
+
+  const createdNodes = segmentResults.flatMap((result: any) => [
+    ...(Array.isArray(result?.images) ? result.images : []),
+    ...(Array.isArray(result?.bubbles) ? result.bubbles : []),
+  ]);
+
+  if (!Array.isArray(createdNodes) || createdNodes.length === 0) {
+    return 0;
+  }
+
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  createdNodes.forEach((node: Konva.Node) => {
+    node.on("click tap", (evt) => {
+      handleNodeClick(evt, node);
+    });
+    layer!.add(node);
+  });
+
+  if (createdNodes.length > 0) {
+    selectedNodes = createdNodes;
+    transformer?.nodes(selectedNodes);
+    selectedNodes.forEach((n) => {
+      addNodeSelectStyle(n);
+      n.moveToTop();
+    });
+    transformer?.moveToTop();
+    layer.batchDraw();
+    setTimeout(() => updateScrollbars(), 300);
+  }
+
+  return createdNodes.length;
+};
+
 const clearSelection = () => {
   if (!transformer) return;
 
@@ -3447,6 +3528,7 @@ defineExpose({
   addMemoryAtPosition,
   replaceImageNodeSource,
   addImageNodeRightOfTarget,
+  addSegmentsAroundTarget,
   setAiRingLabels,
   setAiRightLabels,
 });

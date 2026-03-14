@@ -6,6 +6,9 @@
       <div v-if="imgLoaded" class="size-info">
         原图尺寸: {{ naturalWidth }} x {{ naturalHeight }}，拖拽鼠标在原图上画矩形进行裁剪
       </div>
+      <div v-if="imgLoaded" class="analyze-tip">
+        裁剪完成后点击“确认并分析”，系统会调用接口并在主图周边生成 segment 图与泡泡。
+      </div>
 
       <div v-if="imgLoaded" class="crop-canvas-wrap">
         <canvas
@@ -19,8 +22,10 @@
       </div>
 
       <div class="crop-actions">
-        <button class="btn" type="button" @click="$emit('cancel')">取消</button>
-        <button class="btn primary" type="button" :disabled="!selection" @click="handleConfirm">确认</button>
+        <button class="btn" type="button" :disabled="confirmLoading" @click="$emit('cancel')">取消</button>
+        <button class="btn primary" type="button" :disabled="!selection || confirmLoading" @click="handleConfirm">
+          {{ confirmLoading ? "分析中..." : "确认并分析" }}
+        </button>
       </div>
     </div>
   </div>
@@ -37,6 +42,10 @@ const props = defineProps({
   imageSrc: {
     type: String,
     default: "",
+  },
+  confirmLoading: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -270,6 +279,17 @@ watch(
   font-size: 12px;
   color: #909399;
   margin-bottom: 8px;
+}
+
+.analyze-tip {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  background: #f5f7fa;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 8px 10px;
 }
 
 .crop-canvas-wrap {
