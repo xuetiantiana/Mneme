@@ -492,6 +492,23 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     }
   }
 
+  if (toolType === "Constellate") {
+    const selectedType = selectedNodes[0]?.getAttr?.("customType") || "";
+    if (
+      selectedType !== "pcm_unit" &&
+      selectedType !== "segment" &&
+      selectedType !== "bubble"
+    ) {
+      ElMessage({
+        message:
+          'Constellate 仅支持选中 type 为 "pcm_unit"、"segment" 或 "bubble" 的节点',
+        type: "warning",
+      });
+      currentNav.value = "";
+      return;
+    }
+  }
+
   reflectSelectedNodes.value = konvaRef.value.resetNodesData(selectedNodes);
   reflectTargetNode.value = selectedNodes[0] || null;
   reflectTargetType.value = selectedNodes[0]?.getAttr?.("customType") || "";
@@ -1211,6 +1228,7 @@ const handleAiRingClick = async (data) => {
   aiPopupVisible.value = true;
 
   const reflectBasePayload = buildHintPayload(reflectSelectedNodes.value);
+  const ringWidth = Math.max(0, Math.round(data.ringWidth ?? 0));
 
   // 构建请求参数
   const requestData = {
@@ -1218,7 +1236,7 @@ const handleAiRingClick = async (data) => {
     perspective: getPerspectivePayloadByLabel(data.label),
     depth: {
       min: 0,
-      max: 500,
+      max: ringWidth,
       value: Math.max(0, Math.round(data.lineLength || 0)),
     },
   };

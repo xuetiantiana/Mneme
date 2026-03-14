@@ -920,6 +920,10 @@ const handleStageClick = (
     // 获取标签和连线长度
     const label = aiRingLabels[index];
     const lineLength = distance - aiAssistState.innerRadius;
+    const ringWidth = Math.max(
+      0,
+      aiAssistState.outerRadius - aiAssistState.innerRadius
+    );
 
     // 获取屏幕坐标用于定位弹窗
     const pointerPos = stage!.getPointerPosition();
@@ -969,10 +973,11 @@ const handleStageClick = (
     emit("ai-ring-click", {
       label,
       lineLength,
+      ringWidth,
       position: screenPos,
     });
 
-    console.log("AI Ring Click:", { label, lineLength, screenPos });
+    console.log("AI Ring Click:", { label, lineLength, ringWidth, screenPos });
   }
 };
 
