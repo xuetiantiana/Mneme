@@ -861,8 +861,17 @@ const handleAiModeChange = (isActive) => {
 
 const handleAiPopupConfirm = (data) => {
   if (konvaRef.value && konvaRef.value.createAiContentNode) {
+    const isConstellate = currentNav.value === "Constellate";
     // 传入问题（作为标题/label）、图片列表
-    konvaRef.value.createAiContentNode(data.images, data.question, data.nodeMeta);
+    konvaRef.value.createAiContentNode(
+      data.images,
+      data.question,
+      data.nodeMeta,
+      {
+        flattenToNodes: isConstellate,
+        staticConnection: isConstellate,
+      }
+    );
   }
   if (konvaRef.value && konvaRef.value.cancelAiAssist) {
     konvaRef.value.cancelAiAssist();

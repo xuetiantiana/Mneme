@@ -460,13 +460,13 @@ export const gelConstellateToolData = (data: any): any => {
       ttt:"constellate text",
       mmm: [
         {
-          imageUrl: "http://localhost:8000/api/images/test_user/pcm/PCM-20260314052402579-b4600d8558/uploads/20260314132402_0_1aacaf23e158.png",
+          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
           id: "memory-20260313050838889-937a186605",
           type: "memory",
           text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
         },
          {
-          imageUrl: "http://localhost:8000/api/images/test_user/pcm/PCM-20260314052402579-b4600d8558/uploads/20260314132402_0_1aacaf23e158.png",
+          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
           id: "memory-20260313050838889-937a186605",
           type: "memory",
           text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"

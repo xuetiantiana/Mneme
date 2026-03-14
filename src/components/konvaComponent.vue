@@ -980,7 +980,11 @@ const handleStageClick = (
 const createAiContentNode = (
   images?: string[],
   label?: string,
-  nodeMeta?: { id?: string; customType?: string }
+  nodeMeta?: { id?: string; customType?: string },
+  options?: {
+    flattenToNodes?: boolean;
+    staticConnection?: boolean;
+  }
 ) => {
   if (!aiAssistState || !aiGuideLine || !layer) return;
 
@@ -1086,54 +1090,150 @@ const createAiContentNode = (
   updateLayout();
 
   // 如果有图片，添加图片
+  const imageLoadTasks: Promise<void>[] = [];
   if (images && images.length > 0) {
     let imageY = currentY + 5;
     images.forEach((src) => {
-      const imageObj = new Image();
-      imageObj.onload = () => {
-        // 计算图片尺寸，保持宽度适配
-        const imgWidth = maxWidth - 20; // 留白
-        const scale = imgWidth / imageObj.width;
-        const imgHeight = imageObj.height * scale;
+      const imageTask = new Promise<void>((resolve) => {
+        const imageObj = new Image();
+        imageObj.onload = () => {
+          // 计算图片尺寸，保持宽度适配
+          const imgWidth = maxWidth - 20; // 留白
+          const scale = imgWidth / imageObj.width;
+          const imgHeight = imageObj.height * scale;
 
-        const konvaImage = new Konva.Image({
-          x: 10,
-          y: imageY,
-          image: imageObj,
-          width: imgWidth,
-          height: imgHeight,
-          cornerRadius: 4,
-        });
-        group.add(konvaImage);
+          const konvaImage = new Konva.Image({
+            x: 10,
+            y: imageY,
+            image: imageObj,
+            width: imgWidth,
+            height: imgHeight,
+            cornerRadius: 4,
+          });
+          group.add(konvaImage);
 
-        // 更新背景高度
-        imageY += imgHeight + 10;
-        bgNode.height(Math.max(bgNode.height(), imageY));
+          // 更新背景高度
+          imageY += imgHeight + 10;
+          bgNode.height(Math.max(bgNode.height(), imageY));
 
-        // 每次图片加载完都要重新计算位置，因为高度变了，中心点变了
-        updateLayout();
-      };
-      imageObj.src = src;
+          // 每次图片加载完都要重新计算位置，因为高度变了，中心点变了
+          updateLayout();
+          resolve();
+        };
+        imageObj.onerror = () => {
+          resolve();
+        };
+        imageObj.src = src;
+      });
+
+      imageLoadTasks.push(imageTask);
     });
   }
 
   layer.add(group);
 
-  // 获取源节点并创建连线
-  const sourceNode = aiAssistState.target;
-  if (sourceNode) {
-    createConnection(sourceNode, group);
-  } else {
-    const persistentLine = new Konva.Line({
-      points: [startX, startY, endX, endY],
+  const getNodeCenterInLayer = (node: Konva.Node) => {
+    const localBox = node.getClientRect({
+      skipShadow: true,
+      relativeTo: node,
+    });
+
+    const localCenter = {
+      x: localBox.x + localBox.width / 2,
+      y: localBox.y + localBox.height / 2,
+    };
+
+    const absoluteCenter = node.getAbsoluteTransform().point(localCenter);
+    const layerTransform = layer!.getAbsoluteTransform().copy().invert();
+    return layerTransform.point(absoluteCenter);
+  };
+
+  const createStaticConnection = (node1: Konva.Node, node2: Konva.Node) => {
+    const p1 = getNodeCenterInLayer(node1);
+    const p2 = getNodeCenterInLayer(node2);
+
+    const line = new Konva.Line({
+      points: [p1.x, p1.y, p2.x, p2.y],
       stroke: "#8cc5ff",
       strokeWidth: 2,
       dash: [10, 5],
       listening: false,
     });
-    layer.add(persistentLine);
-    persistentLine.moveToBottom();
-  }
+
+    layer!.add(line);
+    line.moveToBottom();
+    return line;
+  };
+
+  const flattenGroupToNodes = () => {
+    const baseX = group.x() - group.offsetX();
+    const baseY = group.y() - group.offsetY();
+    const children: any[] = group.getChildren() as any;
+
+    const flattenedNodes: Konva.Node[] = children
+      .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
+      .map((child: any) => {
+      const childNode = child as any;
+      childNode.remove();
+
+      childNode.position({
+        x: baseX + childNode.x(),
+        y: baseY + childNode.y(),
+      });
+
+      childNode.draggable(true);
+
+      childNode.on("click tap", (evt) => {
+        handleNodeClick(evt, childNode);
+      });
+
+      layer!.add(childNode);
+      return childNode;
+      });
+
+    children
+      .filter((child: any) => !(child instanceof Konva.Image || child instanceof Konva.Text))
+      .forEach((child: any) => {
+        child.destroy();
+      });
+
+    updateDraggableState();
+    group.destroy();
+    return flattenedNodes;
+  };
+
+  // 获取源节点并创建连线
+  const sourceNode = aiAssistState.target;
+  Promise.all(imageLoadTasks).then(() => {
+    const shouldFlatten = !!options?.flattenToNodes;
+    const useStaticConnection = !!options?.staticConnection;
+
+    const targetNodeForLine = shouldFlatten
+      ? flattenGroupToNodes()[0]
+      : group;
+
+    if (sourceNode) {
+      if (useStaticConnection) {
+        if (targetNodeForLine) {
+          createStaticConnection(sourceNode, targetNodeForLine);
+        }
+      } else {
+        createConnection(sourceNode, targetNodeForLine || group);
+      }
+    } else {
+      const persistentLine = new Konva.Line({
+        points: [startX, startY, endX, endY],
+        stroke: "#8cc5ff",
+        strokeWidth: 2,
+        dash: [10, 5],
+        listening: false,
+      });
+      layer!.add(persistentLine);
+      persistentLine.moveToBottom();
+    }
+
+    layer!.batchDraw();
+  });
 
   // 清除 AI 辅助环
   clearAiAssist();
