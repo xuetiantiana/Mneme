@@ -2881,94 +2881,7 @@ const handleDrop = (e: DragEvent) => {
         return;
       }
       const dropPos = getDropPosition(e);
-      initMainImages(item, {
-        offsetX: dropPos.x - item.layout.main_cluster.cx,
-        offsetY: dropPos.y - item.layout.main_cluster.cy,
-        stage: stage!,
-        onButtonClick: (data, node) => {
-          const mainNode = node;
-          console.log("Image button clicked, data:", data, node);
-
-          // 根据当前 node 的中心点位置计算 offsetX 和 offsetY
-          const currentOffsetX =
-            node.x() + node.width() / 2 - item.layout.main_cluster.cx;
-          const currentOffsetY =
-            node.y() + node.height() / 2 - item.layout.main_cluster.cy;
-
-          initSegmentsImages(data, {
-            offsetX: currentOffsetX,
-            offsetY: currentOffsetY,
-          })
-            .then((nodes) => {
-              nodes.forEach((node) => {
-                node.on("click tap", (evt) => {
-                  handleNodeClick(evt, node);
-                });
-                layer!.add(node);
-                // if (node.className === "Image") {
-                //   // 创建从 mainNode 到当前节点的连接线
-                //   const connectionLine = createConnection(mainNode, node, {
-                //     strokeWidth: 2,
-                //     arrow: true,
-                //     dashed: true,
-                //     onDragMove: (line, source, target) => {
-                //       const getNodeCenter = (n) => {
-                //         const absPos = n.getAbsolutePosition();
-                //         return {
-                //           x: absPos.x + (n.width() * n.scaleX()) / 2,
-                //           y: absPos.y + (n.height() * n.scaleY()) / 2,
-                //         };
-                //       };
-                //       const sourcePos = getNodeCenter(source);
-                //       const targetPos = getNodeCenter(target);
-                //       line.points([
-                //         sourcePos.x,
-                //         sourcePos.y,
-                //         targetPos.x,
-                //         targetPos.y,
-                //       ]);
-                //     },
-                //   });
-                //   if (connectionLine) {
-                //     layer!.add(connectionLine);
-                //     connectionLine.moveToBottom();
-                //   }
-                // }
-              });
-
-              setTimeout(() => updateScrollbars(), 1000);
-              // data.segments.forEach((segment, index) => {
-              //   initPCMBubbles(segment.layout.bubbles, {
-              //     offsetX: currentOffsetX,
-              //     offsetY: currentOffsetY,
-              //   })
-              //     .then((nodes) => {
-              //       nodes.forEach((node) => {
-              //         node.on("click tap", (evt) => {
-              //           handleNodeClick(evt, node);
-              //         });
-              //         layer!.add(node);
-              //       });
-              //     })
-              //     .catch((error) => {
-              //       console.error("Failed to create PCM nodes:", error);
-              //     });
-              // });
-            })
-            .catch((error) => {
-              console.error("Failed to create PCM nodes:", error);
-            });
-        },
-      }).then((nodes) => {
-        console.log(nodes);
-        nodes.forEach((node) => {
-          node.on("click tap", (evt) => {
-            handleNodeClick(evt, node);
-          });
-          layer!.add(node);
-        });
-        setTimeout(() => updateScrollbars(), 1000);
-      });
+      addPCMAtPosition(item, dropPos);
     } else if (dragData.dragType === "segment-image") {
       const dropPos = getDropPosition(e);
       const segment = dragData.segment;
@@ -3202,6 +3115,85 @@ const addTextAtPosition = (
   updateScrollbars();
 };
 
+const addPCMAtPosition = (
+  item: any,
+  position: { x: number; y: number },
+  isCenter = true
+) => {
+  if (!layer || !stage || !item || !position) {
+    return;
+  }
+
+  const clusterCenter = item?.layout?.main_cluster || { cx: 0, cy: 0 };
+  const centerX = Number(clusterCenter?.cx) || 0;
+  const centerY = Number(clusterCenter?.cy) || 0;
+  const mainClusterImages = Array.isArray(clusterCenter?.images)
+    ? clusterCenter.images
+    : [];
+
+  let anchorX = centerX;
+  let anchorY = centerY;
+
+  if (!isCenter && mainClusterImages.length > 0) {
+    let minX = Infinity;
+    let minY = Infinity;
+
+    mainClusterImages.forEach((img: any) => {
+      const x = Number(img?.x) || 0;
+      const y = Number(img?.y) || 0;
+      const w = Number(img?.w) || 0;
+      const h = Number(img?.h) || 0;
+      minX = Math.min(minX, x - w / 2);
+      minY = Math.min(minY, y - h / 2);
+    });
+
+    if (Number.isFinite(minX) && Number.isFinite(minY)) {
+      anchorX = minX;
+      anchorY = minY;
+    }
+  }
+
+  initMainImages(item, {
+    offsetX: position.x - anchorX,
+    offsetY: position.y - anchorY,
+    stage,
+    onButtonClick: (data: any, node: Konva.Image) => {
+      const currentOffsetX = node.x() + node.width() / 2 - centerX;
+      const currentOffsetY = node.y() + node.height() / 2 - centerY;
+
+      initSegmentsImages(data, {
+        offsetX: currentOffsetX,
+        offsetY: currentOffsetY,
+      })
+        .then((nodes: any[]) => {
+          nodes.forEach((segmentNode: any) => {
+            segmentNode.on("click tap", (evt: any) => {
+              handleNodeClick(evt, segmentNode);
+            });
+            layer!.add(segmentNode);
+          });
+
+          setTimeout(() => updateScrollbars(), 1000);
+        })
+        .catch((error: any) => {
+          console.error("Failed to create PCM nodes:", error);
+        });
+    },
+  })
+    .then((nodes: any[]) => {
+      nodes.forEach((node: any) => {
+        node.on("click tap", (evt: any) => {
+          handleNodeClick(evt, node);
+        });
+        layer!.add(node);
+      });
+      setTimeout(() => updateScrollbars(), 1000);
+    })
+    .catch((error: any) => {
+      console.error("Failed to create PCM main nodes:", error);
+    });
+};
+
 const addMemoryAtPosition = (
   text: string,
   imageSrc: string,
@@ -3351,6 +3343,7 @@ defineExpose({
   clearAiGuideLine,
   resetNodesData,
   addTextAtPosition,
+  addPCMAtPosition,
   addMemoryAtPosition,
   replaceImageNodeSource,
   addImageNodeRightOfTarget,

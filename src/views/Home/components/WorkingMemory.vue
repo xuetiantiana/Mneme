@@ -164,11 +164,13 @@ import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
 import CropImagePopup from "./CropImagePopup.vue";
 import {
+  CreateOnePCM,
   gelConstellateToolData,
   ReflectHint,
   ConstellateHint,
   ReflectQuestions,
 } from "@/service/api";
+import { usePCMStore } from "@/stores/pcmStore";
 
 const props = defineProps({
   topicContainers: {
@@ -178,6 +180,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["renderNodesToTopic"]);
+const pcmStore = usePCMStore();
 
 const memoryItems = ref([]);
 const konvaRef = ref(null);
@@ -666,7 +669,7 @@ const handleCropCancel = () => {
   }
 };
 
-const handleWhisperSubmit = (payload) => {
+const handleWhisperSubmit = async (payload) => {
   const content = (payload?.text || "").trim();
   const imageDataUrl = payload?.imageDataUrl || "";
 
@@ -686,8 +689,16 @@ const handleWhisperSubmit = (payload) => {
     return;
   }
 
-  if (whisperPopupData.value.toolType === "Add Memory" && imageDataUrl) {
-    if (!konvaRef.value.addMemoryAtPosition) {
+  if (whisperPopupData.value.toolType === "Add Memory") {
+    if (!imageDataUrl) {
+      ElMessage({
+        message: "Add Memory 请上传图片后再提交",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (!konvaRef.value.addPCMAtPosition) {
       ElMessage({
         message: "图文添加功能未准备好",
         type: "warning",
@@ -695,13 +706,43 @@ const handleWhisperSubmit = (payload) => {
       return;
     }
 
-    konvaRef.value.addMemoryAtPosition(
-      content,
-      imageDataUrl,
-      whisperPopupData.value.stagePos
-    );
-    closeWhisperPopup();
-    currentNav.value = "";
+    try {
+      const response = await CreateOnePCM({
+        text: content,
+        imageFile: payload?.imageFile || null,
+        imageDataUrl,
+      });
+      const pcmDetail = response?.data?.data || response?.data || null;
+
+      if (!pcmDetail || typeof pcmDetail !== "object") {
+        throw new Error("CreateOnePCM 响应缺少有效 pcm detail");
+      }
+
+      const insertedItem = pcmStore.insertPCMDetailToFront(pcmDetail);
+      if (!insertedItem) {
+        throw new Error("PCM 数据映射失败，无法插入列表");
+      }
+
+      konvaRef.value.addPCMAtPosition(
+        insertedItem,
+        whisperPopupData.value.stagePos,
+        false
+      );
+
+      closeWhisperPopup();
+      currentNav.value = "";
+      ElMessage({
+        message: "记忆创建成功，已添加到列表与画布",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("CreateOnePCM failed:", error);
+      ElMessage({
+        message: "创建记忆失败，请稍后重试",
+        type: "error",
+      });
+    }
+
     return;
   }
 

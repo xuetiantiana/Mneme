@@ -12,6 +12,418 @@ export const GetPCMList = (data: any): any => {
   );
 };
 
+export const CreateOnePCM = (data: any): any => {
+  // return request.get(
+  //   "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/pcm/list"
+  // );
+
+  const response = {
+    success: true,
+    data: {
+      
+            "id": "PCM-20260314055223235-372f15e117",
+            "type": "pcm_unit",
+            "created_at": "2026-03-14T05:53:01.946873",
+            "unit_summary": "在深圳的宠物店里看小狗，让人放松的记忆。",
+            "context": {
+                "time_anchor": "2025.11",
+                "place_anchor": "深圳宠物店"
+            },
+            "user_input": {
+                "images": [
+                    "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314055223235-372f15e117/uploads/20260314055223_0_1aacaf23e158.png"
+                ],
+                "text": "看宠物店里面很多小狗\n我住在深圳的时候，每天都会去深圳楼下的商场吃饭，然后顺便去看一看这个宠物店的小狗小猫放松一下。",
+                "time_place": "2025.11，深圳宠物店",
+                "received_at": "2026-03-14T05:52:23.235092"
+            },
+            "segments": [
+                {
+                    "signifier_ref": "PCM-20260314055223235-372f15e117-signifier-1",
+                    "id": "PCM-20260314055223235-372f15e117-segment-1",
+                    "type": "segment",
+                    "label": "宠物店小狗趴在玻璃柜",
+                    "category": "text_image_overlap",
+                    "source": [
+                        "author_text",
+                        "image"
+                    ],
+                    "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314055223235-372f15e117/crops/crop-20260314055301895-9fc9af16f2.png",
+                    "interpretations": {
+                        "meaning": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-3",
+                                "type": "interpretation",
+                                "text": "宠物陪伴",
+                                "kind": "meaning",
+                                "t": 3,
+                                "specificity": 4,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text",
+                                    "image"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            }
+                        ],
+                        "emotion": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-5",
+                                "type": "interpretation",
+                                "text": "怀念温暖",
+                                "kind": "emotion",
+                                "t": 3,
+                                "specificity": 5,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            },
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-4",
+                                "type": "interpretation",
+                                "text": "放松愉悦",
+                                "kind": "emotion",
+                                "t": 0,
+                                "specificity": 4,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text",
+                                    "image"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            }
+                        ],
+                        "sensory": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-6",
+                                "type": "interpretation",
+                                "text": "毛软蓬松",
+                                "kind": "sensory",
+                                "t": 0,
+                                "specificity": 2,
+                                "status": "ai_recommended",
+                                "source": [
+                                    "image"
+                                ],
+                                "modality": "tactile",
+                                "ai_confidence": 2
+                            }
+                        ],
+                        "aesthetic": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-8",
+                                "type": "interpretation",
+                                "text": "温馨柔和",
+                                "kind": "aesthetic",
+                                "t": 0,
+                                "specificity": 3,
+                                "status": "ai_recommended",
+                                "source": [
+                                    "image"
+                                ],
+                                "modality": null,
+                                "ai_confidence": 3
+                            },
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-9",
+                                "type": "interpretation",
+                                "text": "画面静谧",
+                                "kind": "aesthetic",
+                                "t": 3,
+                                "specificity": 3,
+                                "status": "ai_recommended",
+                                "source": [
+                                    "image"
+                                ],
+                                "modality": null,
+                                "ai_confidence": 2
+                            }
+                        ]
+                    },
+                    "image_index": 0,
+                    "image_width": 164,
+                    "image_height": 247,
+                    "layout": {
+                        "x": -411,
+                        "y": 0,
+                        "w": 198,
+                        "h": 217,
+                        "group_ref": "PCM-20260314055223235-372f15e117-group-1",
+                        "bubbles": [
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-3",
+                                "text": "宠物陪伴",
+                                "kind": "meaning",
+                                "x": -115,
+                                "y": 107,
+                                "r": 30,
+                                "specificity": 4,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-3",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-4",
+                                "text": "放松愉悦",
+                                "kind": "emotion",
+                                "x": -152,
+                                "y": 39,
+                                "r": 30,
+                                "specificity": 4,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-4",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-5",
+                                "text": "怀念温暖",
+                                "kind": "emotion",
+                                "x": -152,
+                                "y": -39,
+                                "r": 30,
+                                "specificity": 5,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-5",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-6",
+                                "text": "毛软蓬松",
+                                "kind": "sensory",
+                                "x": -115,
+                                "y": -107,
+                                "r": 30,
+                                "specificity": 2,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-6",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-8",
+                                "text": "温馨柔和",
+                                "kind": "aesthetic",
+                                "x": -50,
+                                "y": -149,
+                                "r": 30,
+                                "specificity": 3,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-7",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-9",
+                                "text": "画面静谧",
+                                "kind": "aesthetic",
+                                "x": 27,
+                                "y": -155,
+                                "r": 30,
+                                "specificity": 3,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-8",
+                                "type": "bubble"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "signifier_ref": "PCM-20260314055223235-372f15e117-signifier-2",
+                    "id": "PCM-20260314055223235-372f15e117-segment-2",
+                    "type": "segment",
+                    "label": "去商场吃饭后顺便看宠物",
+                    "category": "text_has_image_missing",
+                    "source": [
+                        "author_text"
+                    ],
+                    "image_url": null,
+                    "interpretations": {
+                        "meaning": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-10",
+                                "type": "interpretation",
+                                "text": "日常放松",
+                                "kind": "meaning",
+                                "t": 0,
+                                "specificity": 5,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            },
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-11",
+                                "type": "interpretation",
+                                "text": "生活闲趣",
+                                "kind": "meaning",
+                                "t": 3,
+                                "specificity": 4,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            }
+                        ],
+                        "emotion": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-13",
+                                "type": "interpretation",
+                                "text": "温馨怀旧",
+                                "kind": "emotion",
+                                "t": 3,
+                                "specificity": 5,
+                                "status": "user_provided",
+                                "source": [
+                                    "author_text"
+                                ],
+                                "modality": null,
+                                "ai_confidence": null
+                            }
+                        ],
+                        "sensory": [],
+                        "aesthetic": [
+                            {
+                                "id": "PCM-20260314055223235-372f15e117-interp-16",
+                                "type": "interpretation",
+                                "text": "生活流畅",
+                                "kind": "aesthetic",
+                                "t": 0,
+                                "specificity": 2,
+                                "status": "ai_recommended",
+                                "source": [
+                                    "author_text"
+                                ],
+                                "modality": null,
+                                "ai_confidence": 1
+                            }
+                        ]
+                    },
+                    "layout": {
+                        "x": 402,
+                        "y": 0,
+                        "w": 180,
+                        "h": 136,
+                        "group_ref": "PCM-20260314055223235-372f15e117-group-2",
+                        "bubbles": [
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-10",
+                                "text": "日常放松",
+                                "kind": "meaning",
+                                "x": 15,
+                                "y": -147,
+                                "r": 30,
+                                "specificity": 5,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-9",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-11",
+                                "text": "生活闲趣",
+                                "kind": "meaning",
+                                "x": 110,
+                                "y": -99,
+                                "r": 30,
+                                "specificity": 4,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-10",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-13",
+                                "text": "温馨怀旧",
+                                "kind": "emotion",
+                                "x": 110,
+                                "y": 99,
+                                "r": 30,
+                                "specificity": 5,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-12",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-16",
+                                "text": "生活流畅",
+                                "kind": "aesthetic",
+                                "x": 15,
+                                "y": 147,
+                                "r": 30,
+                                "specificity": 2,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-13",
+                                "type": "bubble"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "layout": {
+                "canvas": {
+                    "w": 1333,
+                    "h": 833
+                },
+                "main_cluster": {
+                    "cx": 0,
+                    "cy": 0,
+                    "label": "在深圳的宠物店里看小狗，让人放松的记忆。",
+                    "images": [
+                        {
+                            "index": 0,
+                            "x": 0,
+                            "y": 0,
+                            "w": 264,
+                            "h": 350,
+                            "rotation": 0,
+                            "z_index": 1
+                        }
+                    ]
+                },
+                "groups": [
+                    {
+                        "id": "PCM-20260314055223235-372f15e117-group-1",
+                        "type": "group",
+                        "label": "宠物店小狗趴在玻",
+                        "concept": "",
+                        "placement": "left",
+                        "segment_refs": [
+                            "PCM-20260314055223235-372f15e117-segment-1"
+                        ]
+                    },
+                    {
+                        "id": "PCM-20260314055223235-372f15e117-group-2",
+                        "type": "group",
+                        "label": "去商场吃饭后顺便",
+                        "concept": "",
+                        "placement": "right",
+                        "segment_refs": [
+                            "PCM-20260314055223235-372f15e117-segment-2"
+                        ]
+                    }
+                ],
+                "connections": [
+                    {
+                        "from": "main",
+                        "to": "PCM-20260314055223235-372f15e117-segment-1"
+                    },
+                    {
+                        "from": "main",
+                        "to": "PCM-20260314055223235-372f15e117-segment-2"
+                    }
+                ],
+                "origin": {
+                    "x": 0,
+                    "y": 0
+                },
+                "bubble_coords": "relative",
+                "planning_elapsed_ms": 6.68
+            }
+        }
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
 export const CreateStory = (data: any): any => {
   return request.post("/api/story/create", data);
 

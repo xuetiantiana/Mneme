@@ -69,10 +69,10 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 import PCMCanvasPopup from "@/components/PCMCanvasPopup.vue";
-import { getImageProxyUrl } from "@/utils/initPCM";
-import { GetPCMList } from "@/service/api";
+import { usePCMStore } from "@/stores/pcmStore";
 
 const selectAll = ref(false);
 const popupVisible = ref(false);
@@ -82,53 +82,14 @@ const canvasPopupVisible = ref(false);
 const canvasPopupPosition = ref({ top: 0, left: 0 });
 const currentCanvasItem = ref({});
 
-const memoryItems = ref([]);
-const isLoading = ref(false);
+const pcmStore = usePCMStore();
+const { memoryItems, isLoading } = storeToRefs(pcmStore);
 
 onMounted(async () => {
-  isLoading.value = true;
   try {
-    const response = await GetPCMList();
-    console.log("response", response);
-    const data = response.data;
-
-    if (data.units && Array.isArray(data.units)) {
-      memoryItems.value = data.units.map((unit) => {
-        const mainImages =
-          unit.user_input?.images?.map((img, index) => ({
-            image_url: getImageProxyUrl(img),
-            id: unit.id,
-            layout: unit.layout?.main_cluster?.images?.[index] || {},
-          })) || [];
-
-        return {
-          id: unit.id,
-          title: unit.unit_summary || "未命名记忆",
-          selected: false,
-          images:
-            unit.user_input?.images?.map((img) => getImageProxyUrl(img)) || [],
-          mainImages: mainImages,
-          createdAt: unit.created_at,
-          text: unit.user_input?.text || "",
-          timePlace: unit.user_input?.time_place || "",
-          segments: unit.segments || [],
-          user_input: unit.user_input || {},
-          layout: unit.layout || {},
-          type: unit.type || "pcm_unit",
-        };
-      });
-
-      console.log(
-        "已加载 PCM 数据:",
-        memoryItems.value.length,
-        "条记忆",
-        memoryItems.value
-      );
-    }
+    await pcmStore.fetchPCMList();
   } catch (error) {
     console.error("加载 PCM 数据失败:", error);
-  } finally {
-    isLoading.value = false;
   }
 });
 
