@@ -230,7 +230,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .whisper-input-popup {
-  position: absolute;
+  position: fixed;
   z-index: 1200;
 }
 

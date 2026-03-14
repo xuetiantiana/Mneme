@@ -162,9 +162,9 @@ const handleRenderNodesToTopic = (nodesData) => {
   gap: 14px;
 
   .left-panel {
-    width: 350px;
-    min-width: 350px;
-    max-width: 350px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
     background-color: #ffff;
     display: flex;
     flex-direction: column;

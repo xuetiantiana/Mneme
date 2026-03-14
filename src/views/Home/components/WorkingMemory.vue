@@ -8,6 +8,7 @@
       display: flex;
       flex-direction: column;
       position: relative;
+      overflow: hidden;
     "
   >
     <div style="height: 100%" @click.self="handleAiPopupCancel">
@@ -89,21 +90,21 @@
         :class="{ active: currentNav === 'Add Memory', disabled: hintLoading }"
         @click="handleNavClick('Add Memory')"
       >
-        📷 Add Memory
+        📷Add Memory
       </div>
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Crop', disabled: hintLoading }"
         @click="handleNavClick('Crop')"
       >
-        ✂️ Crop
+        ✂️Crop
       </div>
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Group', disabled: hintLoading }"
         @click="handleNavClick('Group')"
       >
-        🔗 Group
+        🔗Group
       </div>
     </div>
 
@@ -507,12 +508,11 @@ const handleWhisperCanvasClick = (event) => {
   }
 
   const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage || !wmContainer.value) {
+  if (!stage) {
     return;
   }
 
   const stageRect = stage.container().getBoundingClientRect();
-  const wmRect = wmContainer.value.getBoundingClientRect();
 
   const localX = event.clientX - stageRect.left;
   const localY = event.clientY - stageRect.top;
@@ -524,8 +524,8 @@ const handleWhisperCanvasClick = (event) => {
 
   whisperPopupData.value = {
     position: {
-      x: event.clientX - wmRect.left,
-      y: event.clientY - wmRect.top,
+      x: event.clientX,
+      y: event.clientY,
     },
     stagePos,
     toolType: currentNav.value,
@@ -943,7 +943,20 @@ const handleStageTransform = () => {
   }
 
   if (whisperPopupVisible.value) {
-    const whisperPos = getPopupPositionFromStagePos(whisperPopupData.value.stagePos);
+    const stage = konvaRef.value?.konvaData?.stage;
+    const stagePos = whisperPopupData.value.stagePos;
+    let whisperPos = null;
+
+    if (stage && stagePos) {
+      const stageRect = stage.container().getBoundingClientRect();
+      const transform = stage.getAbsoluteTransform();
+      const localPos = transform.point(stagePos);
+      whisperPos = {
+        x: stageRect.left + localPos.x,
+        y: stageRect.top + localPos.y,
+      };
+    }
+
     if (whisperPos) {
       whisperPopupData.value.position = whisperPos;
     }
@@ -980,7 +993,6 @@ const handleRenderNodes = (canvasIndex) => {
   display: flex;
   flex-direction: column;
   padding: 0.875rem;
-  overflow: hidden;
 }
 
 .get-nodes-btn {
@@ -1063,30 +1075,31 @@ const handleRenderNodes = (canvasIndex) => {
 
 .top-nav-bar {
   position: absolute;
-  top: 20px;
-  left: 50px;
+  top: 10px;
+  left: 10px;
   // left: 50%;
   // transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  padding: 8px 24px;
+  padding: 8px 20px;
   border-radius: 24px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex-wrap: nowrap;
+  gap: 5px;
+  max-width: calc(100% - 70px);
+  flex-wrap: wrap;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 100;
   border: 1px solid rgba(0, 0, 0, 0.05);
 
   .nav-item {
     position: relative;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: #333;
     cursor: pointer;
     transition: all 0.2s;
-    padding: 6px 16px;
+    padding: 6px 10px;
     border-radius: 20px;
     white-space: nowrap;
 
