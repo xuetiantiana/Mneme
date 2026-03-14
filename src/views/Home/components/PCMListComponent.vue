@@ -212,7 +212,7 @@ const handleCloseCanvasPopup = () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 0.875rem;
+  padding: 0;
   overflow: hidden;
 
   .loading-tip {
@@ -248,7 +248,7 @@ const handleCloseCanvasPopup = () => {
 
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 0.5em;
     padding: 0.5em;
     border-radius: 12px;
@@ -258,7 +258,7 @@ const handleCloseCanvasPopup = () => {
       position: relative;
       border: 1px solid transparent;
       border-radius: 12px;
-      padding: 1.5em 0.9em 0.9em;
+      padding: .5em;
       cursor: pointer;
       transition: all 0.2s ease;
       background-color: #f1f1f1;
@@ -325,13 +325,13 @@ const handleCloseCanvasPopup = () => {
 
       .card-images {
         position: relative;
-        height: 120px;
+        height: 200px;
         margin-bottom: 12px;
 
         .card-image {
           position: absolute;
-          width: 80px;
-          height: 80px;
+          width: 100%;
+          height: 200px;
           object-fit: cover;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

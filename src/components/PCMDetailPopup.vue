@@ -5,9 +5,7 @@
     :style="{ top: position.top + 'px', left: position.left + 'px' }"
   >
     <div class="popup-header">
-      <h3 class="popup-title">
-        {{ item.title }}
-      </h3>
+
       <button class="close-btn" @click="handleClose">×</button>
     </div>
     <div class="popup-content">
@@ -15,17 +13,22 @@
         class="popup-section main-image-section"
         v-if="item.mainImages && item.mainImages.length > 0"
       >
-        <img
+        <div
           v-for="(image, index) in item.mainImages"
-          style="width: 200px; height: 200px"
           :key="index"
-          :src="image.image_url"
-          :alt="item.title"
-          class="main-image draggable-item"
-          draggable="true"
-          @dragstart="handlePCMDragStart($event, item)"
-        />
+          class="image-with-caption"
+        >
+          <img
+            style="width: 200px; height: 200px"
+            :src="image.image_url"
+            :alt="item.title"
+            class="main-image draggable-item"
+            draggable="true"
+            @dragstart="handlePCMDragStart($event, item)"
+          />
+        </div>
       </div>
+      <p class="image-caption" style="margin-bottom: 20px ;">{{ item.title }}</p>
       <!-- <div class="popup-section">
         <h3 
           class="popup-title" 
@@ -44,11 +47,7 @@
             class="segment-item"
           >
             <div class="segment-left">
-              <div class="segment-header">
-                <span class="segment-label" draggable="true">
-                  {{ segment.label }}
-                </span>
-              </div>
+             
               <div class="segment-image" v-if="segment.image_url">
                 <img
                   :src="getImageProxyUrl(segment.image_url)"
@@ -65,6 +64,7 @@
                     )
                   "
                 />
+                <div class="image-caption">{{ segment.label }}</div>
               </div>
             </div>
             <div class="segment-right">
@@ -321,7 +321,6 @@ const handleSegmentItemDragStart = (event, imgSrc, title, id, segment) => {
     display: flex;
     align-items: flex-start;
     padding: 0.6em 1em;
-    border-bottom: 1px solid #e8e8e8;
     background: #fff;
     h3 {
       font-size: 1em;
@@ -399,6 +398,13 @@ const handleSegmentItemDragStart = (event, imgSrc, title, id, segment) => {
         align-items: center;
         gap: 16px;
 
+        .image-with-caption {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
         .main-image {
           background: #f1f1f1;
           object-fit: contain;
@@ -461,10 +467,14 @@ const handleSegmentItemDragStart = (event, imgSrc, title, id, segment) => {
             .segment-image {
               margin: 0;
               text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
 
               .segment-image-img {
                 max-width: 100%;
-                max-height: 120px;
+                min-width: 50%;
                 border-radius: 6px;
                 cursor: move;
                 transition: all 0.2s;
@@ -533,6 +543,14 @@ const handleSegmentItemDragStart = (event, imgSrc, title, id, segment) => {
           }
         }
       }
+    }
+
+    .image-caption {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+      text-align: center;
+      word-break: break-word;
     }
   }
 }

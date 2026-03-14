@@ -2,7 +2,11 @@
   <div v-if="visible" ref="popupWrapRef" class="ai-popup-wrap" :style="style">
     <div class="ai-question-popup">
       <!-- 通用头部 -->
-      <div class="popup-header">
+      <div
+        class="popup-header"
+        :class="{ draggable: isDraggableView }"
+        @mousedown="handleHeaderMouseDown"
+      >
         <span>AI Tool - {{ toolType }}</span>
         <el-icon class="close-icon" @click="handleCancel"><Close /></el-icon>
       </div>
@@ -77,7 +81,7 @@
       <div v-else class="popup-content empty-state">暂无建议</div>
 
       <!-- 通用确认区 -->
-      <div class="popup-footer">
+      <div v-if="isConstellateView" class="popup-footer">
         <el-button
           type="primary"
           size="small"
@@ -110,7 +114,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { Check, Close, Loading } from "@element-plus/icons-vue";
 
 // ------------------------
@@ -166,6 +170,11 @@ const selectedConstellateImageIndexes = ref([]);
 const popupWrapRef = ref(null);
 const questionCardRefs = ref([]);
 const toolsPanelTop = ref(0);
+// 记录用户手动拖拽后的偏移量，叠加到父组件传入位置上
+const popupOffset = ref({ x: 0, y: 0 });
+const isDragging = ref(false);
+let dragStartMouse = { x: 0, y: 0 };
+let dragStartOffset = { x: 0, y: 0 };
 
 // ------------------------
 // 观察与重置
@@ -177,9 +186,13 @@ watch(
     if (val) {
       selectedIndex.value = -1;
       selectedConstellateImageIndexes.value = [];
+      popupOffset.value = { x: 0, y: 0 };
       nextTick(() => {
         updateToolsPanelTop();
       });
+    } else {
+      // 弹窗关闭时确保注销全局拖拽监听
+      stopDragging();
     }
   }
 );
@@ -229,9 +242,15 @@ watch(
 // 视图计算
 // ------------------------
 const style = computed(() => {
-  // 简单的边界检查，防止弹出屏幕外 (可选优化)
-  const left = Math.min(props.position.x, window.innerWidth - 580);
-  const top = Math.min(props.position.y, window.innerHeight - 400);
+  // 位置 = 基础锚点 + 手动拖拽偏移，并做基础边界钳制
+  const left = Math.min(
+    props.position.x + popupOffset.value.x,
+    window.innerWidth - 580
+  );
+  const top = Math.min(
+    props.position.y + popupOffset.value.y,
+    window.innerHeight - 400
+  );
 
   return {
     left: `${Math.max(20, left)}px`,
@@ -243,6 +262,11 @@ const selectedItem = computed(() => {
   if (selectedIndex.value < 0) return null;
   return props.questionList?.[selectedIndex.value] || null;
 });
+
+const isReflectView = computed(() => props.toolType === "Reflect");
+const isDraggableView = computed(
+  () => props.toolType === "Reflect" || props.toolType === "Constellate"
+);
 
 // 区分 Constellate / Reflect 渲染分支
 const isConstellateView = computed(() => props.toolType === "Constellate");
@@ -323,6 +347,48 @@ const handleToolClick = (tool, item, index) => {
   });
 };
 
+const handleHeaderMouseDown = (event) => {
+  // 仅左键可拖拽；Reflect / Constellate 都允许
+  if (!isDraggableView.value || event.button !== 0) {
+    return;
+  }
+
+  isDragging.value = true;
+  dragStartMouse = {
+    x: event.clientX,
+    y: event.clientY,
+  };
+  dragStartOffset = {
+    x: popupOffset.value.x,
+    y: popupOffset.value.y,
+  };
+
+  document.addEventListener("mousemove", handleHeaderMouseMove);
+  document.addEventListener("mouseup", stopDragging);
+};
+
+const handleHeaderMouseMove = (event) => {
+  if (!isDragging.value) {
+    return;
+  }
+
+  // 以按下时刻为基准累加位移，避免抖动和漂移
+  popupOffset.value = {
+    x: dragStartOffset.x + (event.clientX - dragStartMouse.x),
+    y: dragStartOffset.y + (event.clientY - dragStartMouse.y),
+  };
+};
+
+const stopDragging = () => {
+  if (!isDragging.value) {
+    return;
+  }
+
+  isDragging.value = false;
+  document.removeEventListener("mousemove", handleHeaderMouseMove);
+  document.removeEventListener("mouseup", stopDragging);
+};
+
 // ------------------------
 // Constellate 交互
 // ------------------------
@@ -377,35 +443,17 @@ const handleConfirm = () => {
     });
     return;
   }
-
-  // Reflect：提交当前选中的问题项
-  if (selectedIndex.value === -1) return;
-
-  const selectedItem = props.questionList[selectedIndex.value];
-  const images = (Array.isArray(selectedItem?.images) && selectedItem.images.length > 0)
-    ? selectedItem.images.filter(Boolean)
-    : ((Array.isArray(selectedItem?.memory) && selectedItem.memory.length > 0)
-      ? selectedItem.memory
-          .map((m) => m?.image_url)
-          .filter((url) => typeof url === "string" && url.trim().length > 0)
-      : []);
-  emit("confirm", {
-    label: props.label,
-    question: selectedItem?.text || selectedItem?.question || "",
-    images,
-    answer: selectedItem.answer, // 还可以传递 answer 或其他信息
-    nodeMeta: {
-      id: selectedItem?.id || "",
-      customType: selectedItem?.type || "",
-    },
-    ...selectedItem,
-  });
 };
 
 // 通用关闭事件
 const handleCancel = () => {
   emit("cancel");
 };
+
+onBeforeUnmount(() => {
+  // 组件卸载兜底清理监听，防止内存泄漏
+  stopDragging();
+});
 </script>
 
 <style scoped>
@@ -417,7 +465,7 @@ const handleCancel = () => {
 
 .ai-question-popup {
   position: relative;
-  width: 440px;
+  width: 300px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -436,6 +484,10 @@ const handleCancel = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.popup-header.draggable {
+  cursor: move;
 }
 
 .close-icon {

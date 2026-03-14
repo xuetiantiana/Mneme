@@ -113,7 +113,7 @@ import StoryListDialog from "@/views/Home/components/StoryListDialog.vue";
 import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 
 const showLeft = ref(true);
-const showRight = ref(true);
+const showRight = ref(false);
 
 const isFullscreen = computed(() => !showLeft.value && !showRight.value);
 
@@ -158,13 +158,13 @@ const handleRenderNodesToTopic = (nodesData) => {
   width: 100%;
   overflow: hidden;
   background: #eee;
-  padding: 56px 16px 16px;
+  padding: 56px 1px 1px;
   gap: 14px;
 
   .left-panel {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
     background-color: #ffff;
     display: flex;
     flex-direction: column;

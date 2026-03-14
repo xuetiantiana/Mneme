@@ -53,6 +53,7 @@
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Reflect', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Reflect' }"
+        :data-tip="getNavHint('Reflect')"
         @click="handleNavClick('Reflect')"
       >
         Reflect
@@ -63,6 +64,7 @@
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Constellate', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Constellate' }"
+        :data-tip="getNavHint('Constellate')"
         @click="handleNavClick('Constellate')"
       >
         Constellate
@@ -73,6 +75,7 @@
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Resonance', disabled: hintLoading }"
+        :data-tip="getNavHint('Resonance')"
         @click="handleNavClick('Resonance')"
       >
         Resonance
@@ -81,27 +84,32 @@
       <div
         class="nav-item"
         :class="{ active: currentNav === 'Whisper', disabled: hintLoading }"
+        :data-tip="getNavHint('Whisper')"
         @click="handleNavClick('Whisper')"
       >
         💭  Whisper
       </div>
       <div
         class="nav-item"
-        :class="{ active: currentNav === 'Add Memory', disabled: hintLoading }"
-        @click="handleNavClick('Add Memory')"
-      >
-        📷Add Memory
-      </div>
-      <div
-        class="nav-item"
         :class="{ active: currentNav === 'Crop', disabled: hintLoading }"
+        :data-tip="getNavHint('Crop')"
         @click="handleNavClick('Crop')"
       >
         ✂️Crop
       </div>
       <div
         class="nav-item"
+        :class="{ active: currentNav === 'Add Memory', disabled: hintLoading }"
+        :data-tip="getNavHint('Add Memory')"
+        @click="handleNavClick('Add Memory')"
+      >
+        📷Add Memory
+      </div>
+      
+      <div
+        class="nav-item"
         :class="{ active: currentNav === 'Group', disabled: hintLoading }"
+        :data-tip="getNavHint('Group')"
         @click="handleNavClick('Group')"
       >
         🔗Group
@@ -202,6 +210,17 @@ const AI_RIGHT_LABELS_BY_TOOL = {
   Reflect: ["反思细节", "反思转化"],
   Constellate: ["直接检索", "远距离启发"],
 };
+const NAV_HINTS = {
+  Reflect: "先选中一个主图/子图再点击",
+  Constellate: "先选中一个主图/子图/泡泡节点再点击",
+  Resonance: "功能预留中",
+  Whisper: "点击之后选中子图",
+  Crop: "点击之后选择主图进行裁剪",
+  "Add Memory": "点击画布位置后上传图文",
+  Group: "选中多个节点后使用",
+};
+
+const getNavHint = (navItem) => NAV_HINTS[navItem] || "";
 const cropPopupVisible = ref(false);
 const cropPopupData = ref({
   imageSrc: "",
@@ -1118,6 +1137,29 @@ const handleRenderNodes = (canvasIndex) => {
       opacity: 0.5;
       cursor: not-allowed;
       pointer-events: none;
+    }
+
+    &::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 8px);
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      font-size: 12px;
+      line-height: 1.3;
+      color: #fff;
+      background: rgba(30, 30, 30, 0.92);
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      z-index: 2;
+    }
+
+    &:hover::after {
+      opacity: 1;
     }
 
     .nav-loading-inline {
