@@ -258,8 +258,8 @@ const getAiRingSliceIndex = (dx: number, dy: number) => {
 };
 
 // 圆环背景改为灰色毛玻璃风格
-const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.34)";
-const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.52)";
+const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.20)";
+const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.34)";
 const AI_RING_STROKE = "rgba(255, 255, 255, 0.38)";
 const AI_RIGHT_LABELS = ["反思细节", "反思转化"];
 let aiRightLabels = [...AI_RIGHT_LABELS];
@@ -983,7 +983,7 @@ const handleStageClick = (
 
 // 创建 AI 生成的内容节点（在确认后调用）
 const createAiContentNode = (
-  images?: string[],
+  images?: Array<string | { image_url?: string; imageUrl?: string; url?: string; image_id?: string; imageID?: string; imageId?: string; id?: string; type?: string; customType?: string }>,
   label?: string,
   nodeMeta?: { id?: string; customType?: string },
   options?: {
@@ -1098,7 +1098,21 @@ const createAiContentNode = (
   const imageLoadTasks: Promise<void>[] = [];
   if (images && images.length > 0) {
     let imageY = currentY + 5;
-    images.forEach((src) => {
+    images.forEach((item) => {
+      const src = typeof item === "string"
+        ? item
+        : String(item?.image_url || item?.imageUrl || item?.url || "");
+      const imageId = typeof item === "string"
+        ? ""
+        : String(item?.image_id || item?.imageID || item?.imageId || item?.id || "");
+      const imageCustomType = typeof item === "string"
+        ? ""
+        : String(item?.customType || item?.type || "");
+
+      if (!src || !src.trim()) {
+        return;
+      }
+
       const imageTask = new Promise<void>((resolve) => {
         const imageObj = new Image();
         imageObj.onload = () => {
@@ -1114,6 +1128,8 @@ const createAiContentNode = (
             width: imgWidth,
             height: imgHeight,
             cornerRadius: 4,
+            id: imageId || undefined,
+            customType: imageCustomType || undefined,
           });
           group.add(konvaImage);
 

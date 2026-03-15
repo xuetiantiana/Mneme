@@ -553,6 +553,22 @@ export const initPCMBubbles = (bubbles, options = {}) => {
         // nodes.push(konvaCircle)
 
         if (bubble.text) {
+          const hasColorSource =
+            (typeof bubble.textBackgroundColor === "string" &&
+              bubble.textBackgroundColor.trim().length > 0) ||
+            (typeof bubble.fill === "string" && bubble.fill.trim().length > 0) ||
+            (typeof bubble.kind === "string" && bubble.kind.trim().length > 0);
+
+          const bubbleBackgroundColor = hasColorSource
+            ? bubble.textBackgroundColor ||
+              bubble.fill ||
+              getBubbleColor(bubble.kind, bubble.specificity)
+            : "#000";
+
+          const bubbleTextColor = hasColorSource
+            ? bubble.textColor || "#333"
+            : "#fff";
+
           createTextNode(
             {
               text: bubble.text,
@@ -564,11 +580,11 @@ export const initPCMBubbles = (bubbles, options = {}) => {
               startY: y,
               fontSize: bubble.fontSize || 14,
               fontFamily: bubble.fontFamily || DEFAULT_FONT_FAMILY,
-              backgroundColor: bubble.textBackgroundColor,
+              fill: bubbleTextColor,
               padding: bubble.textPadding || 5,
               cornerRadius: bubble.textCornerRadius || 4,
               center: true,
-              backgroundColor: getBubbleColor(bubble.kind, bubble.specificity),
+              backgroundColor: bubbleBackgroundColor,
               isBubble: false,
               align: "center",
               // width: 60,

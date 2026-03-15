@@ -323,7 +323,7 @@ const aiPopupData = ref({
   lineLength: 0,
   position: { x: 0, y: 0 },
   questionList: [], // 新增：存储接口返回的问题列表
-  constellateData: { ttt: "", mmm: [] },
+  constellateData: {},
   loading: false, // 新增：加载状态
   targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
   relativePos: { x: 0, y: 0 }, // 新增：记录点击点相对于舞台原点的坐标（未缩放）
@@ -998,22 +998,25 @@ const handleCropConfirm = async ({ dataUrl }) => {
 
   cropSubmitting.value = true;
   try {
+    // const response = await cropUpdate({
+    //   imageDataUrl: dataUrl,
+    //   target: {
+    //     id: node.id?.() || "",
+    //     type: node.getAttr?.("customType") || "",
+    //   },
+    // });
     const response = await cropUpdate({
-      imageDataUrl: dataUrl,
-      target: {
-        id: node.id?.() || "",
-        type: node.getAttr?.("customType") || "",
-      },
+      "type": "action",
+      "action": "crop",
+      "image":dataUrl,
+      "parent_ref": node.id?.() || "" ,
+      "operation_logs": null,
     });
 
     const payload = response?.data?.data ?? response?.data ?? null;
-    const segments = Array.isArray(payload?.segments)
-      ? payload.segments
-      : Array.isArray(payload)
-      ? payload
-      : payload && typeof payload === "object"
-      ? [payload]
-      : [];
+    const segments = [response?.data?.segment || payload?.segment].filter(
+      (seg) => seg && typeof seg === "object"
+    );
 
     if (!segments.length) {
       throw new Error("cropUpdate 未返回可渲染的 segment");
@@ -1114,8 +1117,10 @@ const handleWhisperSubmit = async (payload) => {
     try {
       const response = await CreateOnePCM({
         text: content,
-        imageFile: payload?.imageFile || null,
-        imageDataUrl,
+        // imageFile: payload?.imageFile || null,
+        // imageDataUrl,
+        time_place: "",
+        images: [imageDataUrl],
       });
       const pcmDetail = response?.data?.data || response?.data || null;
 
@@ -1172,20 +1177,29 @@ const handleWhisperSubmit = async (payload) => {
 
     whisperSubmitting.value = true;
     try {
-      const response = await whisperUpdate({
-        text: content,
-        segment: {
-          id: targetNode.id?.() || "",
-          type: targetNode.getAttr?.("customType") || "segment",
-        },
+      // const response = await whisperUpdate({
+      //   text: content,
+      //   segment: {
+      //     id: targetNode.id?.() || "",
+      //     type: targetNode.getAttr?.("customType") || "segment",
+      //   },
+      // });
+
+       const response = await whisperUpdate({
+        "id": targetNode.id?.() || "",
+        "type": "action",
+        "action": "whisper",
+        "text" : content,
+        "operation_logs" : null,
       });
 
       const result = response?.data?.data ?? response?.data ?? {};
-      const bubbles = Array.isArray(result?.bubbles)
-        ? result.bubbles
-        : Array.isArray(result)
-        ? result
-        : [];
+      // const bubbles = Array.isArray(result?.bubbles)
+      //   ? result.bubbles
+      //   : Array.isArray(result)
+      //   ? result
+      //   : [];
+      const bubbles = [result.whisper]
 
       if (!bubbles.length) {
         throw new Error("whisperUpdate 未返回 bubbles");
@@ -1272,7 +1286,7 @@ const handleAiRingClick = async (data) => {
       y: data.position.y - wmContainer.value.getBoundingClientRect().top,
     },
     questionList: [], // 重置问题列表
-    constellateData: { ttt: "", mmm: [] },
+    constellateData: {},
     loading: true, // 开始加载
     relativePos: { x: relativeX, y: relativeY },
     reflectTargetType: reflectTargetType.value || "",
@@ -1285,7 +1299,11 @@ const handleAiRingClick = async (data) => {
   aiPopupVisible.value = true;
 
   const reflectBasePayload = buildHintPayload(reflectSelectedNodes.value);
-  const ringWidth = Math.max(0, Math.round(data.ringWidth ?? 0));
+  const rawRingWidth = Math.max(1, Number(data.ringWidth) || 1);
+  const rawLineLength = Math.max(0, Number(data.lineLength) || 0);
+  const depthRatio = Math.max(0, Math.min(1, rawLineLength / rawRingWidth));
+  // 统一用视觉圆环宽度作为 depth.max，避免画布缩放时 depth 数值漂移。
+  const depthMax = 200;
 
   // 构建请求参数
   const requestData = {
@@ -1293,8 +1311,8 @@ const handleAiRingClick = async (data) => {
     perspective: getPerspectivePayloadByLabel(data.label),
     depth: {
       min: 0,
-      max: ringWidth,
-      value: Math.max(0, Math.round(data.lineLength || 0)),
+      max: depthMax,
+      value: Math.round(depthRatio * depthMax),
     },
   };
   aiPopupData.value.reflectRequestData = requestData;
@@ -1305,14 +1323,7 @@ const handleAiRingClick = async (data) => {
     if (currentNav.value === "Constellate") {
       res = await gelConstellateToolData(requestData);
       const payload = res?.data || {};
-      const mmm =
-        (Array.isArray(payload?.mmm) && payload.mmm) ||
-        (Array.isArray(payload?.questionList) && payload.questionList) ||
-        [];
-      aiPopupData.value.constellateData = {
-        ttt: payload?.ttt || "",
-        mmm,
-      };
+      aiPopupData.value.constellateData = payload;
       aiPopupData.value.questionList = [];
     } else {
       res = await ReflectQuestions(requestData);
@@ -1322,7 +1333,7 @@ const handleAiRingClick = async (data) => {
         (Array.isArray(res?.data?.questionList) && res.data.questionList) ||
         [];
       aiPopupData.value.questionList = questionList;
-      aiPopupData.value.constellateData = { ttt: "", mmm: [] };
+      aiPopupData.value.constellateData = {};
     }
   } catch (error) {
     console.error(`Failed to fetch ${currentNav.value} tool data:`, error);

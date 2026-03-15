@@ -13,9 +13,10 @@ export const GetPCMList = (data: any): any => {
 };
 
 export const CreateOnePCM = (data: any): any => {
-  // return request.get(
-  //   "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/pcm/list"
-  // );
+  return request.post(
+    "/api/pcm/create",
+    data
+  );
 
   const response = {
     success: true,
@@ -452,24 +453,24 @@ export const CreateStory = (data: any): any => {
 
 
 export const gelConstellateToolData = (data: any): any => {
-  // return request.post("/api/story/create", data);
+  return request.post("/api/constellate/suggest", data);
 
   const response = {
     success: true,
     data: {
-      ttt:"constellate text",
-      mmm: [
+      title:"constellate text",
+      images: [
         {
-          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-          id: "memory-20260313050838889-937a186605",
-          type: "memory",
-          text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
-        },
+          image_url: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
+          "image_id": "img-crop-20260312161530-a8f3c1d2b0",
+          "pcm_ref": "PCM-yyy",
+          "reason": "画中白鹿被金色光芒环绕，与'包裹'的温暖感共鸣"
+         },
          {
-          imageUrl: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-          id: "memory-20260313050838889-937a186605",
-          type: "memory",
-          text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
+          image_url: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
+          "image_id": "memory-20260313050838889-937a186605",
+          "type": "memory",
+          "text": "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。"
         },
       ],
     },
@@ -484,7 +485,7 @@ export const gelConstellateToolData = (data: any): any => {
 
 export const ReflectHint = (data: any): any => {
   console.log("ReflectHint data:", data);
-  // return request.post("/api/reflect/hint", data);
+  return request.post("/api/reflect/hint", data);
 
   const response = {
     success: true,
@@ -525,7 +526,7 @@ export const ReflectHint = (data: any): any => {
 
 export const ConstellateHint = (data: any): any => {
   console.log("ConstellateHint data:", data);
-  // return request.post("/api/reflect/hint", data);
+  return request.post("/api/constellate/hint", data);
 
   const response = {
     success: true,
@@ -564,7 +565,7 @@ export const ConstellateHint = (data: any): any => {
 
 
 export const ReflectQuestions = (data: any): any => {
-  // return request.post("/api/reflect/questions", data);
+  return request.post("/api/reflect/questions", data);
 
   const response = {
     success: true,
@@ -636,7 +637,7 @@ export const ReflectQuestions = (data: any): any => {
 
 export const cropUpdate = (data: any): any => {
   console.log("ConstellateHint data:", data);
-  // return request.post("/api/reflect/hint", data);
+  return request.post("/api/crop/add", data);
 
   const response = {
     success: true,
@@ -838,7 +839,94 @@ export const cropUpdate = (data: any): any => {
 
 export const whisperUpdate = (data: any): any => {
   console.log("ConstellateHint data:", data);
-  // return request.post("/api/reflect/hint", data);
+  return request.post("/api/whisper/add ", data);
+
+  const response = {
+    success: true,
+    data: {
+      "bubbles": [
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-3",
+                                "text": "宠物陪伴",
+                                "kind": "meaning",
+                                "x": -115,
+                                "y": 107,
+                                "r": 30,
+                                "specificity": 4,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-3",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-4",
+                                "text": "放松愉悦",
+                                "kind": "emotion",
+                                "x": -152,
+                                "y": 39,
+                                "r": 30,
+                                "specificity": 4,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-4",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-5",
+                                "text": "怀念温暖",
+                                "kind": "emotion",
+                                "x": -152,
+                                "y": -39,
+                                "r": 30,
+                                "specificity": 5,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-5",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-6",
+                                "text": "毛软蓬松",
+                                "kind": "sensory",
+                                "x": -115,
+                                "y": -107,
+                                "r": 30,
+                                "specificity": 2,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-6",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-8",
+                                "text": "温馨柔和",
+                                "kind": "aesthetic",
+                                "x": -50,
+                                "y": -149,
+                                "r": 30,
+                                "specificity": 3,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-7",
+                                "type": "bubble"
+                            },
+                            {
+                                "interpretation_ref": "PCM-20260314055223235-372f15e117-interp-9",
+                                "text": "画面静谧",
+                                "kind": "aesthetic",
+                                "x": 27,
+                                "y": -155,
+                                "r": 30,
+                                "specificity": 3,
+                                "id": "PCM-20260314055223235-372f15e117-bubble-8",
+                                "type": "bubble"
+                            }
+                        ]
+    }
+  };
+
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(response);
+    }, 1000);
+  });
+};
+
+
+
+export const ResonanceCompose = (data: any): any => {
+  console.log("ResonanceCompose data:", data);
+  return request.post("/api/resonance/compose", data);
 
   const response = {
     success: true,

@@ -19,13 +19,13 @@
 
       <!-- Constellate 专区：文本 + 可多选图片 -->
       <div v-else-if="isConstellateView" class="popup-content constellate-content">
-        <div class="constellate-text">{{ String(constellateData?.ttt || "").trim() }}</div>
+        <div class="constellate-text">{{ String(constellateData?.title || "").trim() }}</div>
         <div
-          v-if="(Array.isArray(constellateData?.mmm) ? constellateData.mmm : []).flatMap((item) => (Array.isArray(item?.images) ? item.images : ((typeof item?.imageUrl === 'string' && item.imageUrl.trim().length > 0) ? [item.imageUrl] : []))).filter((url) => typeof url === 'string' && url.trim().length > 0).length"
+          v-if="constellateImageItems.length > 0"
           class="constellate-grid"
         >
           <button
-            v-for="(img, i) in (Array.isArray(constellateData?.mmm) ? constellateData.mmm : []).flatMap((item) => (Array.isArray(item?.images) ? item.images : ((typeof item?.imageUrl === 'string' && item.imageUrl.trim().length > 0) ? [item.imageUrl] : []))).filter((url) => typeof url === 'string' && url.trim().length > 0)"
+            v-for="(img, i) in constellateImageItems"
             :key="i"
             type="button"
             class="constellate-image-item"
@@ -35,7 +35,7 @@
             <span class="constellate-select-icon">
               <el-icon><Check /></el-icon>
             </span>
-            <img :src="img" alt="" />
+            <img :src="img.url" alt="" />
           </button>
         </div>
         <div v-else class="empty-state">暂无图片</div>
@@ -144,7 +144,7 @@ const props = defineProps({
   },
   constellateData: {
     type: Object,
-    default: () => ({ ttt: "", mmm: [] }),
+    default: () => ({}),
   },
   loading: {
     type: Boolean,
@@ -271,21 +271,62 @@ const isDraggableView = computed(
 // 区分 Constellate / Reflect 渲染分支
 const isConstellateView = computed(() => props.toolType === "Constellate");
 
+const constellateImageItems = computed(() => {
+  const source = Array.isArray(props.constellateData?.images)
+    ? props.constellateData.images
+    : [];
+
+  return source
+    .map((item) => {
+      if (typeof item === "string") {
+        const url = item.trim();
+        return url
+          ? {
+              url,
+              imageID: "",
+              type: "",
+              pcmRef: "",
+              reason: "",
+              raw: { image_url: url },
+            }
+          : null;
+      }
+
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const url =
+        (typeof item.image_url === "string" && item.image_url.trim()) ||
+        (typeof item.imageUrl === "string" && item.imageUrl.trim()) ||
+        (typeof item.url === "string" && item.url.trim()) ||
+        "";
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        url,
+        imageID:
+          item.imageID || item.imageId || item.image_id || item.id || "",
+        type: item.type || item.customType || "",
+        pcmRef: item.pcm_ref || item.pcmRef || "",
+        reason: item.reason || "",
+        raw: item,
+      };
+    })
+    .filter(Boolean);
+});
+
 // Constellate：必须至少选择 1 张图片
 // Reflect：必须选择 1 个问题项
 const confirmDisabled = computed(() => {
   if (isConstellateView.value) {
-    const images = (Array.isArray(props.constellateData?.mmm)
-      ? props.constellateData.mmm
-      : []
-    )
-      .flatMap((item) => (Array.isArray(item?.images)
-        ? item.images
-        : ((typeof item?.imageUrl === "string" && item.imageUrl.trim().length > 0)
-          ? [item.imageUrl]
-          : [])))
-      .filter((url) => typeof url === "string" && url.trim().length > 0);
-    return images.length === 0 || selectedConstellateImageIndexes.value.length === 0;
+    return (
+      constellateImageItems.value.length === 0 ||
+      selectedConstellateImageIndexes.value.length === 0
+    );
   }
   return selectedIndex.value === -1;
 });
@@ -395,49 +436,31 @@ const stopDragging = () => {
 const handleConfirm = () => {
   // Constellate：提交被勾选的图片，并附带首张图片元信息
   if (isConstellateView.value) {
-    const text = String(props.constellateData?.ttt || "").trim();
-    const allImageItems = (Array.isArray(props.constellateData?.mmm)
-      ? props.constellateData.mmm
-      : []
-    )
-      .flatMap((item) => {
-        if (Array.isArray(item?.images) && item.images.length > 0) {
-          return item.images
-            .filter((url) => typeof url === "string" && url.trim().length > 0)
-            .map((url) => ({
-              url,
-              id: item?.id || "",
-              type: item?.type || "",
-            }));
-        }
-
-        if (typeof item?.imageUrl === "string" && item.imageUrl.trim().length > 0) {
-          return [{
-            url: item.imageUrl,
-            id: item?.id || "",
-            type: item?.type || "",
-          }];
-        }
-
-        return [];
-      });
+    const text = String(props.constellateData?.title || "").trim();
+    const allImageItems = constellateImageItems.value;
 
     const selectedImageItems = selectedConstellateImageIndexes.value
       .map((idx) => allImageItems[idx])
       .filter(Boolean);
     const images = selectedImageItems
-      .map((item) => item.url)
-      .filter((url) => typeof url === "string" && url.trim().length > 0);
+      .map((item) => ({
+        ...((item.raw && typeof item.raw === "object") ? item.raw : {}),
+        image_id: item.imageID || item.raw?.image_id || item.raw?.id || "",
+        image_url: item.url,
+        pcm_ref: item.pcmRef || item.raw?.pcm_ref || "",
+        reason: item.reason || item.raw?.reason || "",
+      }))
+      .filter((item) => typeof item.image_url === "string" && item.image_url.trim().length > 0);
     const firstMeta = selectedImageItems[0] || null;
 
     emit("confirm", {
       label: props.label,
       question: text,
       images,
-      ttt: text,
-      mmm: props.constellateData?.mmm || [],
+      title: props.constellateData?.title || "",
       nodeMeta: {
-        id: firstMeta?.id || "",
+        id: firstMeta?.imageID || "",
+        imageID: firstMeta?.imageID || "",
         customType: firstMeta?.type || "",
       },
     });
