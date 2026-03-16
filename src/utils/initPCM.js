@@ -8,6 +8,12 @@ import {
 
 export const getImageProxyUrl = (url) => {
   if (!url) return "";
+  const isDev = Boolean(import.meta.env?.DEV);
+
+  // 生产/打包环境直接使用原图地址，不走代理。
+  if (!isDev) {
+    return url;
+  }
 
   // 如果是 Azure 图片，使用代理
   if (url.includes("azurewebsites.net")) {
