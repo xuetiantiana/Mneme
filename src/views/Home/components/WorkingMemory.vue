@@ -1115,6 +1115,7 @@ const handleWhisperSubmit = async (payload) => {
       return;
     }
 
+    whisperSubmitting.value = true;
     try {
       const response = await CreateOnePCM({
         text: content,
@@ -1152,6 +1153,8 @@ const handleWhisperSubmit = async (payload) => {
         message: "创建记忆失败，请稍后重试",
         type: "error",
       });
+    } finally {
+      whisperSubmitting.value = false;
     }
 
     return;

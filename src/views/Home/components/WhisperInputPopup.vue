@@ -13,8 +13,12 @@
         class="whisper-input"
         type="text"
         placeholder="语音将自动转成文字，也可手动输入"
+        :disabled="submitLoading"
         @input="handleInput"
       />
+      <div v-if="toolType === 'Add Memory'" class="tool-hint add-memory-hint">
+        提示：生成 PCM 预计需要 2-3 分钟，请耐心等待。
+      </div>
       <div v-if="toolType === 'Add Memory'" class="upload-row">
         <label class="upload-label" for="memory-upload-input">上传图片</label>
         <input
@@ -22,6 +26,7 @@
           class="upload-input"
           type="file"
           accept="image/*"
+          :disabled="submitLoading"
           @change="handleFileChange"
         />
       </div>
@@ -37,7 +42,7 @@
           {{ isRecording ? "停止录音" : "开始录音" }}
         </button>
         <button class="action-btn primary" type="button" :disabled="submitLoading" @click="handleSubmit">
-          {{ submitLoading ? "分析中..." : (toolType === 'Whisper' ? '确定分析' : '提交') }}
+          {{ submitLoading ? (toolType === 'Add Memory' ? '生成 PCM 中...' : '分析中...') : (toolType === 'Whisper' ? '确定分析' : '提交') }}
         </button>
         <button class="action-btn" type="button" :disabled="submitLoading" @click="$emit('cancel')">
           取消
@@ -45,7 +50,9 @@
       </div>
       <div class="popup-hint">
         {{
-          speechSupported
+          submitLoading && toolType === 'Add Memory'
+            ? "正在生成 PCM，预计 2-3 分钟，请勿关闭弹窗或重复提交。"
+            : speechSupported
             ? isRecording
               ? "正在录音识别..."
               : "识别已暂停，可继续"
@@ -197,8 +204,7 @@ const handleSubmit = () => {
   });
 };
 
-const handleFileChange = (event) => {
-  const file = event.target?.files?.[0];
+const updateMemoryFile = (file) => {
   if (!file) {
     imageFile.value = null;
     imagePreviewUrl.value = "";
@@ -211,6 +217,11 @@ const handleFileChange = (event) => {
     imagePreviewUrl.value = typeof reader.result === "string" ? reader.result : "";
   };
   reader.readAsDataURL(file);
+};
+
+const handleFileChange = (event) => {
+  const file = event.target?.files?.[0] || null;
+  updateMemoryFile(file);
 };
 
 watch(
@@ -319,6 +330,12 @@ onBeforeUnmount(() => {
   border: 1px solid #ebeef5;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+.add-memory-hint {
+  color: #8a5f00;
+  background: #fff7e6;
+  border-color: #ffe7ba;
 }
 
 .action-btn {

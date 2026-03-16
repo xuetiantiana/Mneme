@@ -16,6 +16,7 @@ declare module 'vue' {
     ElInput: typeof import('element-plus/es')['ElInput']
     ElPopover: typeof import('element-plus/es')['ElPopover']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    ElUpload: typeof import('element-plus/es')['ElUpload']
     KonvaComponent: typeof import('./src/components/konvaComponent.vue')['default']
     PCMCanvasPopup: typeof import('./src/components/PCMCanvasPopup.vue')['default']
     PCMDetailPopup: typeof import('./src/components/PCMDetailPopup.vue')['default']
