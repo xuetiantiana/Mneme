@@ -145,9 +145,12 @@ const getTopicContainers = () => {
 
 const handleRenderNodesToTopic = (nodesData) => {
   console.log("Home接收到要渲染的节点数据:", nodesData);
-  if (topicContainerListRef.value) {
+  showRight.value = true; // 确保右侧面板打开以显示渲染结果
+  setTimeout(() => {
+    if (topicContainerListRef.value) {
     topicContainerListRef.value.renderNodesToFirstCanvas(nodesData);
   }
+  }, 100);
 };
 </script>
 

@@ -1014,7 +1014,8 @@ const handleCropConfirm = async ({ dataUrl }) => {
     });
 
     const payload = response?.data?.data ?? response?.data ?? null;
-    const segments = [response?.data?.segment || payload?.segment].filter(
+    payload.segment.image_url = dataUrl; // 直接用裁剪后的图覆盖原 segment 的图片，避免接口未返回 image_url 时无法渲染。
+    const segments = [payload?.segment].filter(
       (seg) => seg && typeof seg === "object"
     );
 
