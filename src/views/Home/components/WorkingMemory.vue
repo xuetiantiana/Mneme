@@ -117,14 +117,14 @@
       >
         🔗Group
       </div>
-      <div
+      <!-- <div
         class="nav-item"
         :class="{ active: currentNav === 'Ungroup', disabled: hintLoading }"
         :data-tip="getNavHint('Ungroup')"
         @click="handleNavClick('Ungroup')"
       >
         🔓Ungroup
-      </div>
+      </div> -->
     </div>
 
     <!-- 左下角按钮列表 -->

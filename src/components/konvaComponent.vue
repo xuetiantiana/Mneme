@@ -258,8 +258,8 @@ const getAiRingSliceIndex = (dx: number, dy: number) => {
 };
 
 // 圆环背景改为灰色毛玻璃风格
-const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.20)";
-const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.34)";
+const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.90)";
+const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.90)";
 const AI_RING_STROKE = "rgba(255, 255, 255, 0.38)";
 const AI_RIGHT_LABELS = ["反思细节", "反思转化"];
 let aiRightLabels = [...AI_RIGHT_LABELS];
@@ -3708,7 +3708,8 @@ const groupSelectedNodes = () => {
     fill: "rgba(255, 255, 255, 0.92)",
     stroke: "rgba(120, 120, 120, 0.7)",
     strokeWidth: 1,
-    listening: false,
+    // 需要可命中，点击事件才能冒泡到 ungroupBtn 触发解组。
+    listening: true,
   });
 
   const ungroupBtnText = new Konva.Text({
