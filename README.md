@@ -55,14 +55,14 @@ npm run deploy
 
 ## 路由与页面
 
-| 路径 | 页面 | 说明 |
-|---|---|---|
-| `/` | Home/Home.vue | 主流程页面：Memory Gallery + Working Memory + My Story |
-| `/Index` | Index/Index.vue | 分层画布输入流程（实验页） |
-| `/konvaComponent` | components/konvaComponent.vue | Konva 组件调试入口 |
-| `/canvas` `/canvas2` `/canvas3` | 各类画布实验页 | 试验/历史页面 |
-| `/FabricEditor` | FabricEditor.vue | Fabric 编辑器实验页 |
-| `/qqq` | qqq.vue | 其他测试页面 |
+| 路径                            | 页面                          | 说明                                                   |
+| ------------------------------- | ----------------------------- | ------------------------------------------------------ |
+| `/`                             | Home/Home.vue                 | 主流程页面：Memory Gallery + Working Memory + My Story |
+| `/Index`                        | Index/Index.vue               | 分层画布输入流程（实验页）                             |
+| `/konvaComponent`               | components/konvaComponent.vue | Konva 组件调试入口                                     |
+| `/canvas` `/canvas2` `/canvas3` | 各类画布实验页                | 试验/历史页面                                          |
+| `/FabricEditor`                 | FabricEditor.vue              | Fabric 编辑器实验页                                    |
+| `/qqq`                          | qqq.vue                       | 其他测试页面                                           |
 
 ## 核心业务流程
 
@@ -71,9 +71,9 @@ npm run deploy
 3. 中间 `WorkingMemory` 使用 `KonvaComponent` 进行图文编排与节点选择。
 4. 选中节点通过“发送到主题容器”进入右侧 `TopicContainerList` 指定画布。
 5. 右侧点击 `Generate`：
-   - 导出选中主题容器的画布图片。
-   - 组装主题标题、描述、canvas 数据。
-   - 调用 `CreateStory` 接口生成故事。
+    - 导出选中主题容器的画布图片。
+    - 组装主题标题、描述、canvas 数据。
+    - 调用 `CreateStory` 接口生成故事。
 6. 生成结果写入 Pinia `storyStore`，并在 `StoryListDialog` 中以 Markdown 展示。
 
 ## 目录结构
@@ -102,8 +102,8 @@ Mneme
 ### 接口封装
 
 - `src/service/api.ts`
-  - `GetPCMList()`：获取 PCM 列表
-  - `CreateStory(data)`：创建故事
+    - `GetPCMList()`：获取 PCM 列表
+    - `CreateStory(data)`：创建故事
 
 ### 请求基础设置
 
@@ -123,9 +123,9 @@ Mneme
 ## 状态管理
 
 - `src/stores/storyStore.js`
-  - `storyList`：故事列表
-  - `addStory(story)`：新增故事（头插）
-  - `clearStoryList()`：清空列表
+    - `storyList`：故事列表
+    - `addStory(story)`：新增故事（头插）
+    - `clearStoryList()`：清空列表
 
 ## 构建与发布
 
@@ -145,3 +145,4 @@ Mneme
 - 为 `CreateStory` 返回结构补齐严格类型定义。
 - 拆分超大组件（尤其是 `konvaComponent.vue`）以提升可维护性。
 - 增加单元测试与端到端测试，保障画布与生成流程稳定性。
+- test
