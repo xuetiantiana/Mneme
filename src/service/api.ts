@@ -6,7 +6,7 @@ const request = createAxios({
   baseURL: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net",
 });
 
-export const GetPCMList = (data: any): any => {
+export const GetPCMList = (): any => {
   return request.get(
     "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/pcm/list"
   );

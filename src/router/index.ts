@@ -57,7 +57,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const hasUserId = !!localStorage.getItem('user_id');
   const hasSessionId = !!localStorage.getItem('session_id');
   const hasIdentity = hasUserId && hasSessionId;

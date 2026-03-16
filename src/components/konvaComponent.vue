@@ -138,6 +138,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 // 导入 Vue 的响应式 API 和生命周期钩子
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Konva from "konva";

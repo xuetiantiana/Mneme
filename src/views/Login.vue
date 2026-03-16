@@ -2,14 +2,11 @@
   <div class="login-page">
     <div class="login-card">
       <h2>Welcome</h2>
-      <p>请输入 user_id 和 session_id 后继续</p>
+      <p>请输入 user_id 后继续，session_id 将自动生成</p>
 
       <el-form @submit.prevent>
         <el-form-item label="user_id">
           <el-input v-model="form.user_id" placeholder="请输入 user_id" clearable />
-        </el-form-item>
-        <el-form-item label="session_id">
-          <el-input v-model="form.session_id" placeholder="请输入 session_id" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">
@@ -22,7 +19,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStoryStore } from "@/stores/storyStore";
@@ -38,13 +35,24 @@ const form = reactive({
 
 const submitting = ref(false);
 
+const createSessionId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
+onMounted(() => {
+  form.session_id = createSessionId();
+});
+
 const handleSubmit = async () => {
   const userId = (form.user_id || "").trim();
   const sessionId = (form.session_id || "").trim();
 
-  if (!userId || !sessionId) {
+  if (!userId) {
     ElMessage({
-      message: "请填写完整的 user_id 和 session_id",
+      message: "请填写 user_id",
       type: "warning",
     });
     return;
