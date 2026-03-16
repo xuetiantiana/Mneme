@@ -1,32 +1,54 @@
-import axios, { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosInstance, AxiosResponse } from "axios";
 import { ElMessage } from "element-plus";
+import { addOperationLog } from "./operationLogs";
 
+const resolveApiType = (config?: AxiosRequestConfig): string => {
+    if (!config) return "";
+    const baseURL = config.baseURL || "";
+    const url = config.url || "";
+    if (!url) return baseURL;
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${baseURL}${url}`;
+};
 
-export const createAxios = (
-    config?: AxiosRequestConfig,
-): AxiosInstance => {
+const resolveInput = (config?: AxiosRequestConfig): unknown => {
+    if (!config) return null;
+    return config.data ?? config.params ?? null;
+};
+
+const resolveHeaderValue = (headers: any, key: string): string => {
+    if (!headers) return "";
+    if (typeof headers.get === "function") {
+        return String(headers.get(key) || "").trim();
+    }
+    return String(headers[key] || headers[key.toLowerCase()] || "").trim();
+};
+
+export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
     const instance = axios.create({
         //请求头
-        baseURL: '/api',
+        baseURL: "/api",
         //超时配置
         timeout: 120000,
         //跨域携带cookie
         // withCredentials: true,
         // 自定义配置覆盖基本配置
         ...config,
-
     });
-
 
     //添加请求拦截器
     instance.interceptors.request.use(
-        config => {
+        (config) => {
             const userId = (localStorage.getItem("user_id") || "").trim();
             const sessionId = (localStorage.getItem("session_id") || "").trim();
 
             if (!userId) {
                 ElMessage.warning("user_id 不能为空，请先登录");
-                return Promise.reject(new Error("Missing required user_id for request header X-User-Id"));
+                return Promise.reject(
+                    new Error(
+                        "Missing required user_id for request header X-User-Id",
+                    ),
+                );
             }
 
             config.headers = config.headers || {};
@@ -39,26 +61,48 @@ export const createAxios = (
 
             return config;
         },
-        error => {
+        (error) => {
             // 请求错误
-            return Promise.reject(error)
-        }
-    )
+            return Promise.reject(error);
+        },
+    );
 
     // 添加响应拦截器
     instance.interceptors.response.use(
-        function (response:AxiosResponse) {
+        function (response: AxiosResponse) {
+            const config = response.config || {};
+            const headerUserId = resolveHeaderValue(
+                config.headers,
+                "X-User-Id",
+            );
+            const headerSessionId = resolveHeaderValue(
+                config.headers,
+                "X-Session-Id",
+            );
+            const userId =
+                headerUserId || (localStorage.getItem("user_id") || "").trim();
+            const sessionId =
+                headerSessionId ||
+                (localStorage.getItem("session_id") || "").trim();
+
+            addOperationLog({
+                sessionId,
+                userId,
+                input: resolveInput(config),
+                output: response.data,
+                apitype: resolveApiType(config),
+            });
             return response;
         },
-        function (error:any) {
+        function (error: any) {
             console.log("响应拦截器response error:", error);
             // 关闭加载 动画
             /***** 接收到异常响应的处理开始 *****/
-            let errorTxt=""
+            let errorTxt = "";
             if (error && error.response) {
                 // 1.公共错误处理
                 // 2.根据响应码具体处理
-                console.log(error.message)
+                console.log(error.message);
                 // switch (error.response.status) {
                 //     case 400:
                 //         error.message = '错误请求'
@@ -100,28 +144,44 @@ export const createAxios = (
                 //     default:
                 //         error.message = `连接错误${error.response.status}`
                 // }
-                if(error.response.data){
-                    console.log(error.response.data)
-                    errorTxt = error.response.status + ": "+ JSON.stringify(error.response.data)
-                }else{
-                    errorTxt = error.response.status + ": " + error.message
+                if (error.response.data) {
+                    console.log(error.response.data);
+                    errorTxt =
+                        error.response.status +
+                        ": " +
+                        JSON.stringify(error.response.data);
+                } else {
+                    errorTxt = error.response.status + ": " + error.message;
                 }
             } else {
                 // 超时处理
                 // console.log(JSON.stringify(error))
-                if (error.code === 'ECONNABORTED' && error.message.indexOf('timeout') !== -1) {
-                    errorTxt = '服务器响应超时 ' + 'code: ' + error.code + ", message: " + error.message
+                if (
+                    error.code === "ECONNABORTED" &&
+                    error.message.indexOf("timeout") !== -1
+                ) {
+                    errorTxt =
+                        "服务器响应超时 " +
+                        "code: " +
+                        error.code +
+                        ", message: " +
+                        error.message;
                 } else {
-                    errorTxt = '连接服务器失败 ' + 'code: ' + error.code + ", message: " + error.message
+                    errorTxt =
+                        "连接服务器失败 " +
+                        "code: " +
+                        error.code +
+                        ", message: " +
+                        error.message;
                 }
             }
 
-            console.log(errorTxt)
+            console.log(errorTxt);
             // ElMessage.error(errorTxt)
             /***** 处理结束 *****/
             return Promise.reject(error);
-        }
-    )
+        },
+    );
 
     return instance;
-}
+};
