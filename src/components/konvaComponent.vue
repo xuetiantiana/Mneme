@@ -2126,6 +2126,7 @@ const handleMouseUp = () => {
     transformer!.nodes(selectedNodes);
     selectedNodes.forEach((n) => n.moveToTop());
     transformer!.moveToTop();
+    bringRelatedUngroupButtonsToTop(selectedNodes);
     return;
   }
 
@@ -2149,6 +2150,38 @@ const haveIntersection = (r1: any, r2: any) => {
     r2.y > r1.y + r1.height ||
     r2.y + r2.height < r1.y
   );
+};
+
+// 选中 group 后，确保悬浮 Ungroup 按钮位于 transformer 之上，避免被遮挡无法点击。
+const bringRelatedUngroupButtonsToTop = (nodes: Konva.Node[] = []) => {
+  if (!layer || !Array.isArray(nodes) || nodes.length === 0) return;
+
+  const groupIds = new Set<string>();
+  nodes.forEach((node) => {
+    if (node instanceof Konva.Group && node.getAttr("customType") === "group") {
+      const id = node.id?.();
+      if (id) groupIds.add(id);
+      return;
+    }
+
+    if (node?.name?.() === "group-bg") {
+      const parent = node.getParent();
+      if (parent instanceof Konva.Group && parent.getAttr("customType") === "group") {
+        const id = parent.id?.();
+        if (id) groupIds.add(id);
+      }
+    }
+  });
+
+  if (groupIds.size === 0) return;
+
+  const floatingBtns = layer.find(".group-ungroup-btn");
+  floatingBtns.forEach((btn: Konva.Node) => {
+    const targetGroupId = String(btn.getAttr("targetGroupId") || "");
+    if (groupIds.has(targetGroupId)) {
+      btn.moveToTop();
+    }
+  });
 };
 
 // 处理节点点击事件
@@ -2216,6 +2249,7 @@ const handleNodeClick = (
   selectedNodes.forEach((n) => n.moveToTop());
   // 将变换器移到最顶部，确保选择框可见
   transformer!.moveToTop();
+  bringRelatedUngroupButtonsToTop(selectedNodes);
 };
 
 // 封装节点阴影设置方法
