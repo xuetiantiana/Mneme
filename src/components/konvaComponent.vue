@@ -179,6 +179,7 @@ let resizeObserver: ResizeObserver | null = null; // 容器大小变化监听器
 let selectedNodes: Konva.Node[] = []; // 当前选中的节点列表
 let clipboardNodes: Konva.Node[] = []; // 复制缓存的节点快照
 let lastPasteOffset = { x: 24, y: 24 }; // 无鼠标位置时的递增偏移
+let isCurrentCanvasLastClicked = false; // 防误删：仅当最后一次点击在当前 canvas 内才允许删除
 let isDrawing = ref(false); // 是否正在绘制
 let isSelecting = ref(false); // 是否正在框选
 let isPanning = ref(false); // 是否正在平移
@@ -1682,6 +1683,8 @@ onMounted(() => {
 
   window.addEventListener("resize", handleResize);
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("mousedown", handleGlobalPointerDown, true);
+  window.addEventListener("touchstart", handleGlobalPointerDown, true);
   window.addEventListener("contextmenu", (e) => e.preventDefault());
   konvaData.stage = stage;
   konvaData.layer = layer;
@@ -1713,6 +1716,8 @@ onUnmounted(() => {
   }
   window.removeEventListener("resize", handleResize);
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("mousedown", handleGlobalPointerDown, true);
+  window.removeEventListener("touchstart", handleGlobalPointerDown, true);
 });
 
 const handleResize = () => {
@@ -1720,6 +1725,13 @@ const handleResize = () => {
     stage.width(container.value.offsetWidth);
     stage.height(container.value.offsetHeight);
   }
+};
+
+const handleGlobalPointerDown = (event: MouseEvent | TouchEvent) => {
+  if (!container.value) return;
+  const target = event.target as Node | null;
+  if (!target) return;
+  isCurrentCanvasLastClicked = container.value.contains(target);
 };
 
 const getStagePointerPos = () => {
@@ -1839,6 +1851,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
   }
   
   if (e.key === "Delete" || e.key === "Backspace") {
+    e.preventDefault();
     deleteSelectedNodes();
   }
 };
@@ -2625,6 +2638,10 @@ const updateDraggableState = () => {
 // 清空选中列表并重置变换器
 const deleteSelectedNodes = () => {
   if (selectedNodes.length === 0) return;
+  if (!isCurrentCanvasLastClicked) {
+    console.warn("Delete blocked: last pointer action was not on current canvas.");
+    return;
+  }
 
   clearAiAssist();
   selectedNodes.forEach((node) => {
