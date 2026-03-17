@@ -48,6 +48,20 @@
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
       />
+      <div
+        v-if="resonancePopup.visible"
+        class="resonance-popup"
+        :style="{
+          left: `${resonancePopup.position.x}px`,
+          top: `${resonancePopup.position.y}px`,
+        }"
+      >
+        <div class="resonance-popup-header">
+          <span>Resonance 返回结果</span>
+          <button class="resonance-popup-close" @click="closeResonancePopup">×</button>
+        </div>
+        <pre class="resonance-result-pre">{{ resonancePopup.text }}</pre>
+      </div>
     </div>
 
     <!-- 顶部导航栏 -->
@@ -190,6 +204,7 @@ import {
   ConstellateHint,
   ReflectQuestions,
   cropUpdate,
+  ResonanceCompose,
   whisperUpdate,
 } from "@/service/api";
 import { operation_logs } from "@/service/operationLogs";
@@ -251,7 +266,7 @@ const aiQuickTools = computed(() => {
 const NAV_HINTS = {
   Reflect: "先选中一个主图/子图再点击",
   Constellate: "先选中一个主图/子图/泡泡节点再点击",
-  Resonance: "功能预留中",
+  Resonance: "仅支持选中 Group 按钮创建的 group",
   Whisper: "点击之后选中子图",
   Crop: "点击之后选择主图进行裁剪",
   "Add Memory": "点击画布位置后上传图文",
@@ -266,7 +281,88 @@ const cropPopupData = ref({
   targetNode: null,
 });
 const cropSubmitting = ref(false);
+const resonancePopup = ref({
+  visible: false,
+  position: { x: 0, y: 0 },
+  stagePos: null,
+  targetNode: null,
+  text: "",
+});
 let whisperCanvasEl = null;
+
+const extractResonanceNodesFromGroup = (groupNode) => {
+  if (!groupNode || typeof groupNode.getChildren !== "function") {
+    return [];
+  }
+
+  const nodes = [];
+  const walk = (node) => {
+    if (!node) return;
+
+    const className = node.className || node.getClassName?.();
+    if (node?.name?.() === "group-bg" || node?.name?.() === "group-ungroup-btn") {
+      return;
+    }
+
+    const customType = String(node.getAttr?.("customType") || "").trim();
+    const id = String(node.id?.() || node.getAttr?.("id") || "").trim();
+    const type = customType || String(className || "node").toLowerCase();
+
+    if (id) {
+      const payload = {
+        id,
+        type,
+      };
+
+      if (className === "Image") {
+        const imageElement = node.image?.();
+        const imageUrl = String(
+          imageElement?.src ||
+            node.getAttr?.("imageSrc") ||
+            node.getAttr?.("image_url") ||
+            ""
+        ).trim();
+        if (imageUrl) {
+          payload.url = imageUrl;
+        }
+      }
+
+      if (className === "Text") {
+        const text = String(node.text?.() || "").trim();
+        if (text) {
+          payload.text = text;
+        }
+      }
+
+      nodes.push(payload);
+    }
+
+    if (typeof node.getChildren === "function") {
+      const children = node.getChildren();
+      children?.forEach?.((child) => walk(child));
+    }
+  };
+
+  walk(groupNode);
+
+  const deduped = [];
+  const keySet = new Set();
+  nodes.forEach((item) => {
+    const key = `${item.id}__${item.type}__${item.url || ""}__${item.text || ""}`;
+    if (keySet.has(key)) return;
+    keySet.add(key);
+    deduped.push(item);
+  });
+
+  return deduped;
+};
+
+const closeResonancePopup = () => {
+  resonancePopup.value.visible = false;
+  resonancePopup.value.stagePos = null;
+  resonancePopup.value.targetNode = null;
+  resonancePopup.value.text = "";
+};
 
 // 处理点击外部区域取消选中的逻辑
 const handleClickOutside = (event) => {
@@ -549,7 +645,7 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
   }
 };
 
-const handleNavClick = (navItem) => {
+const handleNavClick = async (navItem) => {
   if (hintLoading.value) {
     ElMessage({
       message: "提示词仍在加载中，请稍候",
@@ -607,6 +703,72 @@ const handleNavClick = (navItem) => {
         });
       }
       currentNav.value = "";
+      return;
+    }
+
+    if (navItem === "Resonance") {
+      const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
+      if (selectedNodes.length !== 1) {
+        ElMessage({
+          message: "请先选中一个 group 后再使用 Resonance",
+          type: "warning",
+        });
+        currentNav.value = "";
+        return;
+      }
+
+      const selected = selectedNodes[0];
+      const selectedType = String(selected?.getAttr?.("customType") || "");
+      const selectedName = String(selected?.name?.() || "");
+      if (selectedType !== "group" || selectedName !== "wm-group") {
+        ElMessage({
+          message: "Resonance 仅支持 Group 按钮创建的 group",
+          type: "warning",
+        });
+        currentNav.value = "";
+        return;
+      }
+
+      const nodes = extractResonanceNodesFromGroup(selected);
+      if (!Array.isArray(nodes) || nodes.length === 0) {
+        ElMessage({
+          message: "当前 group 中没有可用于 Resonance 的节点数据",
+          type: "warning",
+        });
+        currentNav.value = "";
+        return;
+      }
+
+      const requestBody = {
+        data: nodes,
+        operation_logs,
+      };
+
+      try {
+        const response = await ResonanceCompose(requestBody);
+        const resultData = response?.data?.data ?? response?.data ?? response ?? {};
+        const anchor = getPopupPositionRightOfNode(selected);
+        const popupPos = getPopupPositionFromStagePos(anchor?.stagePos) || {
+          x: 24,
+          y: 80,
+        };
+
+        resonancePopup.value = {
+          visible: true,
+          position: popupPos,
+          stagePos: anchor?.stagePos || null,
+          targetNode: selected,
+          text: JSON.stringify(resultData, null, 2),
+        };
+      } catch (error) {
+        console.error("ResonanceCompose failed:", error);
+        ElMessage({
+          message: "Resonance 调用失败，请稍后重试",
+          type: "error",
+        });
+      } finally {
+        currentNav.value = "";
+      }
       return;
     }
 
@@ -1491,6 +1653,15 @@ const handleStageTransform = () => {
       whisperPopupData.value.position = whisperPos;
     }
   }
+
+  if (resonancePopup.value.visible) {
+    const anchor = getPopupPositionRightOfNode(resonancePopup.value.targetNode);
+    const popupPos = getPopupPositionFromStagePos(anchor?.stagePos);
+    if (popupPos) {
+      resonancePopup.value.position = popupPos;
+      resonancePopup.value.stagePos = anchor?.stagePos || null;
+    }
+  }
 };
 
 const handleRenderNodes = (canvasIndex) => {
@@ -1731,5 +1902,54 @@ const handleRenderNodes = (canvasIndex) => {
 .whisper-mode :deep(.canvas-container),
 :deep(.working-memory-container.whisper-mode .canvas-container) {
   cursor: crosshair !important;
+}
+
+.resonance-popup {
+  position: absolute;
+  width: min(480px, calc(100% - 32px));
+  max-height: 60vh;
+  z-index: 130;
+  border: 1px solid #dbe5f2;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.resonance-popup-header {
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.resonance-popup-close {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.resonance-result-pre {
+  max-height: calc(60vh - 38px);
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: #1f2937;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
