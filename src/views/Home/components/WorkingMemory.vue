@@ -387,10 +387,38 @@ const handleClickOutside = (event) => {
   }
 };
 
+const isTypingElement = (target) => {
+  if (!target || typeof target.closest !== "function") {
+    return false;
+  }
+
+  return !!target.closest(
+    'input, textarea, [contenteditable="true"], .el-input__inner, .el-textarea__inner'
+  );
+};
+
+const handleGlobalKeydown = (event) => {
+  const key = String(event?.key || "").toLowerCase();
+  const isGroupShortcut = (event.ctrlKey || event.metaKey) && key === "g";
+
+  if (!isGroupShortcut) {
+    return;
+  }
+
+  if (isTypingElement(event.target)) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  handleNavClick("Group");
+};
+
 onMounted(() => {
   // 使用 mousedown 可以在点击开始时就触发，体验可能更好，或者 click
   // 这里使用 click 配合 capture 或者注意冒泡
   document.addEventListener("mousedown", handleClickOutside);
+  window.addEventListener("keydown", handleGlobalKeydown);
 
   nextTick(() => {
     const stage = konvaRef.value?.konvaData?.stage;
@@ -405,6 +433,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside);
+  window.removeEventListener("keydown", handleGlobalKeydown);
   if (whisperCanvasEl) {
     whisperCanvasEl.removeEventListener("click", handleCanvasClick);
     whisperCanvasEl.removeEventListener("mousemove", handleCanvasMouseMove);
