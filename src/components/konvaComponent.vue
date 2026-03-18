@@ -2630,6 +2630,29 @@ const updateDraggableState = () => {
   const isSelectMode = currentTool.value === "select";
 
   children.forEach((child) => {
+    if (child?.name?.() === "group-ungroup-btn") {
+      child.draggable(false);
+      child.listening(true);
+      return;
+    }
+
+    if (child instanceof Konva.Group && child.getAttr("customType") === "group") {
+      child.draggable(isSelectMode);
+
+      const groupChildren = child.getChildren();
+      groupChildren.forEach((groupChild: Konva.Node) => {
+        if (groupChild?.name?.() === "group-bg") {
+          groupChild.draggable(false);
+          groupChild.listening(true);
+          return;
+        }
+
+        groupChild.draggable(isSelectMode);
+        groupChild.listening(true);
+      });
+      return;
+    }
+
     child.draggable(isSelectMode);
   });
 };
@@ -3668,6 +3691,81 @@ const clearSelection = () => {
   layer?.batchDraw();
 };
 
+const GROUP_PREV_DRAG_BOUND_FUNC_ATTR = "__groupPrevDragBoundFunc";
+
+const applyGroupedChildDragConstraint = (
+  node: Konva.Node,
+  group: Konva.Group,
+  bgRect: Konva.Rect
+) => {
+  const prevDragBoundFunc = node.dragBoundFunc();
+  if (!node.getAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR)) {
+    node.setAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR, prevDragBoundFunc || null);
+  }
+
+  node.dragBoundFunc((pos: Konva.Vector2d) => {
+    // Konva 传入的是绝对坐标，先转换到 group 局部坐标再做边界约束。
+    const groupAbsTransform = group.getAbsoluteTransform();
+    const groupAbsInverse = groupAbsTransform.copy().invert();
+    const targetLocalPos = groupAbsInverse.point(pos);
+    const currentLocalPos = node.position();
+    const deltaX = targetLocalPos.x - currentLocalPos.x;
+    const deltaY = targetLocalPos.y - currentLocalPos.y;
+
+    const nodeRect = node.getClientRect({
+      relativeTo: group,
+      skipShadow: true,
+      skipStroke: false,
+    });
+    const bgRectBox = bgRect.getClientRect({
+      relativeTo: group,
+      skipShadow: true,
+      skipStroke: false,
+    });
+
+    let boundedLocalX = targetLocalPos.x;
+    let boundedLocalY = targetLocalPos.y;
+
+    const nextLeft = nodeRect.x + deltaX;
+    const nextRight = nodeRect.x + nodeRect.width + deltaX;
+    const nextTop = nodeRect.y + deltaY;
+    const nextBottom = nodeRect.y + nodeRect.height + deltaY;
+
+    if (nextLeft < bgRectBox.x) {
+      boundedLocalX += bgRectBox.x - nextLeft;
+    }
+    if (nextRight > bgRectBox.x + bgRectBox.width) {
+      boundedLocalX -= nextRight - (bgRectBox.x + bgRectBox.width);
+    }
+    if (nextTop < bgRectBox.y) {
+      boundedLocalY += bgRectBox.y - nextTop;
+    }
+    if (nextBottom > bgRectBox.y + bgRectBox.height) {
+      boundedLocalY -= nextBottom - (bgRectBox.y + bgRectBox.height);
+    }
+
+    return groupAbsTransform.point({
+      x: boundedLocalX,
+      y: boundedLocalY,
+    });
+  });
+
+  node.draggable(currentTool.value === "select");
+  node.listening(true);
+};
+
+const restoreGroupedChildDragConstraint = (node: Konva.Node) => {
+  const prevDragBoundFunc = node.getAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR);
+
+  if (typeof prevDragBoundFunc === "function") {
+    node.dragBoundFunc(prevDragBoundFunc);
+  } else {
+    node.dragBoundFunc((pos: Konva.Vector2d) => pos);
+  }
+
+  node.setAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR, null);
+};
+
 const groupSelectedNodes = () => {
   if (!layer || !transformer) {
     return { success: false, message: "画布未准备好" };
@@ -3826,10 +3924,8 @@ const groupSelectedNodes = () => {
   });
 
   nodesToGroup.forEach((node) => {
-    // 进入 group 后只允许整体操作，子节点不再单独拖拽/命中。
-    node.draggable(false);
-    node.listening(false);
     node.moveTo(group);
+    applyGroupedChildDragConstraint(node, group, bgRect);
   });
 
   group.on("click tap", (evt) => {
@@ -3913,6 +4009,8 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
       child.destroy();
       return;
     }
+
+    restoreGroupedChildDragConstraint(child);
 
     const absPos = child.getAbsolutePosition();
     const absRotation = child.getAbsoluteRotation();

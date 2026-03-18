@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { GetPCMList } from "@/service/api";
 import { getImageProxyUrl } from "@/utils/initPCM";
+import { ElMessage } from "element-plus";
 
 const mapPCMUnitToCard = (unit = {}) => {
   const mainImages =
@@ -32,15 +33,30 @@ export const usePCMStore = defineStore("pcm", () => {
   const memoryItems = ref([]);
   const isLoading = ref(false);
 
+  const resolvePCMUnits = (payload) => {
+    if (Array.isArray(payload)) return payload;
+
+    return (
+      (Array.isArray(payload?.units) && payload.units) ||
+      (Array.isArray(payload?.data?.units) && payload.data.units) ||
+      (Array.isArray(payload?.pcm_list) && payload.pcm_list) ||
+      (Array.isArray(payload?.data?.pcm_list) && payload.data.pcm_list) ||
+      (Array.isArray(payload?.items) && payload.items) ||
+      (Array.isArray(payload?.data?.items) && payload.data.items) ||
+      []
+    );
+  };
+
   const fetchPCMList = async () => {
     isLoading.value = true;
     try {
       const response = await GetPCMList();
       const payload = response?.data || {};
-      const units =
-        (Array.isArray(payload?.units) && payload.units) ||
-        (Array.isArray(payload?.data?.units) && payload.data.units) ||
-        [];
+      const units = resolvePCMUnits(payload);
+
+      if (!units.length) {
+        ElMessage.warning("PCM为空");
+      }
 
       memoryItems.value = units.map((unit) => mapPCMUnitToCard(unit));
       return memoryItems.value;

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="故事列表"
+    title="Creative Assets"
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -15,7 +15,7 @@
           :class="{ active: selectedStoryIndex === index }"
           @click="selectedStoryIndex = index"
         >
-          <div class="story-title">{{ story.result.title }}</div>
+          <div class="story-title">{{ getStoryTitle(story) }}</div>
           <div class="story-time">{{ getStoryTime(story.createdAt) }}</div>
         </div>
         <div v-if="storyStore.storyList.length === 0" class="no-story">
@@ -23,13 +23,34 @@
         </div>
       </div>
       <div class="story-list-right">
-        <div v-if="selectedStory" class="story-content">
-          <div class="story-item-detail">
-            <!-- <div class="item-title">{{ selectedStory.result.title }}</div> -->
+        <div v-if="selectedStoryTopics.length > 0" class="story-content">
+          <div
+            v-for="(topic, topicIndex) in selectedStoryTopics"
+            :key="topic.topic_id || topic.id || topicIndex"
+            class="story-item-detail"
+          >
+            <div class="item-title">{{ topic.title || `主题 ${topicIndex + 1}` }}</div>
             <div
               class="item-description"
-              v-html="parseMarkdown(selectedStory.result.markdown)"
+              v-html="parseMarkdown(topic.markdown)"
             ></div>
+
+            <div v-if="Array.isArray(topic.images) && topic.images.length" class="topic-images">
+              <div
+                v-for="(image, imageIndex) in topic.images"
+                :key="image.image_id || image.id || imageIndex"
+                class="topic-image-item"
+              >
+                <img
+                  :src="image.url"
+                  :alt="image.description || topic.title || 'topic image'"
+                  class="topic-image"
+                />
+                <div v-if="image.description" class="topic-image-desc">
+                  {{ image.description }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div v-else class="no-selected">请创建一个故事</div>
@@ -84,6 +105,62 @@ const selectedStory = computed(() => {
     return storyStore.storyList[selectedStoryIndex.value];
   }
   return null;
+});
+
+const normalizeTopic = (topic = {}, index = 0) => {
+  return {
+    topic_id: topic.topic_id || topic.id || `topic-${index}`,
+    title: topic.title || "未命名主题",
+    markdown: topic.markdown || "",
+    images: Array.isArray(topic.images) ? topic.images : [],
+  };
+};
+
+const getStoryPayload = (story) => {
+  if (!story || typeof story !== "object") return {};
+  if (story.result && typeof story.result === "object") return story.result;
+  return story;
+};
+
+const getStoryTopics = (story) => {
+  const payload = getStoryPayload(story);
+
+  if (Array.isArray(payload.topics)) {
+    return payload.topics.map((topic, index) => normalizeTopic(topic, index));
+  }
+
+  if (payload.title || payload.markdown || Array.isArray(payload.images)) {
+    return [
+      normalizeTopic(
+        {
+          topic_id: payload.topic_id || payload.id || "",
+          title: payload.title || "未命名主题",
+          markdown: payload.markdown || "",
+          images: Array.isArray(payload.images) ? payload.images : [],
+        },
+        0
+      ),
+    ];
+  }
+
+  return [];
+};
+
+const getStoryTitle = (story) => {
+  const payload = getStoryPayload(story);
+  if (payload.title) return payload.title;
+
+  const topics = getStoryTopics(story);
+  if (topics.length > 0 && topics[0].title) {
+    return topics[0].title;
+  }
+
+  return "未命名故事";
+};
+
+const selectedStoryTopics = computed(() => {
+  if (!selectedStory.value) return [];
+  return getStoryTopics(selectedStory.value);
 });
 
 const getStoryTime = (timeStr) => {
@@ -262,6 +339,34 @@ const handleClose = () => {
             padding-left: 12px;
             margin: 12px 0;
             color: #666;
+          }
+        }
+
+        .topic-images {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 12px;
+          margin-top: 12px;
+
+          .topic-image-item {
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fafafa;
+
+            .topic-image {
+              width: 100%;
+              height: auto;
+              border-radius: 6px;
+              display: block;
+            }
+
+            .topic-image-desc {
+              margin-top: 6px;
+              font-size: 12px;
+              color: #666;
+              line-height: 1.4;
+            }
           }
         }
       }

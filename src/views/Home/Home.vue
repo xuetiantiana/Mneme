@@ -3,7 +3,7 @@
     <el-button
       style="position: absolute; right: 10px; top: 10px"
       @click="showStoryListDialog = true"
-      >Generated outline</el-button
+      >Generated Assets</el-button
     >
 
     <!-- 故事列表弹窗 -->
