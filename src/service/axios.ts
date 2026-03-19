@@ -11,9 +11,47 @@ const resolveApiType = (config?: AxiosRequestConfig): string => {
     return `${baseURL}${url}`;
 };
 
+const parseJsonSafely = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    try {
+        return JSON.parse(trimmed);
+    } catch {
+        return value;
+    }
+};
+
+const removeOperationLogsField = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+        return value.map((item) => removeOperationLogsField(item));
+    }
+
+    if (value && typeof value === "object") {
+        const next: Record<string, unknown> = {};
+        Object.entries(value as Record<string, unknown>).forEach(([key, val]) => {
+            if (key === "operation_logs") return;
+            next[key] = removeOperationLogsField(val);
+        });
+        return next;
+    }
+
+    return value;
+};
+
 const resolveInput = (config?: AxiosRequestConfig): unknown => {
     if (!config) return null;
-    return config.data ?? config.params ?? null;
+    const source = config.data ?? config.params ?? null;
+
+    if (source instanceof FormData) {
+        const formObject: Record<string, unknown> = {};
+        source.forEach((val, key) => {
+            formObject[key] = val;
+        });
+        return removeOperationLogsField(formObject);
+    }
+
+    return removeOperationLogsField(parseJsonSafely(source));
 };
 
 const resolveHeaderValue = (headers: any, key: string): string => {
@@ -90,7 +128,7 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
                 userId,
                 input: resolveInput(config),
                 output: response.data,
-                apitype: resolveApiType(config),
+                API_Type: resolveApiType(config),
             });
             return response;
         },

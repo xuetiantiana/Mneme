@@ -5,7 +5,7 @@ export interface OperationLogItem {
   timestamp: string;
   input: unknown;
   output: unknown;
-  apitype: string;
+  API_Type: string;
 }
 
 export const operation_logs: OperationLogItem[] = [];
