@@ -2224,6 +2224,7 @@ const handleDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
 const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   const stage = textNodeKonva.getStage();
   if (!stage) return;
+  const isGroupMeaningText = textNodeKonva?.name?.() === "group-meaning-text";
 
   const textPosition = textNodeKonva.getAbsolutePosition(stage);
   const stageBox = stage!.container().getBoundingClientRect();
@@ -2291,6 +2292,26 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
 
   let isRemoving = false;
 
+  const resizeGroupMeaningBg = () => {
+    if (!isGroupMeaningText) {
+      return;
+    }
+
+    const parent = textNodeKonva.getParent();
+    if (!(parent instanceof Konva.Group)) {
+      return;
+    }
+
+    const bg = parent.findOne(".group-meaning-bg") as Konva.Rect | null;
+    if (!bg) {
+      return;
+    }
+
+    const minHeight = 24;
+    bg.height(Math.max(minHeight, textNodeKonva.height() + 8));
+    parent.getLayer?.()?.batchDraw?.();
+  };
+
   function removeTextarea() {
     if (isRemoving) return;
     isRemoving = true;
@@ -2312,15 +2333,18 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   textarea.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) {
       textNodeKonva.text(textarea.value);
+      resizeGroupMeaningBg();
       removeTextarea();
-      if (!textarea.value.trim()) {
+      if (!isGroupMeaningText && !textarea.value.trim()) {
         textNodeKonva.destroy();
         transformer!.nodes([]);
       }
     }
     if (e.key === "Escape") {
+      textNodeKonva.text(textarea.value);
+      resizeGroupMeaningBg();
       removeTextarea();
-      if (!textarea.value.trim()) {
+      if (!isGroupMeaningText && !textarea.value.trim()) {
         textNodeKonva.destroy();
         transformer!.nodes([]);
       }
@@ -2337,8 +2361,9 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   function handleOutsideClick(e: MouseEvent | TouchEvent) {
     if (e.target !== textarea) {
       textNodeKonva.text(textarea.value);
+      resizeGroupMeaningBg();
       removeTextarea();
-      if (!textarea.value.trim()) {
+      if (!isGroupMeaningText && !textarea.value.trim()) {
         textNodeKonva.destroy();
         transformer!.nodes([]);
       }
@@ -2481,6 +2506,15 @@ const updateDraggableState = () => {
       const groupChildren = child.getChildren();
       groupChildren.forEach((groupChild: Konva.Node) => {
         if (groupChild?.name?.() === "group-bg") {
+          groupChild.draggable(false);
+          groupChild.listening(true);
+          return;
+        }
+
+        if (
+          groupChild?.name?.() === "group-meaning-text" ||
+          groupChild?.name?.() === "group-meaning-bg"
+        ) {
           groupChild.draggable(false);
           groupChild.listening(true);
           return;
@@ -3731,6 +3765,7 @@ const clearSelection = () => {
 };
 
 const GROUP_PREV_DRAG_BOUND_FUNC_ATTR = "__groupPrevDragBoundFunc";
+const GROUP_MEANING_DEFAULT_TEXT = "这是对group的描述";
 
 const applyGroupedChildDragConstraint = (
   node: Konva.Node,
@@ -3850,6 +3885,7 @@ const groupSelectedNodes = () => {
   }
 
   const padding = 16;
+  const groupHeaderReserve = 42;
   const groupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const group = new Konva.Group({
     id: groupId,
@@ -3860,9 +3896,9 @@ const groupSelectedNodes = () => {
 
   const bgRect = new Konva.Rect({
     x: minX - padding,
-    y: minY - padding,
+    y: minY - padding - groupHeaderReserve,
     width: Math.max(1, maxX - minX + padding * 2),
-    height: Math.max(1, maxY - minY + padding * 2),
+    height: Math.max(1, maxY - minY + padding * 2 + groupHeaderReserve),
     fill: "rgba(140, 140, 140, 0.18)",
     stroke: "rgba(120, 120, 120, 0.65)",
     strokeWidth: 1.5,
@@ -3875,6 +3911,42 @@ const groupSelectedNodes = () => {
 
   layer.add(group);
   group.add(bgRect);
+
+  const meaningFieldWidth = Math.max(140, Math.min(280, bgRect.width() - 20));
+  const meaningFieldX = bgRect.x() + 10;
+  const meaningFieldY = bgRect.y() + 8;
+
+  const groupMeaningText = new Konva.Text({
+    x: meaningFieldX + 6,
+    y: meaningFieldY + 4,
+    text: GROUP_MEANING_DEFAULT_TEXT,
+    width: Math.max(60, meaningFieldWidth - 12),
+    fontSize: 12,
+    lineHeight: 1.4,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: "#4b5563",
+    draggable: false,
+    listening: true,
+    name: "group-meaning-text",
+    wrap: "word",
+  });
+
+  const groupMeaningBg = new Konva.Rect({
+    x: meaningFieldX,
+    y: meaningFieldY,
+    width: meaningFieldWidth,
+    height: Math.max(24, groupMeaningText.height() + 8),
+    fill: "rgba(156, 163, 175, 0.25)",
+    stroke: "rgba(107, 114, 128, 0.4)",
+    strokeWidth: 1,
+    cornerRadius: 6,
+    draggable: false,
+    listening: true,
+    name: "group-meaning-bg",
+  });
+
+  group.add(groupMeaningBg);
+  group.add(groupMeaningText);
 
   const ungroupBtnWidth = 64;
   const ungroupBtnHeight = 22;
@@ -4044,7 +4116,12 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
   const restoredNodes: Konva.Node[] = [];
 
   children.forEach((child) => {
-    if (child.name() === "group-bg" || child.name() === "group-ungroup-btn") {
+    if (
+      child.name() === "group-bg" ||
+      child.name() === "group-ungroup-btn" ||
+      child.name() === "group-meaning-text" ||
+      child.name() === "group-meaning-bg"
+    ) {
       child.destroy();
       return;
     }

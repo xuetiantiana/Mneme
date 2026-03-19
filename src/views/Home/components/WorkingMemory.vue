@@ -437,6 +437,8 @@ const buildHintPayload = (nodeJsonList) => {
 const RESONANCE_GROUP_EXCLUDED_NAMES = new Set([
   "group-bg",
   "group-ungroup-btn",
+  "group-meaning-text",
+  "group-meaning-bg",
 ]);
 
 // Resonance 业务过滤：排除 group 的装饰/操作节点，避免把背景和按钮传给后端。
@@ -481,6 +483,11 @@ const buildResonanceHintPayload = (nodeJsonList) => {
   const firstNode = firstRaw && typeof firstRaw === "object" ? firstRaw : null;
 
   const attrs = firstNode?.attrs || {};
+  const groupMeaningFromChild = Array.isArray(firstNode?.children)
+    ? firstNode.children.find(
+        (child) => String(child?.attrs?.name || "") === "group-meaning-text"
+      )?.attrs?.text
+    : "";
 
   // Resonance 先做 children 业务过滤，再根据 content.className 决定是否回传 groups。
   let content = firstNode || {};
@@ -514,7 +521,7 @@ const buildResonanceHintPayload = (nodeJsonList) => {
   return {
     groups,
     operation_logs,
-    group_meaning: String(attrs?.group_meaning || attrs?.groupMeaning || "").trim(),
+    group_meaning: String(groupMeaningFromChild || "").trim(),
   };
 };
 
