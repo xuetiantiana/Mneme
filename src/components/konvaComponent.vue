@@ -1644,6 +1644,7 @@ const pasteCopiedNodes = () => {
       handleNodeClick(evt, pastedNode);
     });
     currentLayer.add(pastedNode);
+    rebindGroupedChildConstraintsDeep(pastedNode);
     return pastedNode;
   });
 
@@ -3011,6 +3012,17 @@ const getDropPosition = (e: DragEvent) => {
 };
 
 // 将别的 canvas 的节点（多个）复制到当前画布中心，垂直水平居中
+const clearNodeListenersDeep = (node: Konva.Node) => {
+  if (!node) return;
+  node.off();
+
+  if (node instanceof Konva.Group) {
+    node.getChildren().forEach((child: Konva.Node) => {
+      clearNodeListenersDeep(child);
+    });
+  }
+};
+
 const renderNodes = (nodesData) => {
   console.log("nodesData:", nodesData);
   if (!layer || !nodesData || nodesData.length === 0) return;
@@ -3027,7 +3039,8 @@ const renderNodes = (nodesData) => {
     const clonedNode = node.clone({
       id: node.id(),
     });
-    clonedNode.off();
+    // 清理克隆节点及其所有子节点上的旧事件，避免点击回流到来源画布实例。
+    clearNodeListenersDeep(clonedNode);
     // 移除选中阴影
     removeNodeSelectStyle(clonedNode);
     clonedNode.on("click tap", (evt) => handleNodeClick(evt, clonedNode));
@@ -3069,6 +3082,7 @@ const renderNodes = (nodesData) => {
     node.scaleX(node.scaleX() * fitScale);
     node.scaleY(node.scaleY() * fitScale);
     layer.add(node);
+    rebindGroupedChildConstraintsDeep(node);
   });
   setTimeout(() => updateScrollbars(), 1000);
 };
@@ -3838,6 +3852,40 @@ const restoreGroupedChildDragConstraint = (node: Konva.Node) => {
   }
 
   node.setAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR, null);
+};
+
+// 节点经过 clone（跨画布发送、复制粘贴）后，子节点可能仍持有旧 group/bg 的拖拽约束闭包。
+// 这里统一重绑，确保拖拽计算始终基于当前画布中的 group 实例。
+const rebindGroupedChildConstraintsDeep = (node: Konva.Node) => {
+  if (!(node instanceof Konva.Group)) {
+    return;
+  }
+
+  if (node.getAttr("customType") === "group") {
+    const bgRect = node.findOne(".group-bg") as Konva.Rect | null;
+    if (bgRect) {
+      node.getChildren().forEach((child: Konva.Node) => {
+        const childName = String(child?.name?.() || "");
+        if (
+          childName === "group-bg" ||
+          childName === "group-ungroup-btn" ||
+          childName === "group-meaning-text" ||
+          childName === "group-meaning-bg"
+        ) {
+          return;
+        }
+
+        // 先清空旧约束，再绑定到当前 group，避免坐标错乱。
+        child.setAttr(GROUP_PREV_DRAG_BOUND_FUNC_ATTR, null);
+        child.dragBoundFunc((pos: Konva.Vector2d) => pos);
+        applyGroupedChildDragConstraint(child, node, bgRect);
+      });
+    }
+  }
+
+  node.getChildren().forEach((child: Konva.Node) => {
+    rebindGroupedChildConstraintsDeep(child);
+  });
 };
 
 const groupSelectedNodes = () => {

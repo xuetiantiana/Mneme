@@ -190,10 +190,15 @@ const handleGenerate = async () => {
             return;
           }
           console.log("canvasData", canvasData);
-          // 将 JSON 字符串数组转换为解析后的对象数组
-          const parsedCanvasData = canvasData.map((jsonStr) =>
-            JSON.parse(jsonStr)
-          );
+          // 仅使用新格式：对象数组。
+          const parsedCanvasData = (Array.isArray(canvasData) ? canvasData : [])
+            .filter((item) => item && typeof item === "object");
+
+          if (parsedCanvasData.length === 0) {
+            ElMessage.error(`第 ${containerIndex} 个主题容器的画布数据格式无效`);
+            loading.value = false;
+            return;
+          }
           console.log("parsedCanvasData", parsedCanvasData);
 
           result.push({
@@ -240,12 +245,13 @@ const handleGenerate = async () => {
 
       // 触发创建成功事件
       emit("createSuccess", 0);
+      ElMessage.success("创建成功");
     } else {
-      ElMessage.error("创建失败:" + (response?.message || "未知错误"));
-      ElMessage.error("创建失败:" + (error?.message || "未知错误"));
+      ElMessage.error("创建失败:" + (res?.message || "未知错误"));
     }
-    ElMessage.error(errorMsg);
-    loading.value = false;
+  } catch (error) {
+    console.error("CreateStory failed:", error);
+    ElMessage.error("创建失败:" + (error?.message || "未知错误"));
   } finally {
     loading.value = false;
   }
@@ -305,9 +311,6 @@ defineExpose({
       position: relative;
       &:last-child {
         margin-bottom: 0;
-      }
-      &.active {
-        // border-color: #000;
       }
 
       .topic-checkbox {
