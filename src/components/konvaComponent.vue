@@ -693,7 +693,7 @@ const updateAiAssistPosition = () => {
   const innerRadius = diagonal / 2 / scaleX;
 
   aiAssistState.innerRadius = innerRadius;
-  aiAssistState.outerRadius = innerRadius + 200 / scaleX; // 保持外圈宽度视觉一致? 或者固定数值
+  aiAssistState.outerRadius = innerRadius + 200; // 固定画布坐标宽度，缩放时视觉宽度随之变化
 
   // 更新所有扇形的位置和半径
   aiRingSlices.forEach((group) => {
@@ -1278,7 +1278,7 @@ const triggerAiAssist = () => {
     centerX: localPos.x,
     centerY: localPos.y,
     innerRadius,
-    outerRadius: innerRadius + 200 / scaleX, // 外圆半径比内圆大 200 (视觉像素)
+    outerRadius: innerRadius + 200, // 外圆半径比内圆大 200（画布坐标）
     target: target,
   };
 
