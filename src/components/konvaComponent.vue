@@ -147,7 +147,6 @@ import {
   createImageAndTextNodes,
   createTextNode,
   createInterpretationTextNodes,
-  createConnection,
   DEFAULT_FONT_FAMILY,
 } from "@/utils/canvasPositionUtils";
 import {
@@ -990,7 +989,6 @@ const createAiContentNode = (
   nodeMeta?: { id?: string; customType?: string },
   options?: {
     flattenToNodes?: boolean;
-    staticConnection?: boolean;
   }
 ) => {
   if (!aiAssistState || !aiGuideLine || !layer) return;
@@ -1155,39 +1153,6 @@ const createAiContentNode = (
 
   layer.add(group);
 
-  const getNodeCenterInLayer = (node: Konva.Node) => {
-    const localBox = node.getClientRect({
-      skipShadow: true,
-      relativeTo: node,
-    });
-
-    const localCenter = {
-      x: localBox.x + localBox.width / 2,
-      y: localBox.y + localBox.height / 2,
-    };
-
-    const absoluteCenter = node.getAbsoluteTransform().point(localCenter);
-    const layerTransform = layer!.getAbsoluteTransform().copy().invert();
-    return layerTransform.point(absoluteCenter);
-  };
-
-  const createStaticConnection = (node1: Konva.Node, node2: Konva.Node) => {
-    const p1 = getNodeCenterInLayer(node1);
-    const p2 = getNodeCenterInLayer(node2);
-
-    const line = new Konva.Line({
-      points: [p1.x, p1.y, p2.x, p2.y],
-      stroke: "#8cc5ff",
-      strokeWidth: 2,
-      dash: [10, 5],
-      listening: false,
-    });
-
-    layer!.add(line);
-    line.moveToBottom();
-    return line;
-  };
-
   const flattenGroupToNodes = () => {
     const baseX = group.x() - group.offsetX();
     const baseY = group.y() - group.offsetY();
@@ -1225,34 +1190,11 @@ const createAiContentNode = (
     return flattenedNodes;
   };
 
-  // 获取源节点并创建连线
-  const sourceNode = aiAssistState.target;
   Promise.all(imageLoadTasks).then(() => {
     const shouldFlatten = !!options?.flattenToNodes;
-    const useStaticConnection = !!options?.staticConnection;
 
-    const targetNodeForLine = shouldFlatten
-      ? flattenGroupToNodes()[0]
-      : group;
-
-    if (sourceNode) {
-      if (useStaticConnection) {
-        if (targetNodeForLine) {
-          createStaticConnection(sourceNode, targetNodeForLine);
-        }
-      } else {
-        createConnection(sourceNode, targetNodeForLine || group);
-      }
-    } else {
-      const persistentLine = new Konva.Line({
-        points: [startX, startY, endX, endY],
-        stroke: "#8cc5ff",
-        strokeWidth: 2,
-        dash: [10, 5],
-        listening: false,
-      });
-      layer!.add(persistentLine);
-      persistentLine.moveToBottom();
+    if (shouldFlatten) {
+      flattenGroupToNodes();
     }
 
     layer!.batchDraw();
@@ -1265,109 +1207,6 @@ const createAiContentNode = (
   layer.batchDraw();
 
   return group;
-};
-
-const createConnection = (node1: Konva.Node, node2: Konva.Node) => {
-  const line = new Konva.Line({
-    stroke: "#8cc5ff",
-    strokeWidth: 2,
-    dash: [10, 5],
-    listening: false, // 确保连线不响应鼠标事件，也就无法被选中
-  });
-
-  // 存储连接关系
-  line.setAttr("fromNodeId", node1.id() || node1.name());
-  line.setAttr("toNodeId", node2.id() || node2.name());
-
-  layer!.add(line);
-  line.moveToBottom();
-
-  const updateLine = () => {
-    // 获取节点在 Layer 坐标系中的中心点
-    const getCenter = (node: Konva.Node) => {
-      // 使用 relativeTo: node 获取节点自身的局部包围盒
-      // 这不受节点旋转/缩放/位移的影响，只反映内容的几何尺寸
-      const localBox = node.getClientRect({
-        skipShadow: true,
-        relativeTo: node,
-      });
-
-      // 计算局部中心点
-      const localCenter = {
-        x: localBox.x + localBox.width / 2,
-        y: localBox.y + localBox.height / 2,
-      };
-
-      // 将局部中心点转换为绝对坐标（Stage 坐标）
-      // 使用 getAbsoluteTransform()，它包含了节点的所有变换矩阵（包括 Transformer 施加的）
-      const absoluteCenter = node.getAbsoluteTransform().point(localCenter);
-
-      // 将绝对坐标转回 Layer 坐标，以便连线使用
-      const layerTransform = layer!.getAbsoluteTransform().copy().invert();
-      return layerTransform.point(absoluteCenter);
-    };
-
-    const p1 = getCenter(node1);
-    const p2 = getCenter(node2);
-
-    line.points([p1.x, p1.y, p2.x, p2.y]);
-  };
-
-  // 辅助函数：检查连线本身是否被 Transformer 选中
-  const isLineSelected = () => {
-    if (!transformer) return false;
-    const nodes = transformer.nodes();
-    return nodes.includes(line);
-  };
-
-  // 绑定事件：总是监听 dragend/transformend 确保最终位置正确
-  node1.on("dragend transformend", updateLine);
-  node2.on("dragend transformend", updateLine);
-
-  // 绑定 dragmove/transform 事件：
-  const handleMove = () => {
-    // 如果连线也被选中了，就不需要手动更新位置（Transformer 会带着它移动）
-    if (!isLineSelected()) {
-      updateLine();
-    }
-  };
-
-  node1.on("dragmove transform", handleMove);
-  node2.on("dragmove transform", handleMove);
-
-  // 监听 Transformer 事件
-  if (transformer) {
-    transformer.on("dragmove transform", () => {
-      const nodes = transformer!.nodes();
-      // 如果连线本身被选中，跳过更新
-      if (nodes.includes(line)) return;
-
-      if (nodes.includes(node1) || nodes.includes(node2)) {
-        updateLine();
-      }
-    });
-
-    transformer.on("dragend transformend", () => {
-      // 无论如何，操作结束时强制更新一次
-      // 使用 setTimeout 确保在下一帧更新，避免坐标尚未完全同步
-      const nodes = transformer!.nodes();
-      if (
-        nodes.includes(node1) ||
-        nodes.includes(node2) ||
-        nodes.includes(line)
-      ) {
-        setTimeout(() => {
-          updateLine();
-          layer!.batchDraw(); // 确保重绘
-        }, 0);
-      }
-    });
-  }
-
-  // 初始更新一次
-  updateLine();
-
-  return line;
 };
 
 // 取消 AI 辅助锁定状态，恢复交互
@@ -3255,8 +3094,6 @@ const createKonvaLine = (nodeData) => {
     draggable: nodeData.draggable,
     visible: nodeData.visible,
     opacity: nodeData.opacity,
-    lineCap: "round",
-    lineJoin: "round",
   });
 };
 
@@ -3331,7 +3168,6 @@ const addResonanceGroupAtPosition = (
   if (!mainText) return;
 
   const kind = String(resonanceItem?.kind || "analysis").trim();
-  const level = resonanceItem?.level ?? "-";
   const keyword = String(resonanceItem?.keyword || "").trim();
   const actions = Array.isArray(resonanceItem?.actions)
     ? resonanceItem.actions
@@ -3380,22 +3216,8 @@ const addResonanceGroupAtPosition = (
     listening: false,
   });
 
-  const levelText = new Konva.Text({
-    x: cardWidth - cardPadding,
-    y: currentY,
-    text: `L${level}`,
-    fontSize: 12,
-    fontFamily: DEFAULT_FONT_FAMILY,
-    fill: "#64748b",
-    align: "right",
-    draggable: false,
-    listening: false,
-  });
-  levelText.offsetX(levelText.width());
-
   group.add(kindText);
-  group.add(levelText);
-  currentY += Math.max(kindText.height(), levelText.height()) + 8;
+  currentY += kindText.height() + 8;
 
   if (keyword) {
     const keywordText = new Konva.Text({
@@ -3621,6 +3443,52 @@ const addMemoryAtPosition = (
     .catch((error) => {
       console.error("Failed to add memory node:", error);
     });
+};
+
+// 将外部创建的 Konva 节点安全挂载到当前图层，并补齐可选中能力。
+// 典型场景：WorkingMemory 中先异步创建节点（如 Resonance Fuse），再交给画布统一接管交互。
+// 处理规则：
+// 1) 入参支持单节点或节点数组；非 Konva.Node 会被自动忽略。
+// 2) 为每个有效节点绑定 click/tap，统一复用 handleNodeClick，保证后续可单选/多选。
+// 3) 当 autoSelect=true 时，会清空旧选中并选中新节点，同时更新 transformer 与选中样式。
+// 4) 统一调用 updateDraggableState / batchDraw / updateScrollbars，保证交互状态与视图同步。
+// 返回值：实际成功添加到 layer 的节点数量。
+const addExternalNodes = (
+  nodesInput: Konva.Node[] | Konva.Node,
+  options?: { autoSelect?: boolean }
+) => {
+  if (!layer) return 0;
+
+  // 统一归一化为数组，便于后续批处理。
+  const nodes = Array.isArray(nodesInput) ? nodesInput : [nodesInput];
+  // 防御式过滤：只接收真正的 Konva 节点实例。
+  const validNodes = nodes.filter((node) => node instanceof Konva.Node);
+  if (validNodes.length === 0) return 0;
+
+  validNodes.forEach((node) => {
+    // 外部节点默认不带当前画布的选中逻辑，这里补绑统一点击处理。
+    node.on("click tap", (evt) => {
+      handleNodeClick(evt, node);
+    });
+    layer!.add(node);
+  });
+
+  if (options?.autoSelect && transformer) {
+    // 切换选中集前，先移除旧节点的选中视觉态。
+    selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+    selectedNodes = validNodes;
+    transformer.nodes(selectedNodes);
+    // 新节点进入选中态，并确保视觉层级位于上方。
+    selectedNodes.forEach((n) => addNodeSelectStyle(n));
+    selectedNodes.forEach((n) => n.moveToTop());
+    transformer.moveToTop();
+  }
+
+  updateDraggableState();
+  layer.batchDraw();
+  updateScrollbars();
+
+  return validNodes.length;
 };
 
 const replaceImageNodeSource = (targetNode: Konva.Node, imageSrc: string) => {
@@ -4235,6 +4103,7 @@ defineExpose({
   addResonanceGroupAtPosition,
   addPCMAtPosition,
   addMemoryAtPosition,
+  addExternalNodes,
   replaceImageNodeSource,
   addImageNodeRightOfTarget,
   addSegmentsAroundTarget,

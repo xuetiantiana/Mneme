@@ -1005,7 +1005,7 @@ const runResonanceFuse = async () => {
           startX: anchor.stagePos.x,
           startY: anchor.stagePos.y,
           center: false,
-          group: true,
+          group: false,
         }
       );
     } catch (imageError) {
@@ -1052,11 +1052,17 @@ const runResonanceFuse = async () => {
       } else if (node instanceof Konva.Image) {
         node.setAttr("imageSrc", renderImageSrc);
       }
-
-      layer.add(node);
     });
 
-    layer.batchDraw();
+    if (konvaRef.value?.addExternalNodes) {
+      konvaRef.value.addExternalNodes(createdNodes, { autoSelect: true });
+    } else {
+      createdNodes.forEach((node) => {
+        if (!(node instanceof Konva.Node)) return;
+        layer.add(node);
+      });
+      layer.batchDraw();
+    }
 
     ElMessage({
       message: "Fuse 已生成图文节点",
@@ -1857,7 +1863,6 @@ const handleAiPopupConfirm = (data) => {
       data.nodeMeta,
       {
         flattenToNodes: isConstellate,
-        staticConnection: isConstellate,
       }
     );
   }

@@ -53,7 +53,6 @@
           >
             <div class="resonance-card-head">
               <span class="resonance-kind">{{ item?.kind || "analysis" }}</span>
-              <span class="resonance-level">L{{ item?.level ?? "-" }}</span>
             </div>
             <div v-if="item?.keyword" class="resonance-keyword">{{ item.keyword }}</div>
             <div class="resonance-text">{{ item?.text || "" }}</div>
@@ -715,11 +714,6 @@ onBeforeUnmount(() => {
 .resonance-kind {
   font-size: 12px;
   color: #475569;
-}
-
-.resonance-level {
-  font-size: 12px;
-  color: #64748b;
 }
 
 .resonance-keyword {
