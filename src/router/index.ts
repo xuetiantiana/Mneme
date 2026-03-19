@@ -1,4 +1,5 @@
 import { createRouter, RouteRecordRaw, createWebHashHistory } from 'vue-router'
+import { getSessionId } from '@/service/session'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -59,7 +60,7 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   const hasUserId = !!localStorage.getItem('user_id');
-  const hasSessionId = !!localStorage.getItem('session_id');
+  const hasSessionId = !!getSessionId();
   const hasIdentity = hasUserId && hasSessionId;
 
   if (to.meta?.public) {

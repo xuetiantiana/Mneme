@@ -23,6 +23,7 @@ import { onMounted, reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStoryStore } from "@/stores/storyStore";
+import { getSessionId } from "@/service/session";
 
 const router = useRouter();
 const route = useRoute();
@@ -35,15 +36,8 @@ const form = reactive({
 
 const submitting = ref(false);
 
-const createSessionId = () => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-};
-
 onMounted(() => {
-  form.session_id = createSessionId();
+  form.session_id = getSessionId();
 });
 
 const handleSubmit = async () => {

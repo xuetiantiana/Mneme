@@ -1,14 +1,14 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
+import { getSessionId, setSessionId as setMemorySessionId } from "@/service/session";
 
 export const useStoryStore = defineStore("story", () => {
   // 从 localStorage 初始化数据
   const savedStoryList = localStorage.getItem("storyList");
   const savedUserId = localStorage.getItem("user_id");
-  const savedSessionId = localStorage.getItem("session_id");
   const storyList = ref(savedStoryList ? JSON.parse(savedStoryList) : []);
   const user_id = ref(savedUserId || "");
-  const session_id = ref(savedSessionId || "");
+  const session_id = ref(getSessionId());
 
   // 监听 storyList 变化并同步到 localStorage
   watch(
@@ -21,10 +21,6 @@ export const useStoryStore = defineStore("story", () => {
 
   watch(user_id, (newValue) => {
     localStorage.setItem("user_id", newValue || "");
-  });
-
-  watch(session_id, (newValue) => {
-    localStorage.setItem("session_id", newValue || "");
   });
 
   const addStory = (story) => {
@@ -40,7 +36,7 @@ export const useStoryStore = defineStore("story", () => {
   };
 
   const setSessionId = (value) => {
-    session_id.value = value || "";
+    session_id.value = setMemorySessionId(value);
   };
 
   return {
