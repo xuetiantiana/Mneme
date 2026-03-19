@@ -2824,7 +2824,7 @@ const resetNodesData = (nodes) => {
       processGroup(node, json);
     }
 
-    return JSON.stringify(json);
+    return json;
   });
 };
 
@@ -3313,6 +3313,177 @@ const addTextAtPosition = (
   transformer.nodes(selectedNodes);
   addNodeSelectStyle(textNode);
   textNode.moveToTop();
+  transformer.moveToTop();
+
+  layer.batchDraw();
+  updateScrollbars();
+};
+
+const addResonanceGroupAtPosition = (
+  resonanceItem: any,
+  position: { x: number; y: number }
+) => {
+  if (!layer || !transformer || !position) return;
+
+  const mainText = String(
+    resonanceItem?.text || resonanceItem?.keyword || ""
+  ).trim();
+  if (!mainText) return;
+
+  const kind = String(resonanceItem?.kind || "analysis").trim();
+  const level = resonanceItem?.level ?? "-";
+  const keyword = String(resonanceItem?.keyword || "").trim();
+  const actions = Array.isArray(resonanceItem?.actions)
+    ? resonanceItem.actions
+    : [];
+
+  const cardWidth = 280;
+  const cardPadding = 12;
+  const bodyWidth = cardWidth - cardPadding * 2;
+
+  // 先清理旧选中样式，再创建新的 Resonance 结果组。
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+
+  const group = new Konva.Group({
+    x: position.x,
+    y: position.y,
+    draggable: true,
+    name: "resonance-result-group",
+    customType: "resonance_result_group",
+  });
+
+  const cardBg = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: cardWidth,
+    height: 80,
+    fill: "#ffffff",
+    stroke: "#dbe7fb",
+    strokeWidth: 1,
+    cornerRadius: 10,
+    shadowColor: "rgba(15, 23, 42, 0.08)",
+    shadowBlur: 8,
+    shadowOffset: { x: 0, y: 2 },
+  });
+  group.add(cardBg);
+
+  let currentY = cardPadding;
+
+  const kindText = new Konva.Text({
+    x: cardPadding,
+    y: currentY,
+    text: kind,
+    fontSize: 12,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: "#475569",
+    draggable: false,
+    listening: false,
+  });
+
+  const levelText = new Konva.Text({
+    x: cardWidth - cardPadding,
+    y: currentY,
+    text: `L${level}`,
+    fontSize: 12,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: "#64748b",
+    align: "right",
+    draggable: false,
+    listening: false,
+  });
+  levelText.offsetX(levelText.width());
+
+  group.add(kindText);
+  group.add(levelText);
+  currentY += Math.max(kindText.height(), levelText.height()) + 8;
+
+  if (keyword) {
+    const keywordText = new Konva.Text({
+      x: cardPadding,
+      y: currentY,
+      text: keyword,
+      fontSize: 13,
+      fontFamily: DEFAULT_FONT_FAMILY,
+      fill: "#1d4ed8",
+      width: bodyWidth,
+      wrap: "word",
+      draggable: false,
+      listening: false,
+    });
+    group.add(keywordText);
+    currentY += keywordText.height() + 8;
+  }
+
+  const mainTextNode = new Konva.Text({
+    x: cardPadding,
+    y: currentY,
+    text: mainText,
+    fontSize: 13,
+    fontFamily: DEFAULT_FONT_FAMILY,
+    fill: "#334155",
+    width: bodyWidth,
+    lineHeight: 1.6,
+    wrap: "word",
+    draggable: false,
+    listening: false,
+  });
+  group.add(mainTextNode);
+  currentY += mainTextNode.height();
+
+  if (actions.length > 0) {
+    currentY += 8;
+
+    actions.forEach((action: any) => {
+      const actionTextValue = String(
+        action?.description || action?.kind || ""
+      ).trim();
+      if (!actionTextValue) return;
+
+      const actionText = new Konva.Text({
+        x: cardPadding + 8,
+        y: currentY + 6,
+        text: actionTextValue,
+        fontSize: 12,
+        fontFamily: DEFAULT_FONT_FAMILY,
+        fill: "#475569",
+        width: bodyWidth - 16,
+        lineHeight: 1.4,
+        wrap: "word",
+        draggable: false,
+        listening: false,
+      });
+
+      const actionBg = new Konva.Rect({
+        x: cardPadding,
+        y: currentY,
+        width: bodyWidth,
+        height: actionText.height() + 12,
+        fill: "#f8fafc",
+        stroke: "#e2e8f0",
+        strokeWidth: 1,
+        cornerRadius: 8,
+        draggable: false,
+        listening: false,
+      });
+
+      group.add(actionBg);
+      group.add(actionText);
+      currentY += actionBg.height() + 6;
+    });
+  }
+
+  cardBg.height(currentY + cardPadding);
+
+  group.on("click tap", (evt) => {
+    handleNodeClick(evt, group);
+  });
+
+  layer.add(group);
+
+  selectedNodes = [group];
+  transformer.nodes(selectedNodes);
+  addNodeSelectStyle(group);
+  group.moveToTop();
   transformer.moveToTop();
 
   layer.batchDraw();
@@ -4061,6 +4232,7 @@ defineExpose({
   clearAiGuideLine,
   resetNodesData,
   addTextAtPosition,
+  addResonanceGroupAtPosition,
   addPCMAtPosition,
   addMemoryAtPosition,
   replaceImageNodeSource,

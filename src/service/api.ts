@@ -432,38 +432,7 @@ export const CreateStory = (data: any): any => {
     });
 };
 
-export const gelConstellateToolData = (data: any): any => {
-    return request.post("/api/constellate/suggest", data);
 
-    const response = {
-        success: true,
-        data: {
-            title: "constellate text",
-            images: [
-                {
-                    image_url:
-                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-                    image_id: "img-crop-20260312161530-a8f3c1d2b0",
-                    pcm_ref: "PCM-yyy",
-                    reason: "画中白鹿被金色光芒环绕，与'包裹'的温暖感共鸣",
-                },
-                {
-                    image_url:
-                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-                    image_id: "memory-20260313050838889-937a186605",
-                    type: "memory",
-                    text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。",
-                },
-            ],
-        },
-    };
-
-    return new Promise(function (resolve) {
-        setTimeout(function () {
-            resolve(response);
-        }, 1000);
-    });
-};
 
 export const ReflectHint = (data: any): any => {
     console.log("ReflectHint data:", data);
@@ -484,45 +453,6 @@ export const ReflectHint = (data: any): any => {
                 {
                     id: "perspective-YYYY***-***",
                     name: "过去的你",
-                },
-                {
-                    id: "perspective-YYYY***-***",
-                    name: "诗人",
-                },
-                {
-                    id: "perspective-YYYY***-***",
-                    name: "人类学家",
-                },
-            ],
-        },
-    };
-
-    return new Promise(function (resolve) {
-        setTimeout(function () {
-            resolve(response);
-        }, 1000);
-    });
-};
-
-export const ConstellateHint = (data: any): any => {
-    console.log("ConstellateHint data:", data);
-    return request.post("/api/constellate/hint", data);
-
-    const response = {
-        success: true,
-        data: {
-            depths: [
-                "描述层",
-                "感受层",
-                "评价层",
-                "分析层",
-                "结论层",
-                "行动层",
-            ],
-            perspectives: [
-                {
-                    id: "perspective-YYYY***-***",
-                    name: "过去的你11222",
                 },
                 {
                     id: "perspective-YYYY***-***",
@@ -613,6 +543,262 @@ export const ReflectQuestions = (data: any): any => {
         }, 1000);
     });
 };
+
+export const ConstellateHint = (data: any): any => {
+    console.log("ConstellateHint data:", data);
+    return request.post("/api/constellate/hint", data);
+
+    const response = {
+        success: true,
+        data: {
+            depths: [
+                "描述层",
+                "感受层",
+                "评价层",
+                "分析层",
+                "结论层",
+                "行动层",
+            ],
+            perspectives: [
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "过去的你11222",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "诗人",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "人类学家",
+                },
+            ],
+        },
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
+export const ConstellateSuggest = (data: any): any => {
+    return request.post("/api/constellate/suggest", data);
+
+    const response = {
+        success: true,
+        data: {
+            title: "constellate text",
+            images: [
+                {
+                    image_url:
+                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
+                    image_id: "img-crop-20260312161530-a8f3c1d2b0",
+                    pcm_ref: "PCM-yyy",
+                    reason: "画中白鹿被金色光芒环绕，与'包裹'的温暖感共鸣",
+                },
+                {
+                    image_url:
+                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
+                    image_id: "memory-20260313050838889-937a186605",
+                    type: "memory",
+                    text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。",
+                },
+            ],
+        },
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
+
+export const ResonanceHint = (data: any): any => {
+    console.log("ResonanceHint data:", data);
+    return request.post("/api/resonance/hint", data);
+
+    const response = {
+        success: true,
+        data: {
+            depths: [
+                "描述层",
+                "感受层",
+                "评价层",
+                "分析层",
+                "结论层",
+                "行动层",
+            ],
+            perspectives: [
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "过去的你",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "诗人",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "人类学家",
+                },
+            ],
+        },
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
+export const ResonanceAnalysis = (_data: any): any => {
+    return request.post("/api/resonance/analysis", _data);
+
+    const response = {
+        success: true,
+        data: {
+    "analysis": [
+        {
+            "id": "analysis-20260318102859808-6eb5255b0f",
+            "type": "analysis",
+            "kind": "similarity",
+            "level": 1,
+            "keyword": "温暖亲切",
+            "text": "这两个记忆元素都表达了对宠物店环境的温暖亲切感，尤其是在情感和美学的微特征上高度一致，因此揭示了个人放松和慰藉的本质渴望。",
+            "confidence": 0.88,
+            "created_at": "2026-03-18T10:28:59.808Z",
+            "actions": [
+                {
+                    "id": "action-20260318102859808-15126c87d4",
+                    "type": "action",
+                    "kind": "whisper",
+                    "description": "为这组温暖亲切的元素写一段低语注释，捕捉其情感共鸣",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-bff8d9b560",
+                    "type": "action",
+                    "kind": "crop",
+                    "description": "裁取图片中温暖亲切的核心画面，突出这份感受",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-13a88e717d",
+                    "type": "action",
+                    "kind": "add_memory",
+                    "description": "补充一段曾在类似环境中获得温暖亲切的记忆",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                }
+            ]
+        },
+        {
+            "id": "analysis-20260318102859808-c42ad2fbe8",
+            "type": "analysis",
+            "kind": "contrast",
+            "level": 2,
+            "keyword": "仅剩思念",
+            "text": "元素 1 的“怡然自得”和元素 2 的“仅剩思念”略显对比，尽管表面相似，却反映出个人内心存在的一丝差异状态。",
+            "confidence": 0.75,
+            "created_at": "2026-03-18T10:28:59.808Z",
+            "actions": [
+                {
+                    "id": "action-20260318102859808-744065fdd7",
+                    "type": "action",
+                    "kind": "whisper",
+                    "description": "为这组对比写一段低语注释，探讨内心差异感",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-10ae2c3c74",
+                    "type": "action",
+                    "kind": "crop",
+                    "description": "裁取图片中体现微小情感差异的细节",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-d5cfa00b71",
+                    "type": "action",
+                    "kind": "add_memory",
+                    "description": "补充一段感受到内心微小变化的记忆",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                }
+            ]
+        },
+        {
+            "id": "analysis-20260318102859808-9d45cf4f8c",
+            "type": "analysis",
+            "kind": "sequence",
+            "level": 3,
+            "keyword": "日常放松",
+            "text": "这两个记忆元素反映了个体在宠物店中获得日常放松感的过程，揭示了日常环境如何引导到心灵休憩的轨迹。",
+            "confidence": 0.65,
+            "created_at": "2026-03-18T10:28:59.808Z",
+            "actions": [
+                {
+                    "id": "action-20260318102859808-91455d5c3e",
+                    "type": "action",
+                    "kind": "whisper",
+                    "description": "为这段放松过程写下低语注释，探索日常放松的微妙变化",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-f23c4dbc56",
+                    "type": "action",
+                    "kind": "crop",
+                    "description": "裁取图片中展示日常放松轨迹的部分",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                },
+                {
+                    "id": "action-20260318102859808-47d990e7f7",
+                    "type": "action",
+                    "kind": "add_memory",
+                    "description": "补充一段有关日常环境如何帮助心灵休憩的记忆",
+                    "created_at": "2026-03-18T10:28:59.808Z"
+                }
+            ]
+        }
+    ]
+},
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
+export const ResonanceFuse = (_data: any): any => {
+    return request.post("/api/resonance/fuse", _data);
+
+    const response = {
+        success: true,
+        data: {
+  "id": "fuse-20260318100000000-a1b2c3d4e5",
+  "type": "fuse",
+  "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260316014203014-9081ad0ba7/generated/img-gen-20260316014229726-25d90aaa7f.png"
+,
+  "image_prompt": "A soft picture-book collage illustration blending temple cats, serene water reflections, and warm golden light into a dreamlike composite scene",
+  "description": "两段记忆中的宁静氛围被融合——寺庙中猫咪的安然与水面雕塑的灵性共存，交织出一个温暖又略带神秘的拼贴画面。",
+  "keywords": ["宁静", "融合", "灵性", "温暖", "拼贴"],
+  "created_at": "2026-03-18T10:00:00.000Z"
+},
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
+
+
 
 export const cropUpdate = (data: any): any => {
     console.log("ConstellateHint data:", data);

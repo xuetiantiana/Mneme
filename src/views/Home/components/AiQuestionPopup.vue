@@ -41,9 +41,39 @@
         <div v-else class="empty-state">暂无图片</div>
       </div>
 
+      <!-- Resonance 专区：analysis 列表 -->
+      <div v-else-if="isResonanceView" class="popup-content resonance-content">
+        <template v-if="resonanceData && resonanceData.length > 0">
+          <div
+            v-for="(item, index) in resonanceData"
+            :key="item?.id || index"
+            class="resonance-card"
+            :class="{ active: selectedResonanceIndex === index }"
+            @click="selectResonance(index)"
+          >
+            <div class="resonance-card-head">
+              <span class="resonance-kind">{{ item?.kind || "analysis" }}</span>
+              <span class="resonance-level">L{{ item?.level ?? "-" }}</span>
+            </div>
+            <div v-if="item?.keyword" class="resonance-keyword">{{ item.keyword }}</div>
+            <div class="resonance-text">{{ item?.text || "" }}</div>
+            <div v-if="Array.isArray(item?.actions) && item.actions.length > 0" class="resonance-actions">
+              <div
+                v-for="action in item.actions"
+                :key="action?.id || `${index}-${action?.kind || ''}`"
+                class="resonance-action-item"
+              >
+                {{ action?.description || action?.kind || "" }}
+              </div>
+            </div>
+          </div>
+        </template>
+        <div v-else class="empty-state">暂无分析结果</div>
+      </div>
+
       <!-- Reflect 专区：问题卡片列表 -->
       <div
-        v-else-if="questionList && questionList.length > 0"
+        v-else-if="isReflectView && questionList && questionList.length > 0"
         class="popup-content"
       >
         <div
@@ -91,11 +121,21 @@
           确认
         </el-button>
       </div>
+      <div v-else-if="isResonanceView" class="popup-footer">
+        <el-button
+          type="primary"
+          size="small"
+          @click="handleConfirm"
+          :disabled="confirmDisabled"
+        >
+          确认
+        </el-button>
+      </div>
     </div>
 
     <!-- Reflect 专用右侧工具栏（Constellate 不显示） -->
     <div
-      v-if="selectedIndex !== -1 && !loading && !isConstellateView"
+      v-if="selectedIndex !== -1 && !loading && !isConstellateView && quickTools.length > 0"
       class="popup-tools-panel"
       :style="toolsPanelStyle"
       @click.stop
@@ -142,6 +182,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  resonanceData: {
+    type: Array,
+    default: () => [],
+  },
   constellateData: {
     type: Object,
     default: () => ({}),
@@ -166,6 +210,7 @@ const emit = defineEmits(["confirm", "cancel", "tool-click"]);
 // 通用状态
 // ------------------------
 const selectedIndex = ref(-1);
+const selectedResonanceIndex = ref(-1);
 const selectedConstellateImageIndexes = ref([]);
 const popupWrapRef = ref(null);
 const questionCardRefs = ref([]);
@@ -185,6 +230,7 @@ watch(
   (val) => {
     if (val) {
       selectedIndex.value = -1;
+      selectedResonanceIndex.value = -1;
       selectedConstellateImageIndexes.value = [];
       popupOffset.value = { x: 0, y: 0 };
       nextTick(() => {
@@ -226,6 +272,11 @@ watch(
       selectedIndex.value = -1;
       selectedConstellateImageIndexes.value = [];
     }
+    if (val === "Resonance") {
+      selectedIndex.value = -1;
+      selectedResonanceIndex.value = -1;
+      selectedConstellateImageIndexes.value = [];
+    }
   }
 );
 
@@ -234,6 +285,14 @@ watch(
   () => props.constellateData,
   () => {
     selectedConstellateImageIndexes.value = [];
+  },
+  { deep: true }
+);
+
+watch(
+  () => props.resonanceData,
+  () => {
+    selectedResonanceIndex.value = -1;
   },
   { deep: true }
 );
@@ -264,6 +323,7 @@ const selectedItem = computed(() => {
 });
 
 const isReflectView = computed(() => props.toolType === "Reflect");
+const isResonanceView = computed(() => props.toolType === "Resonance");
 const isDraggableView = computed(
   () => props.toolType === "Reflect" || props.toolType === "Constellate"
 );
@@ -328,6 +388,9 @@ const confirmDisabled = computed(() => {
       selectedConstellateImageIndexes.value.length === 0
     );
   }
+  if (isResonanceView.value) {
+    return selectedResonanceIndex.value === -1;
+  }
   return selectedIndex.value === -1;
 });
 
@@ -345,6 +408,11 @@ const toggleConstellateImage = (index) => {
 const toolsPanelStyle = computed(() => ({
   top: `${toolsPanelTop.value}px`,
 }));
+
+const selectedResonanceItem = computed(() => {
+  if (selectedResonanceIndex.value < 0) return null;
+  return props.resonanceData?.[selectedResonanceIndex.value] || null;
+});
 
 // ------------------------
 // Reflect 交互
@@ -377,6 +445,10 @@ const updateToolsPanelTop = () => {
 
 const selectQuestion = (index) => {
   selectedIndex.value = index;
+};
+
+const selectResonance = (index) => {
+  selectedResonanceIndex.value = index;
 };
 
 // Reflect 项上的快捷工具点击
@@ -465,6 +537,17 @@ const handleConfirm = () => {
       },
     });
     return;
+  }
+
+  // Resonance：提交当前选中的 analysis 项。
+  if (isResonanceView.value) {
+    const item = selectedResonanceItem.value;
+    emit("confirm", {
+      label: props.label,
+      resonanceItem: item,
+      question: String(item?.text || item?.keyword || "").trim(),
+      resonanceIndex: selectedResonanceIndex.value,
+    });
   }
 };
 
@@ -597,6 +680,74 @@ onBeforeUnmount(() => {
   border-color: #1890ff;
   background: #1890ff;
   color: #fff;
+}
+
+/* ===== Resonance 样式 ===== */
+.resonance-content {
+  gap: 10px;
+}
+
+.resonance-card {
+  border: 1px solid #e6edf7;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resonance-card:hover {
+  border-color: #93c5fd;
+}
+
+.resonance-card.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.resonance-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.resonance-kind {
+  font-size: 12px;
+  color: #475569;
+}
+
+.resonance-level {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.resonance-keyword {
+  font-size: 13px;
+  color: #1d4ed8;
+  margin-bottom: 6px;
+}
+
+.resonance-text {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.resonance-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resonance-action-item {
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
 }
 
 /* ===== Reflect 样式 ===== */

@@ -25,6 +25,7 @@
         :tool-type="aiPopupData.toolType"
         :line-length="aiPopupData.lineLength"
         :question-list="aiPopupData.questionList"
+        :resonance-data="aiPopupData.resonanceData"
         :constellate-data="aiPopupData.constellateData"
         :loading="aiPopupData.loading"
         :quick-tools="aiQuickTools"
@@ -48,20 +49,6 @@
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
       />
-      <div
-        v-if="resonancePopup.visible"
-        class="resonance-popup"
-        :style="{
-          left: `${resonancePopup.position.x}px`,
-          top: `${resonancePopup.position.y}px`,
-        }"
-      >
-        <div class="resonance-popup-header">
-          <span>Resonance 返回结果</span>
-          <button class="resonance-popup-close" @click="closeResonancePopup">×</button>
-        </div>
-        <pre class="resonance-result-pre">{{ resonancePopup.text }}</pre>
-      </div>
     </div>
 
     <!-- 顶部导航栏 -->
@@ -90,12 +77,34 @@
         </el-icon>
       </div>
       <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Resonance', disabled: hintLoading }"
+        class="nav-item resonance-nav"
+        :class="[{ open: resonanceMenuVisible }, { active: currentNav === 'Resonance', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Resonance' }]"
         :data-tip="getNavHint('Resonance')"
-        @click="handleNavClick('Resonance')"
+        @mouseenter="handleResonanceMenuEnter"
+        @mouseleave="handleResonanceMenuLeave"
       >
         Resonance
+        <el-icon v-if="hintLoading && pendingAiTool === 'Resonance'" class="nav-loading-inline is-loading">
+          <Loading />
+        </el-icon>
+        <div class="resonance-submenu" @mouseenter="handleResonanceMenuEnter" @mouseleave="handleResonanceMenuLeave" @click.stop>
+          <button
+            type="button"
+            class="resonance-submenu-btn"
+            :disabled="hintLoading"
+            @click="handleResonanceSubAction('Analysis')"
+          >
+            Analysis
+          </button>
+          <button
+            type="button"
+            class="resonance-submenu-btn"
+            :disabled="hintLoading"
+            @click="handleResonanceSubAction('Fuse')"
+          >
+            Fuse
+          </button>
+        </div>
       </div>
       <div class="nav-separator">|</div>
       <div
@@ -186,6 +195,7 @@
         </ul>
       </el-popover>
     </div>
+
   </div>
 </template>
 
@@ -193,18 +203,22 @@
 import { ref, computed, defineProps, onMounted, onUnmounted, nextTick } from "vue";
 import { Edit, Promotion, Search, Loading } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
+import Konva from "konva";
 import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
 import CropImagePopup from "./CropImagePopup.vue";
+import { createImageAndTextNodes } from "@/utils/canvasPositionUtils";
 import {
   CreateOnePCM,
-  gelConstellateToolData,
+  ConstellateSuggest,
   ReflectHint,
   ConstellateHint,
+  ResonanceHint,
+  ResonanceAnalysis,
+  ResonanceFuse,
   ReflectQuestions,
   cropUpdate,
-  ResonanceCompose,
   whisperUpdate,
 } from "@/service/api";
 import { operation_logs } from "@/service/operationLogs";
@@ -232,6 +246,8 @@ const reflectPopupTargetNode = ref(null); // 弹窗生命周期内用于 QuickTo
 const currentHintPerspectives = ref([]); // 当前 hint 返回的 perspective 列表
 const hintLoading = ref(false); // ReflectHint/ConstellateHint 请求中
 const pendingAiTool = ref(""); // 当前正在请求提示词的工具
+const resonanceMenuVisible = ref(false);
+let resonanceMenuCloseTimer = null;
 const whisperPopupVisible = ref(false);
 const whisperPopupData = ref({
   position: { x: 0, y: 0 },
@@ -243,8 +259,13 @@ const whisperSubmitting = ref(false);
 const AI_RIGHT_LABELS_BY_TOOL = {
   Reflect: ["反思细节", "反思转化"],
   Constellate: ["直接检索", "远距离启发"],
+  Resonance: ["共振追问", "意象扩展"],
 };
 const aiQuickTools = computed(() => {
+  if (aiPopupData.value?.toolType === "Resonance") {
+    return [];
+  }
+
   const quickType = aiPopupData.value?.reflectTargetType || reflectTargetType.value;
 
   if (quickType === "pcm_unit") {
@@ -281,88 +302,7 @@ const cropPopupData = ref({
   targetNode: null,
 });
 const cropSubmitting = ref(false);
-const resonancePopup = ref({
-  visible: false,
-  position: { x: 0, y: 0 },
-  stagePos: null,
-  targetNode: null,
-  text: "",
-});
 let whisperCanvasEl = null;
-
-const extractResonanceNodesFromGroup = (groupNode) => {
-  if (!groupNode || typeof groupNode.getChildren !== "function") {
-    return [];
-  }
-
-  const nodes = [];
-  const walk = (node) => {
-    if (!node) return;
-
-    const className = node.className || node.getClassName?.();
-    if (node?.name?.() === "group-bg" || node?.name?.() === "group-ungroup-btn") {
-      return;
-    }
-
-    const customType = String(node.getAttr?.("customType") || "").trim();
-    const id = String(node.id?.() || node.getAttr?.("id") || "").trim();
-    const type = customType || String(className || "node").toLowerCase();
-
-    if (id) {
-      const payload = {
-        id,
-        type,
-      };
-
-      if (className === "Image") {
-        const imageElement = node.image?.();
-        const imageUrl = String(
-          imageElement?.src ||
-            node.getAttr?.("imageSrc") ||
-            node.getAttr?.("image_url") ||
-            ""
-        ).trim();
-        if (imageUrl) {
-          payload.url = imageUrl;
-        }
-      }
-
-      if (className === "Text") {
-        const text = String(node.text?.() || "").trim();
-        if (text) {
-          payload.text = text;
-        }
-      }
-
-      nodes.push(payload);
-    }
-
-    if (typeof node.getChildren === "function") {
-      const children = node.getChildren();
-      children?.forEach?.((child) => walk(child));
-    }
-  };
-
-  walk(groupNode);
-
-  const deduped = [];
-  const keySet = new Set();
-  nodes.forEach((item) => {
-    const key = `${item.id}__${item.type}__${item.url || ""}__${item.text || ""}`;
-    if (keySet.has(key)) return;
-    keySet.add(key);
-    deduped.push(item);
-  });
-
-  return deduped;
-};
-
-const closeResonancePopup = () => {
-  resonancePopup.value.visible = false;
-  resonancePopup.value.stagePos = null;
-  resonancePopup.value.targetNode = null;
-  resonancePopup.value.text = "";
-};
 
 // 处理点击外部区域取消选中的逻辑
 const handleClickOutside = (event) => {
@@ -434,6 +374,10 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside);
   window.removeEventListener("keydown", handleGlobalKeydown);
+  if (resonanceMenuCloseTimer) {
+    clearTimeout(resonanceMenuCloseTimer);
+    resonanceMenuCloseTimer = null;
+  }
   if (whisperCanvasEl) {
     whisperCanvasEl.removeEventListener("click", handleCanvasClick);
     whisperCanvasEl.removeEventListener("mousemove", handleCanvasMouseMove);
@@ -449,6 +393,7 @@ const aiPopupData = ref({
   lineLength: 0,
   position: { x: 0, y: 0 },
   questionList: [], // 新增：存储接口返回的问题列表
+  resonanceData: [],
   constellateData: {},
   loading: false, // 新增：加载状态
   targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
@@ -466,26 +411,16 @@ const handleAddText = () => {
 };
 
 // 组装 ReflectHint / ReflectQuestions 的基础 UNIT 入参。
-// 输入: resetNodesData 返回的选中节点数组（元素通常是 JSON 字符串）。
+// 输入: resetNodesData 返回的选中节点数组（元素通常是 JSON 对象）。
 // 规则:
 // 1) 默认使用第一个选中节点作为当前操作节点。
 // 2) id 优先取 attrs.id，其次取节点顶层 id。
 // 3) type 优先取 attrs.customType，其次 className/type。
-// 4) content 为完整节点对象；若解析失败则回退为空对象。
+// 4) content 为完整节点对象；若首项缺失则回退为空对象。
 // 5) user_id / session_id 通过请求头传递，不再放在 body 内。
 const buildHintPayload = (nodeJsonList) => {
   const firstRaw = Array.isArray(nodeJsonList) && nodeJsonList.length > 0 ? nodeJsonList[0] : null;
-  let firstNode = null;
-
-  if (typeof firstRaw === "string") {
-    try {
-      firstNode = JSON.parse(firstRaw);
-    } catch (e) {
-      firstNode = null;
-    }
-  } else if (firstRaw && typeof firstRaw === "object") {
-    firstNode = firstRaw;
-  }
+  const firstNode = firstRaw && typeof firstRaw === "object" ? firstRaw : null;
 
   const attrs = firstNode?.attrs || {};
   const id = attrs.id || firstNode?.id || "";
@@ -499,6 +434,90 @@ const buildHintPayload = (nodeJsonList) => {
   };
 };
 
+const RESONANCE_GROUP_EXCLUDED_NAMES = new Set([
+  "group-bg",
+  "group-ungroup-btn",
+]);
+
+// Resonance 业务过滤：排除 group 的装饰/操作节点，避免把背景和按钮传给后端。
+// 可删除性：不建议删除。resetNodesData 只做快照导出，不做业务级过滤。
+const isExcludedResonanceGroupChildName = (name) =>
+  RESONANCE_GROUP_EXCLUDED_NAMES.has(String(name || "").trim());
+
+// 将 resetNodesData 快照 children 递归转换为 Resonance 接口需要的结构：
+// - 字段名使用 attr/className（与后端约定一致）
+// - 递归保留嵌套 children
+// - 过滤掉 group-bg / group-ungroup-btn
+// 可删除性：不建议删除。若直接把 resetNodesData 原始 children 透传，
+// 字段结构与无效节点会一并进入 payload，可能导致后端语义偏差。
+const serializeResonanceSnapshotChild = (child) => {
+  if (!child) return null;
+
+  const childName = child?.attrs?.name;
+  if (isExcludedResonanceGroupChildName(childName)) {
+    return null;
+  }
+
+  const serialized = {
+    attrs: (typeof child?.attrs === "object" && child.attrs) || {},
+    className: String(child?.className || ""),
+  };
+
+  if (Array.isArray(child?.children)) {
+    const nestedChildren = child.children
+      .map((nested) => serializeResonanceSnapshotChild(nested))
+      .filter(Boolean);
+    if (nestedChildren.length > 0) {
+      serialized.children = nestedChildren;
+    }
+  }
+
+  return serialized;
+};
+
+const buildResonanceHintPayload = (nodeJsonList) => {
+  // 与 buildHintPayload 保持一致：优先取第一个快照作为当前操作节点。
+  const firstRaw = Array.isArray(nodeJsonList) && nodeJsonList.length > 0 ? nodeJsonList[0] : null;
+  const firstNode = firstRaw && typeof firstRaw === "object" ? firstRaw : null;
+
+  const attrs = firstNode?.attrs || {};
+
+  // Resonance 先做 children 业务过滤，再根据 content.className 决定是否回传 groups。
+  let content = firstNode || {};
+  const isGroupNode =
+    String(attrs?.customType || "") === "group" ||
+    String(attrs?.name || "") === "wm-group" ||
+    String(firstNode?.className || "") === "Group";
+
+  if (isGroupNode && Array.isArray(firstNode?.children)) {
+    const filteredChildren = firstNode.children
+      .map((child) => serializeResonanceSnapshotChild(child))
+      .filter(Boolean);
+
+    content = {
+      ...firstNode,
+      attrs: {
+        ...(firstNode?.attrs || {}),
+        children: filteredChildren,
+      },
+      children: filteredChildren,
+    };
+  }
+
+  const groups =
+    String(content?.className || "").toLowerCase() === "group"
+      ? Array.isArray(content?.attrs?.children)
+        ? content.attrs.children
+        : []
+      : [];
+
+  return {
+    groups,
+    operation_logs,
+    group_meaning: String(attrs?.group_meaning || attrs?.groupMeaning || "").trim(),
+  };
+};
+
 const applyHintRingLabels = async (toolType = "Reflect") => {
   if (!konvaRef.value?.setAiRingLabels) {
     return false;
@@ -506,12 +525,23 @@ const applyHintRingLabels = async (toolType = "Reflect") => {
 
   hintLoading.value = true;
   try {
-    const hintApi = toolType === "Constellate" ? ConstellateHint : ReflectHint;
-    const hintRes = await hintApi(buildHintPayload(reflectSelectedNodes.value));
-    const perspectives = hintRes?.data?.perspectives || [];
-    currentHintPerspectives.value = Array.isArray(perspectives) ? perspectives : [];
+    const hintApi =
+      toolType === "Constellate"
+        ? ConstellateHint
+        : toolType === "Resonance"
+        ? ResonanceHint
+        : ReflectHint;
+    const hintPayload =
+      toolType === "Resonance"
+        ? buildResonanceHintPayload(reflectSelectedNodes.value)
+        : buildHintPayload(reflectSelectedNodes.value);
+    const hintRes = await hintApi(hintPayload);
+    const rawPerspectives =
+      hintRes?.data?.perspectives ?? hintRes?.data?.dimensions ?? [];
+    const perspectives = Array.isArray(rawPerspectives) ? rawPerspectives : [];
+    currentHintPerspectives.value = perspectives;
     const labels = perspectives
-      .map((item) => item?.name)
+      .map((item) => item?.name || item?.text)
       .filter((name) => typeof name === "string" && name.trim().length > 0);
     konvaRef.value.setAiRingLabels(labels);
     return true;
@@ -522,6 +552,8 @@ const applyHintRingLabels = async (toolType = "Reflect") => {
       message:
         toolType === "Constellate"
           ? "ConstellateHint 获取失败，已使用默认标签"
+          : toolType === "Resonance"
+          ? "ResonanceHint 获取失败，已使用默认标签"
           : "ReflectHint 获取失败，已使用默认标签",
       type: "warning",
     });
@@ -533,7 +565,7 @@ const applyHintRingLabels = async (toolType = "Reflect") => {
 
 const getPerspectivePayloadByLabel = (label) => {
   const matched = (currentHintPerspectives.value || []).find(
-    (item) => item?.name === label
+    (item) => (item?.name || item?.text || "") === label
   );
 
   if (matched) {
@@ -578,7 +610,11 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
   }
 
   // 如果之前有其他工具处于激活状态，先取消之前的
-  if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
+  if (
+    currentNav.value === "Reflect" ||
+    currentNav.value === "Constellate" ||
+    currentNav.value === "Resonance"
+  ) {
     if (konvaRef.value && konvaRef.value.cancelAiAssist) {
       konvaRef.value.cancelAiAssist();
     }
@@ -595,7 +631,7 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
 
   // 获取选中的节点并存储
   const selectedNodes = konvaRef.value.getSelectedNodes() || [];
-  if (toolType === "Reflect" || toolType === "Constellate") {
+  if (toolType === "Reflect" || toolType === "Constellate" || toolType === "Resonance") {
     if (selectedNodes.length === 0) {
       ElMessage({
         message: "请先选中一个node",
@@ -644,11 +680,24 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     }
   }
 
+  if (toolType === "Resonance") {
+    const selectedType = selectedNodes[0]?.getAttr?.("customType") || "";
+    const selectedName = String(selectedNodes[0]?.name?.() || "");
+    if (selectedType !== "group" || selectedName !== "wm-group") {
+      ElMessage({
+        message: "Resonance 仅支持选中 Group 按钮创建的 group",
+        type: "warning",
+      });
+      currentNav.value = "";
+      return;
+    }
+  }
+
   reflectSelectedNodes.value = konvaRef.value.resetNodesData(selectedNodes);
   reflectTargetNode.value = selectedNodes[0] || null;
   reflectTargetType.value = selectedNodes[0]?.getAttr?.("customType") || "";
 
-  if (toolType === "Reflect" || toolType === "Constellate") {
+  if (toolType === "Reflect" || toolType === "Constellate" || toolType === "Resonance") {
     pendingAiTool.value = toolType;
     const hintSuccess = await applyHintRingLabels(toolType);
     pendingAiTool.value = "";
@@ -683,7 +732,7 @@ const handleNavClick = async (navItem) => {
     return;
   }
 
-  if (navItem === "Reflect" || navItem === "Constellate") {
+  if (navItem === "Reflect" || navItem === "Constellate" || navItem === "Resonance") {
     closeWhisperPopup();
     handleAiAssistClick(navItem);
   } else {
@@ -735,72 +784,6 @@ const handleNavClick = async (navItem) => {
       return;
     }
 
-    if (navItem === "Resonance") {
-      const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
-      if (selectedNodes.length !== 1) {
-        ElMessage({
-          message: "请先选中一个 group 后再使用 Resonance",
-          type: "warning",
-        });
-        currentNav.value = "";
-        return;
-      }
-
-      const selected = selectedNodes[0];
-      const selectedType = String(selected?.getAttr?.("customType") || "");
-      const selectedName = String(selected?.name?.() || "");
-      if (selectedType !== "group" || selectedName !== "wm-group") {
-        ElMessage({
-          message: "Resonance 仅支持 Group 按钮创建的 group",
-          type: "warning",
-        });
-        currentNav.value = "";
-        return;
-      }
-
-      const nodes = extractResonanceNodesFromGroup(selected);
-      if (!Array.isArray(nodes) || nodes.length === 0) {
-        ElMessage({
-          message: "当前 group 中没有可用于 Resonance 的节点数据",
-          type: "warning",
-        });
-        currentNav.value = "";
-        return;
-      }
-
-      const requestBody = {
-        data: nodes,
-        operation_logs,
-      };
-
-      try {
-        const response = await ResonanceCompose(requestBody);
-        const resultData = response?.data?.data ?? response?.data ?? response ?? {};
-        const anchor = getPopupPositionRightOfNode(selected);
-        const popupPos = getPopupPositionFromStagePos(anchor?.stagePos) || {
-          x: 24,
-          y: 80,
-        };
-
-        resonancePopup.value = {
-          visible: true,
-          position: popupPos,
-          stagePos: anchor?.stagePos || null,
-          targetNode: selected,
-          text: JSON.stringify(resultData, null, 2),
-        };
-      } catch (error) {
-        console.error("ResonanceCompose failed:", error);
-        ElMessage({
-          message: "Resonance 调用失败，请稍后重试",
-          type: "error",
-        });
-      } finally {
-        currentNav.value = "";
-      }
-      return;
-    }
-
     if (navItem === "Whisper" || navItem === "Add Memory") {
       if (currentNav.value === navItem) {
         currentNav.value = "";
@@ -824,7 +807,11 @@ const handleNavClick = async (navItem) => {
     }
 
     // 其他导航项点击逻辑，切换时取消 AI 状态
-    if (currentNav.value === "Reflect" || currentNav.value === "Constellate") {
+    if (
+      currentNav.value === "Reflect" ||
+      currentNav.value === "Constellate" ||
+      currentNav.value === "Resonance"
+    ) {
       if (konvaRef.value && konvaRef.value.cancelAiAssist) {
         konvaRef.value.cancelAiAssist();
       }
@@ -838,6 +825,258 @@ const handleNavClick = async (navItem) => {
       stage.container().style.cursor = "default";
       stage.container().removeAttribute("title");
     }
+  }
+};
+
+const handleResonanceSubAction = (action) => {
+  if (hintLoading.value) {
+    return;
+  }
+
+  resonanceMenuVisible.value = false;
+  if (resonanceMenuCloseTimer) {
+    clearTimeout(resonanceMenuCloseTimer);
+    resonanceMenuCloseTimer = null;
+  }
+
+  if (action === "Analysis") {
+    handleNavClick("Resonance");
+    return;
+  }
+
+  if (action === "Fuse") {
+    runResonanceFuse();
+  }
+};
+
+const handleResonanceMenuEnter = () => {
+  if (resonanceMenuCloseTimer) {
+    clearTimeout(resonanceMenuCloseTimer);
+    resonanceMenuCloseTimer = null;
+  }
+  resonanceMenuVisible.value = true;
+};
+
+const handleResonanceMenuLeave = () => {
+  if (resonanceMenuCloseTimer) {
+    clearTimeout(resonanceMenuCloseTimer);
+  }
+
+  // 给鼠标从主按钮移动到下方菜单留一个短暂缓冲，避免闪退。
+  resonanceMenuCloseTimer = setTimeout(() => {
+    resonanceMenuVisible.value = false;
+    resonanceMenuCloseTimer = null;
+  }, 120);
+};
+
+const captureGroupScreenshotForFuse = (groupNode) => {
+  if (!groupNode || typeof groupNode.toDataURL !== "function") {
+    return "";
+  }
+
+  const hiddenNodeSnapshots = [];
+  const shadowSnapshots = [];
+
+  try {
+    // 复用同一套排除规则，隐藏 group 背景与 ungroup 按钮。
+    const excludedNodes = groupNode.find((node) =>
+      isExcludedResonanceGroupChildName(node?.name?.())
+    ) || [];
+    excludedNodes.forEach((node) => {
+      if (!node) return;
+      hiddenNodeSnapshots.push({ node, visible: node.visible() });
+      node.visible(false);
+    });
+
+    // 去掉 group 内 shape 的阴影，避免把选中态 boxshadow 带进截图。
+    const shapeNodes = groupNode.find((node) => node instanceof Konva.Shape) || [];
+    shapeNodes.forEach((shape) => {
+      shadowSnapshots.push({
+        node: shape,
+        shadowColor: shape.shadowColor(),
+        shadowBlur: shape.shadowBlur(),
+        shadowOpacity: shape.shadowOpacity(),
+        shadowOffset: shape.shadowOffset(),
+      });
+
+      shape.shadowColor("transparent");
+      shape.shadowBlur(0);
+      shape.shadowOpacity(0);
+      shape.shadowOffset({ x: 0, y: 0 });
+    });
+
+    groupNode.getLayer?.()?.batchDraw?.();
+    return String(groupNode.toDataURL({ pixelRatio: 1 }) || "").trim();
+  } catch (error) {
+    return "";
+  } finally {
+    hiddenNodeSnapshots.forEach((item) => {
+      item.node.visible(item.visible);
+    });
+
+    shadowSnapshots.forEach((item) => {
+      item.node.shadowColor(item.shadowColor);
+      item.node.shadowBlur(item.shadowBlur);
+      item.node.shadowOpacity(item.shadowOpacity);
+      item.node.shadowOffset(item.shadowOffset || { x: 0, y: 0 });
+    });
+
+    groupNode.getLayer?.()?.batchDraw?.();
+  }
+};
+
+const runResonanceFuse = async () => {
+  const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
+  if (selectedNodes.length !== 1) {
+    ElMessage({
+      message: "请先选中一个 group 后再使用 Fuse",
+      type: "warning",
+    });
+    return;
+  }
+
+  const groupNode = selectedNodes[0];
+  const selectedType = String(groupNode?.getAttr?.("customType") || "");
+  const selectedName = String(groupNode?.name?.() || "");
+  if (selectedType !== "group" || selectedName !== "wm-group") {
+    ElMessage({
+      message: "Fuse 仅支持 Group 按钮创建的 group",
+      type: "warning",
+    });
+    return;
+  }
+
+  reflectSelectedNodes.value = konvaRef.value?.resetNodesData?.([groupNode]) || [];
+  reflectTargetNode.value = groupNode;
+  reflectTargetType.value = selectedType;
+
+  const payload = buildResonanceHintPayload(reflectSelectedNodes.value);
+
+  // 为 Fuse 请求补充当前 group 的截图快照。
+  const screenshot = captureGroupScreenshotForFuse(groupNode);
+  payload.screenshot = screenshot;
+
+  pendingAiTool.value = "Resonance";
+  hintLoading.value = true;
+  try {
+    const res = await ResonanceFuse(payload);
+    const fuseData = res?.data || {};
+
+    const imageSrc = String(
+      fuseData?.image_url || fuseData?.imageUrl || fuseData?.imageSrc || ""
+    ).trim();
+    const description = String(
+      fuseData?.description || fuseData?.text || ""
+    ).trim();
+    const nodeId = String(fuseData?.id || "").trim();
+    const nodeType = String(fuseData?.type || "resonance_fuse").trim();
+
+    const fallbackScreenshot = String(payload?.screenshot || "").trim();
+    let renderImageSrc = imageSrc || fallbackScreenshot;
+
+    if (!renderImageSrc) {
+      ElMessage({
+        message: "Fuse 返回缺少图片，无法创建图文节点",
+        type: "warning",
+      });
+      return;
+    }
+
+    const anchor = getPopupPositionRightOfNode(groupNode);
+    const layer = konvaRef.value?.konvaData?.layer;
+    if (!anchor?.stagePos || !layer) {
+      ElMessage({
+        message: "Fuse 节点创建失败，画布未准备好",
+        type: "warning",
+      });
+      return;
+    }
+
+    let created;
+    try {
+      created = await createImageAndTextNodes(
+        {
+          imageSrc: renderImageSrc,
+          text: description || "Fuse",
+          id: nodeId,
+          customType: nodeType,
+        },
+        {
+          startX: anchor.stagePos.x,
+          startY: anchor.stagePos.y,
+          center: false,
+          group: true,
+        }
+      );
+    } catch (imageError) {
+      // 接口图片加载失败时，自动回退到截图，避免 Fuse 直接失败。
+      if (!fallbackScreenshot || renderImageSrc === fallbackScreenshot) {
+        throw imageError;
+      }
+
+      renderImageSrc = fallbackScreenshot;
+      created = await createImageAndTextNodes(
+        {
+          imageSrc: renderImageSrc,
+          text: description || "Fuse",
+          id: nodeId,
+          customType: nodeType,
+        },
+        {
+          startX: anchor.stagePos.x,
+          startY: anchor.stagePos.y,
+          center: false,
+          group: true,
+        }
+      );
+    }
+
+    const createdNodes = Array.isArray(created) ? created : [created];
+    createdNodes.forEach((node) => {
+      if (!(node instanceof Konva.Node)) return;
+
+      if (nodeId) {
+        node.id(nodeId);
+      }
+      if (nodeType) {
+        node.setAttr("customType", nodeType);
+      }
+
+      if (node instanceof Konva.Group) {
+        const children = node.getChildren();
+        children.forEach((child) => {
+          if (child instanceof Konva.Image) {
+            child.setAttr("imageSrc", renderImageSrc);
+          }
+        });
+      } else if (node instanceof Konva.Image) {
+        node.setAttr("imageSrc", renderImageSrc);
+      }
+
+      layer.add(node);
+    });
+
+    layer.batchDraw();
+
+    ElMessage({
+      message: "Fuse 已生成图文节点",
+      type: "success",
+    });
+  } catch (error) {
+    console.error("ResonanceFuse failed:", error);
+    const detail = String(
+      error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "未知错误"
+    ).trim();
+    ElMessage({
+      message: `Fuse 调用失败：${detail}`,
+      type: "error",
+    });
+  } finally {
+    pendingAiTool.value = "";
+    hintLoading.value = false;
   }
 };
 
@@ -1390,12 +1629,12 @@ const handleWhisperSubmit = async (payload) => {
       });
 
       const result = response?.data?.data ?? response?.data ?? {};
-      // const bubbles = Array.isArray(result?.bubbles)
-      //   ? result.bubbles
-      //   : Array.isArray(result)
-      //   ? result
-      //   : [];
-      const bubbles = [result.whisper]
+      const bubbles = Array.isArray(result?.bubbles)
+        ? result.bubbles
+        : Array.isArray(result)
+        ? result
+        : [];
+      // const bubbles = [result.whisper]
 
       if (!bubbles.length) {
         throw new Error("whisperUpdate 未返回 bubbles");
@@ -1482,6 +1721,7 @@ const handleAiRingClick = async (data) => {
       y: data.position.y - wmContainer.value.getBoundingClientRect().top,
     },
     questionList: [], // 重置问题列表
+    resonanceData: [],
     constellateData: {},
     loading: true, // 开始加载
     relativePos: { x: relativeX, y: relativeY },
@@ -1494,7 +1734,11 @@ const handleAiRingClick = async (data) => {
   reflectPopupTargetNode.value = reflectTargetNode.value || null;
   aiPopupVisible.value = true;
 
-  const reflectBasePayload = buildHintPayload(reflectSelectedNodes.value);
+  const hintBasePayload =
+    currentNav.value === "Resonance"
+      ? buildResonanceHintPayload(reflectSelectedNodes.value)
+      : buildHintPayload(reflectSelectedNodes.value);
+  const selectedDimensionOrPerspective = getPerspectivePayloadByLabel(data.label);
   const rawRingWidth = Math.max(1, Number(data.ringWidth) || 1);
   const rawLineLength = Math.max(0, Number(data.lineLength) || 0);
   const depthRatio = Math.max(0, Math.min(1, rawLineLength / rawRingWidth));
@@ -1503,8 +1747,10 @@ const handleAiRingClick = async (data) => {
 
   // 构建请求参数
   const requestData = {
-    ...reflectBasePayload,
-    perspective: getPerspectivePayloadByLabel(data.label),
+    ...hintBasePayload,
+    ...(currentNav.value === "Resonance"
+      ? { dimension: selectedDimensionOrPerspective }
+      : { perspective: selectedDimensionOrPerspective }),
     depth: {
       min: 0,
       max: depthMax,
@@ -1517,10 +1763,21 @@ const handleAiRingClick = async (data) => {
   try {
     let res;
     if (currentNav.value === "Constellate") {
-      res = await gelConstellateToolData(requestData);
+      res = await ConstellateSuggest(requestData);
       const payload = res?.data || {};
       aiPopupData.value.constellateData = payload;
       aiPopupData.value.questionList = [];
+      aiPopupData.value.resonanceData = [];
+    } else if (currentNav.value === "Resonance") {
+      res = await ResonanceAnalysis(requestData);
+      const resonanceList = Array.isArray(res?.data?.analysis)
+        ? res.data.analysis
+        : [];
+
+      // Resonance 数据直接透传给弹窗，不做字段转换。
+      aiPopupData.value.resonanceData = resonanceList;
+      aiPopupData.value.questionList = [];
+      aiPopupData.value.constellateData = {};
     } else {
       res = await ReflectQuestions(requestData);
       const questionList =
@@ -1529,6 +1786,7 @@ const handleAiRingClick = async (data) => {
         (Array.isArray(res?.data?.questionList) && res.data.questionList) ||
         [];
       aiPopupData.value.questionList = questionList;
+      aiPopupData.value.resonanceData = [];
       aiPopupData.value.constellateData = {};
     }
   } catch (error) {
@@ -1542,7 +1800,9 @@ const handleAiRingClick = async (data) => {
 const handleAiModeChange = (isActive) => {
   if (
     !isActive &&
-    (currentNav.value === "Reflect" || currentNav.value === "Constellate")
+    (currentNav.value === "Reflect" ||
+      currentNav.value === "Constellate" ||
+      currentNav.value === "Resonance")
   ) {
     currentNav.value = "";
     closeAiPopup();
@@ -1550,6 +1810,44 @@ const handleAiModeChange = (isActive) => {
 };
 
 const handleAiPopupConfirm = (data) => {
+  if (aiPopupData.value?.toolType === "Resonance") {
+    // Resonance 确认后：把选中的分析结果（主文本 + actions）绘制到 group 右侧。
+    const targetGroupNode = reflectTargetNode.value;
+    const anchor = getPopupPositionRightOfNode(targetGroupNode);
+    const resonanceItem = data?.resonanceItem || null;
+    const textContent = String(
+      resonanceItem?.text || resonanceItem?.keyword || data?.question || ""
+    ).trim();
+
+    if (!textContent) {
+      ElMessage({
+        message: "请选择一条分析结果后再确认",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (!anchor?.stagePos || !konvaRef.value?.addResonanceGroupAtPosition) {
+      ElMessage({
+        message: "Resonance 文本绘制失败，画布未准备好",
+        type: "warning",
+      });
+      return;
+    }
+
+    // 组内文本节点禁用拖拽与编辑；仅外层 group 可整体拖动。
+    konvaRef.value.addResonanceGroupAtPosition(
+      resonanceItem || { text: textContent, actions: [] },
+      anchor.stagePos
+    );
+    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+      konvaRef.value.cancelAiAssist();
+    }
+    closeAiPopup();
+    currentNav.value = "";
+    return;
+  }
+
   if (konvaRef.value && konvaRef.value.createAiContentNode) {
     const isConstellate = currentNav.value === "Constellate";
     // 传入问题（作为标题/label）、图片列表
@@ -1635,6 +1933,9 @@ const closeAiPopup = () => {
   aiPopupData.value.reflectTargetType = "";
   aiPopupData.value.reflectTargetId = "";
   aiPopupData.value.reflectRequestData = null;
+  aiPopupData.value.questionList = [];
+  aiPopupData.value.resonanceData = [];
+  aiPopupData.value.constellateData = {};
 };
 
 // 复用：将 stage 坐标转换为 WorkingMemory 容器内的弹窗坐标
@@ -1683,14 +1984,6 @@ const handleStageTransform = () => {
     }
   }
 
-  if (resonancePopup.value.visible) {
-    const anchor = getPopupPositionRightOfNode(resonancePopup.value.targetNode);
-    const popupPos = getPopupPositionFromStagePos(anchor?.stagePos);
-    if (popupPos) {
-      resonancePopup.value.position = popupPos;
-      resonancePopup.value.stagePos = anchor?.stagePos || null;
-    }
-  }
 };
 
 const handleRenderNodes = (canvasIndex) => {
@@ -1883,6 +2176,62 @@ const handleRenderNodes = (canvasIndex) => {
       display: inline-flex;
       align-items: center;
       pointer-events: none;
+    }
+
+    &.resonance-nav::after {
+      display: none;
+    }
+
+    &.resonance-nav.open .resonance-submenu {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .resonance-submenu {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 14px);
+      transform: translateX(-50%) translateY(4px);
+      width: 176px;
+      border-radius: 16px;
+      background: #f6f6f6;
+      border: 2px solid #1f2937;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+      padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.18s ease;
+      z-index: 12;
+    }
+
+    .resonance-submenu-btn {
+      border: none;
+      background: transparent;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 500;
+      color: #222;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.15s ease, color 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &:first-child {
+        border-bottom: 1px solid #d5d5d5;
+      }
     }
   }
 
