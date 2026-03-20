@@ -91,7 +91,8 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
             }
 
             config.headers = config.headers || {};
-            (config.headers as any)["X-User-Id"] = userId;
+            const encodedUserId = encodeURIComponent(userId);
+            (config.headers as any)["X-User-Id"] = encodedUserId;
             if (sessionId) {
                 (config.headers as any)["X-Session-Id"] = sessionId;
             } else {
