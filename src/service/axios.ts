@@ -137,6 +137,7 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
             console.log("响应拦截器response error:", error);
             // 关闭加载 动画
             /***** 接收到异常响应的处理开始 *****/
+            const config = error?.config || {};
             let errorTxt = "";
             if (error && error.response) {
                 // 1.公共错误处理
@@ -216,6 +217,32 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
             }
 
             console.log(errorTxt);
+            const headerUserId = resolveHeaderValue(
+                config.headers,
+                "X-User-Id",
+            );
+            const headerSessionId = resolveHeaderValue(
+                config.headers,
+                "X-Session-Id",
+            );
+            const userId =
+                headerUserId || (localStorage.getItem("user_id") || "").trim();
+            const sessionId =
+                headerSessionId ||
+                getSessionId();
+
+            addOperationLog({
+                sessionId,
+                userId,
+                input: resolveInput(config),
+                output: {
+                    message: error?.message || "",
+                    status: error?.response?.status,
+                    data: error?.response?.data ?? null,
+                    text: errorTxt,
+                },
+                API_Type: resolveApiType(config),
+            });
             // ElMessage.error(errorTxt)
             /***** 处理结束 *****/
             return Promise.reject(error);
