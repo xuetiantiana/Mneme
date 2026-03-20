@@ -1101,3 +1101,13 @@ export const feedbackConfirm = (data: any): any => {
         }, 1000);
     });
 };
+
+export const ExportData = (data: any, config: any = {}): any => {
+    console.log("ExportData data:", data);
+    return request.get("/api/export/data", {
+        params: data,
+        ...config,
+    });
+
+
+};

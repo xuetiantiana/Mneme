@@ -7,6 +7,13 @@
     >
 
     <el-button
+      style="position: absolute; right: 170px; top: 10px"
+      :loading="exportLoading"
+      @click="handleExport"
+      >Export</el-button
+    >
+
+    <el-button
       style="position: absolute; right: 10px; top: 10px"
       @click="showStoryListDialog = true"
       >Generated Assets</el-button
@@ -112,9 +119,13 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
 import PCMListComponent from "@/views/Home/components/PCMListComponent.vue";
 import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
 import StoryListDialog from "@/views/Home/components/StoryListDialog.vue";
+import { ExportData } from "@/service/api";
+import { useStoryStore } from "@/stores/storyStore";
+import { getSessionId } from "@/service/session";
 
 import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 
@@ -136,6 +147,8 @@ const showStoryListDialog = ref(false);
 const currentStoryIndex = ref(0);
 const topicContainerListRef = ref(null);
 const workingMemoryRef = ref(null);
+const exportLoading = ref(false);
+const storyStore = useStoryStore();
 
 const handleCreateSuccess = (index) => {
   currentStoryIndex.value = index;
@@ -162,6 +175,70 @@ const handleRenderNodesToTopic = (nodesData) => {
 const handleLogout = () => {
   localStorage.clear();
   window.location.reload();
+};
+
+const parseFileNameFromDisposition = (disposition) => {
+  if (!disposition) return "export-data";
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
+  const normalMatch = disposition.match(/filename=\"?([^\";]+)\"?/i);
+  if (normalMatch?.[1]) return normalMatch[1];
+  return "export-data";
+};
+
+const downloadBlob = (blob, fileName) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const handleExport = async () => {
+  const user_id = storyStore.user_id || localStorage.getItem("user_id") || "";
+  const session_id = storyStore.session_id || getSessionId();
+
+  if (!user_id || !session_id) {
+    ElMessage.warning("缺少 user_id 或 session_id，无法导出");
+    return;
+  }
+
+  exportLoading.value = true;
+  try {
+    const res = await ExportData(
+      { user_id, session_id },
+      { responseType: "blob" }
+    );
+
+    const contentType = String(res?.headers?.["content-type"] || "").toLowerCase();
+    const disposition = res?.headers?.["content-disposition"] || "";
+
+    if (contentType.includes("application/json")) {
+      const text = await res.data.text();
+      const json = JSON.parse(text || "{}");
+      const downloadUrl = json?.data?.download_url || json?.download_url;
+      if (downloadUrl) {
+        window.open(downloadUrl, "_blank");
+        ElMessage.success("已获取下载链接");
+        return;
+      }
+      ElMessage.success("导出成功");
+      console.log("ExportData JSON response:", json);
+      return;
+    }
+
+    const fileName = parseFileNameFromDisposition(disposition);
+    downloadBlob(res.data, fileName);
+    ElMessage.success("导出文件已下载");
+  } catch (error) {
+    console.error("ExportData error:", error);
+    ElMessage.error("导出失败，请检查网络或稍后重试");
+  } finally {
+    exportLoading.value = false;
+  }
 };
 </script>
 
