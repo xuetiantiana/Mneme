@@ -110,18 +110,13 @@
       <div v-else class="popup-content empty-state">暂无建议</div>
 
       <!-- 通用确认区 -->
-      <div v-if="isConstellateView" class="popup-footer">
+      <div
+        v-if="isReflectView || isConstellateView || isResonanceView"
+        class="popup-footer"
+      >
+        <el-button size="small" @click="handleRegenerate">Regenerate</el-button>
         <el-button
-          type="primary"
-          size="small"
-          @click="handleConfirm"
-          :disabled="confirmDisabled"
-        >
-          确认
-        </el-button>
-      </div>
-      <div v-else-if="isResonanceView" class="popup-footer">
-        <el-button
+          v-if="isConstellateView || isResonanceView"
           type="primary"
           size="small"
           @click="handleConfirm"
@@ -203,7 +198,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["confirm", "cancel", "tool-click"]);
+const emit = defineEmits(["confirm", "cancel", "tool-click", "regenerate"]);
 
 // ------------------------
 // 通用状态
@@ -548,6 +543,10 @@ const handleConfirm = () => {
       resonanceIndex: selectedResonanceIndex.value,
     });
   }
+};
+
+const handleRegenerate = () => {
+  emit("regenerate");
 };
 
 // 通用关闭事件

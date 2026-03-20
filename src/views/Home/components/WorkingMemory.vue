@@ -30,6 +30,7 @@
         :loading="aiPopupData.loading"
         :quick-tools="aiQuickTools"
         @confirm="handleAiPopupConfirm"
+        @regenerate="handleAiPopupRegenerate"
         @tool-click="handleAiPopupToolClick"
         @cancel="handleAiPopupCancel"
       />
@@ -1774,15 +1775,25 @@ const handleAiRingClick = async (data) => {
   aiPopupData.value.reflectRequestData = requestData;
   console.log("requestData", requestData);
 
+  await fetchAiPopupSuggestions(currentNav.value, requestData);
+};
+
+const fetchAiPopupSuggestions = async (toolType, requestData) => {
+  if (!requestData) {
+    return;
+  }
+
+  aiPopupData.value.loading = true;
+
   try {
     let res;
-    if (currentNav.value === "Constellate") {
+    if (toolType === "Constellate") {
       res = await ConstellateSuggest(requestData);
       const payload = res?.data || {};
       aiPopupData.value.constellateData = payload;
       aiPopupData.value.questionList = [];
       aiPopupData.value.resonanceData = [];
-    } else if (currentNav.value === "Resonance") {
+    } else if (toolType === "Resonance") {
       res = await ResonanceAnalysis(requestData);
       const resonanceList = Array.isArray(res?.data?.analysis)
         ? res.data.analysis
@@ -1804,11 +1815,17 @@ const handleAiRingClick = async (data) => {
       aiPopupData.value.constellateData = {};
     }
   } catch (error) {
-    console.error(`Failed to fetch ${currentNav.value} tool data:`, error);
+    console.error(`Failed to fetch ${toolType} tool data:`, error);
     ElMessage.error("获取AI建议失败");
   } finally {
     aiPopupData.value.loading = false;
   }
+};
+
+const handleAiPopupRegenerate = async () => {
+  const toolType = aiPopupData.value?.toolType || currentNav.value;
+  const requestData = aiPopupData.value?.reflectRequestData;
+  await fetchAiPopupSuggestions(toolType, requestData);
 };
 
 const handleAiModeChange = (isActive) => {
@@ -1993,15 +2010,11 @@ const handleAiPopupToolClick = async ({ tool, item }) => {
 };
 
 const handleAiPopupCancel = () => {
-  // 关闭弹窗时同步退出 AI 工具，并清理引导线
+  // 关闭弹窗并清除当前引导线，保持 AI 模式可继续在环上画线
   if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
     konvaRef.value.clearAiGuideLine();
   }
-  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
-    konvaRef.value.cancelAiAssist();
-  }
   closeAiPopup();
-  currentNav.value = "";
 };
 
 // 点击画布其他地方关闭弹窗 (需要在 KonvaComponent 中透传或全局监听，这里简化处理)
