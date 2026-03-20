@@ -1082,88 +1082,17 @@ export const whisperUpdate = (data: any): any => {
     });
 };
 
-export const ResonanceCompose = (data: any): any => {
-    console.log("ResonanceCompose data:", data);
-    // return request.post("/api/resonance/compose", data);
+export const feedbackConfirm = (data: any): any => {
+    console.log("feedbackConfirm data:", data);
+    return request.post("/api/feedback/confirm", data);
 
     const response = {
         success: true,
         data: {
-            bubbles: [
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-3",
-                    text: "宠物陪伴",
-                    kind: "meaning",
-                    x: -115,
-                    y: 107,
-                    r: 30,
-                    specificity: 4,
-                    id: "PCM-20260314055223235-372f15e117-bubble-3",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-4",
-                    text: "放松愉悦",
-                    kind: "emotion",
-                    x: -152,
-                    y: 39,
-                    r: 30,
-                    specificity: 4,
-                    id: "PCM-20260314055223235-372f15e117-bubble-4",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-5",
-                    text: "怀念温暖",
-                    kind: "emotion",
-                    x: -152,
-                    y: -39,
-                    r: 30,
-                    specificity: 5,
-                    id: "PCM-20260314055223235-372f15e117-bubble-5",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-6",
-                    text: "毛软蓬松",
-                    kind: "sensory",
-                    x: -115,
-                    y: -107,
-                    r: 30,
-                    specificity: 2,
-                    id: "PCM-20260314055223235-372f15e117-bubble-6",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-8",
-                    text: "温馨柔和",
-                    kind: "aesthetic",
-                    x: -50,
-                    y: -149,
-                    r: 30,
-                    specificity: 3,
-                    id: "PCM-20260314055223235-372f15e117-bubble-7",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-9",
-                    text: "画面静谧",
-                    kind: "aesthetic",
-                    x: 27,
-                    y: -155,
-                    r: 30,
-                    specificity: 3,
-                    id: "PCM-20260314055223235-372f15e117-bubble-8",
-                    type: "bubble",
-                },
-            ],
-        },
+  "interpretation_id": "interp-20260319100900123-a8f3c1d2b0",
+  "confirmed_id": "question-20260319100832555-a1b2c3d4e5",
+  "confirmed_at": "2026-03-19T10:15:30.456Z"
+},
     };
 
     return new Promise(function (resolve) {

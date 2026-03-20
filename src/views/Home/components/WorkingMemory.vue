@@ -218,6 +218,7 @@ import {
   ResonanceAnalysis,
   ResonanceFuse,
   ReflectQuestions,
+  feedbackConfirm,
   cropUpdate,
   whisperUpdate,
 } from "@/service/api";
@@ -1822,8 +1823,72 @@ const handleAiModeChange = (isActive) => {
   }
 };
 
-const handleAiPopupConfirm = (data) => {
+const collectConfirmedIds = (input) => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      input
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .filter((value) => value.length > 0)
+    )
+  );
+};
+
+const extractImageId = (item) => {
+  if (!item || typeof item !== "object") {
+    return "";
+  }
+
+  const raw =
+    item.image_id ||
+    item.imageID ||
+    item.imageId ||
+    item.id ||
+    item?.raw?.image_id ||
+    item?.raw?.id ||
+    "";
+
+  return typeof raw === "string" ? raw.trim() : "";
+};
+
+const submitFeedbackConfirm = async (candidateIds) => {
+  const confirmedIds = collectConfirmedIds(candidateIds);
+  if (!confirmedIds.length) {
+    return;
+  }
+
+  try {
+    await feedbackConfirm({
+      confirmed_ids: confirmedIds,
+    });
+  } catch (error) {
+    console.error("feedbackConfirm failed:", error);
+  }
+};
+
+const resolveConstellateConfirmedIds = (data) => {
+  const selectedImageIds = Array.isArray(data?.images)
+    ? data.images.map((item) => extractImageId(item))
+    : [];
+
+  return collectConfirmedIds(selectedImageIds);
+};
+
+const resolveResonanceConfirmedIds = (data) => {
+  return collectConfirmedIds([data?.resonanceItem?.id]);
+};
+
+const handleAiPopupConfirm = async (data) => {
+  if (aiPopupData.value?.toolType === "Constellate") {
+    await submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
+  }
+
   if (aiPopupData.value?.toolType === "Resonance") {
+    await submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
+
     // Resonance 确认后：把选中的分析结果（主文本 + actions）绘制到 group 右侧。
     const targetGroupNode = reflectTargetNode.value;
     const anchor = getPopupPositionRightOfNode(targetGroupNode);
@@ -1881,11 +1946,15 @@ const handleAiPopupConfirm = (data) => {
   currentNav.value = "";
 };
 
-const handleAiPopupToolClick = ({ tool }) => {
+const handleAiPopupToolClick = async ({ tool, item }) => {
   if (!tool) return;
 
   const inReflectPopup = aiPopupData.value?.toolType === "Reflect";
   if (inReflectPopup) {
+    if (tool === "Crop" || tool === "Add Memory" || tool === "Whisper") {
+      await submitFeedbackConfirm([item?.id]);
+    }
+
     const popupNode = reflectPopupTargetNode.value || reflectTargetNode.value;
 
     if (tool === "Crop") {
