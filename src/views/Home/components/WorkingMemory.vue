@@ -1900,11 +1900,11 @@ const resolveResonanceConfirmedIds = (data) => {
 
 const handleAiPopupConfirm = async (data) => {
   if (aiPopupData.value?.toolType === "Constellate") {
-    await submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
+    submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
   }
 
   if (aiPopupData.value?.toolType === "Resonance") {
-    await submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
+    submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
 
     // Resonance 确认后：把选中的分析结果（主文本 + actions）绘制到 group 右侧。
     const targetGroupNode = reflectTargetNode.value;
@@ -1969,7 +1969,7 @@ const handleAiPopupToolClick = async ({ tool, item }) => {
   const inReflectPopup = aiPopupData.value?.toolType === "Reflect";
   if (inReflectPopup) {
     if (tool === "Crop" || tool === "Add Memory" || tool === "Whisper") {
-      await submitFeedbackConfirm([item?.id]);
+      submitFeedbackConfirm([item?.id]);
     }
 
     const popupNode = reflectPopupTargetNode.value || reflectTargetNode.value;
