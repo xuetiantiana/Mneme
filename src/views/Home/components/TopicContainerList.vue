@@ -82,7 +82,7 @@ const loading = ref(false);
 
 const topicContainers = ref([
   {
-    title: "猫咪对人的信任",
+    title: "",
     selected: true,
     desc: "人物：\n场景：\n 情节：",
   },

@@ -1655,7 +1655,10 @@ const handleWhisperSubmit = async (payload) => {
         throw new Error("whisperUpdate 未返回 bubbles");
       }
 
-      const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles);
+      // Whisper 成功后把用户输入原文同步写到新泡泡上方。
+      const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles, {
+        topText: content,
+      });
       if (!count) {
         throw new Error("bubbles 渲染失败");
       }
@@ -1952,6 +1955,7 @@ const handleAiPopupConfirm = async (data) => {
       data.nodeMeta,
       {
         flattenToNodes: isConstellate,
+        // Constellate 确认后，新增节点自动进入选中态，便于继续拖拽/发送。
         autoSelectOnFlatten: isConstellate,
       }
     );

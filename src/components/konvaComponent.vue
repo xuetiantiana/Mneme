@@ -989,6 +989,7 @@ const createAiContentNode = (
   nodeMeta?: { id?: string; customType?: string },
   options?: {
     flattenToNodes?: boolean;
+    // 扁平化后立即选中新生成节点（用于 Constellate 确认后的连续操作）。
     autoSelectOnFlatten?: boolean;
   }
 ) => {
@@ -1197,6 +1198,7 @@ const createAiContentNode = (
 
     if (shouldFlatten) {
       const flattenedNodes = flattenGroupToNodes();
+      // Constellate 期望“落画布即选中”，这里切换选中集到新扁平节点。
       if (shouldAutoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
         selectedNodes.forEach((n) => removeNodeSelectStyle(n));
         selectedNodes = flattenedNodes;
@@ -3705,7 +3707,11 @@ const addSegmentsAroundTarget = async (
 
 const addBubblesAroundTarget = async (
   targetNode: Konva.Node,
-  bubblesInput: any
+  bubblesInput: any,
+  options?: {
+    // 可选：把 Whisper 输入原文渲染到新泡泡上方。
+    topText?: string;
+  }
 ) => {
   // 在目标节点周边渲染一组泡泡文本节点，用于 Whisper/Crop 结果回填。
   if (!layer || !targetNode) {
@@ -3765,6 +3771,74 @@ const addBubblesAroundTarget = async (
     });
     layer!.add(node);
   });
+
+  const topText = String(options?.topText || "").trim();
+  if (topText) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+
+    bubbleNodes.forEach((node: Konva.Node) => {
+      const rect = node.getClientRect({
+        relativeTo: layer,
+        skipShadow: true,
+        skipStroke: true,
+      });
+
+      minX = Math.min(minX, rect.x);
+      maxX = Math.max(maxX, rect.x + rect.width);
+      minY = Math.min(minY, rect.y);
+    });
+
+    if (Number.isFinite(minX) && Number.isFinite(maxX) && Number.isFinite(minY)) {
+      // 文本宽度跟随泡泡整体包围盒，保证多泡泡场景下仍居中可读。
+      const textWidth = Math.max(160, maxX - minX + 24);
+      const textAnchorX = minX + (maxX - minX) / 2;
+      const inputTextNode = new Konva.Text({
+        x: textAnchorX,
+        y: minY,
+        width: textWidth,
+        text: topText,
+        fontSize: 14,
+        lineHeight: 1.5,
+        fontFamily: DEFAULT_FONT_FAMILY,
+        fill: "#334155",
+        align: "center",
+        wrap: "word",
+        draggable: true,
+        customType: "whisper-input-text",
+      });
+
+      const textHeight = inputTextNode.height();
+      const textLeftX = textAnchorX - textWidth / 2;
+      const textTopY = minY - textHeight - 10;
+      const inputTextBg = new Konva.Rect({
+        x: textLeftX - 8,
+        y: textTopY - 6,
+        width: textWidth + 16,
+        height: textHeight + 12,
+        fill: "rgba(156, 163, 175, 0.22)",
+        stroke: "rgba(107, 114, 128, 0.35)",
+        strokeWidth: 1,
+        cornerRadius: 8,
+        listening: false,
+        draggable: false,
+        name: "whisper-input-text-bg",
+      });
+
+      inputTextNode.offset({
+        x: textWidth / 2,
+        y: textHeight + 10,
+      });
+
+      inputTextNode.on("click tap", (evt) => {
+        handleNodeClick(evt, inputTextNode);
+      });
+
+      layer!.add(inputTextBg);
+      layer!.add(inputTextNode);
+    }
+  }
 
   selectedNodes = bubbleNodes;
   transformer?.nodes(selectedNodes);
