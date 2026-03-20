@@ -1,5 +1,5 @@
 import { createRouter, RouteRecordRaw, createWebHashHistory } from 'vue-router'
-import { getSessionId } from '@/service/session'
+import { getSessionId } from '../service/session'
 
 const routes: Array<RouteRecordRaw> = [
   {
