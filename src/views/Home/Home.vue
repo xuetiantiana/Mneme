@@ -1,6 +1,12 @@
 <template>
   <div class="layout-container no-copy">
     <el-button
+      style="position: absolute; left: 10px; top: 10px"
+      @click="handleLogout"
+      >退出</el-button
+    >
+
+    <el-button
       style="position: absolute; right: 10px; top: 10px"
       @click="showStoryListDialog = true"
       >Generated Assets</el-button
@@ -151,6 +157,11 @@ const handleRenderNodesToTopic = (nodesData) => {
     topicContainerListRef.value.renderNodesToFirstCanvas(nodesData);
   }
   }, 100);
+};
+
+const handleLogout = () => {
+  localStorage.clear();
+  window.location.reload();
 };
 </script>
 
