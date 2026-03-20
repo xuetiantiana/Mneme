@@ -989,6 +989,7 @@ const createAiContentNode = (
   nodeMeta?: { id?: string; customType?: string },
   options?: {
     flattenToNodes?: boolean;
+    autoSelectOnFlatten?: boolean;
   }
 ) => {
   if (!aiAssistState || !aiGuideLine || !layer) return;
@@ -1192,12 +1193,24 @@ const createAiContentNode = (
 
   Promise.all(imageLoadTasks).then(() => {
     const shouldFlatten = !!options?.flattenToNodes;
+    const shouldAutoSelectOnFlatten = !!options?.autoSelectOnFlatten;
 
     if (shouldFlatten) {
-      flattenGroupToNodes();
+      const flattenedNodes = flattenGroupToNodes();
+      if (shouldAutoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
+        selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+        selectedNodes = flattenedNodes;
+        transformer?.nodes(selectedNodes);
+        selectedNodes.forEach((n) => {
+          addNodeSelectStyle(n);
+          n.moveToTop();
+        });
+        transformer?.moveToTop();
+      }
     }
 
     layer!.batchDraw();
+    setTimeout(() => updateScrollbars(), 200);
   });
 
   // 清除 AI 辅助环

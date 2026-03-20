@@ -1944,7 +1944,7 @@ const handleAiPopupConfirm = async (data) => {
   }
 
   if (konvaRef.value && konvaRef.value.createAiContentNode) {
-    const isConstellate = currentNav.value === "Constellate";
+    const isConstellate = aiPopupData.value?.toolType === "Constellate";
     // 传入问题（作为标题/label）、图片列表
     konvaRef.value.createAiContentNode(
       data.images,
@@ -1952,6 +1952,7 @@ const handleAiPopupConfirm = async (data) => {
       data.nodeMeta,
       {
         flattenToNodes: isConstellate,
+        autoSelectOnFlatten: isConstellate,
       }
     );
   }
