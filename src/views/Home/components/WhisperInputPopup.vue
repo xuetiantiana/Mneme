@@ -7,11 +7,12 @@
   >
     <div class="popup-inner">
       <div class="popup-title">{{ title }}</div>
-      <input
+      <el-input
         ref="inputRef"
         v-model="textValue"
         class="whisper-input"
-        type="text"
+        type="textarea"
+        :rows="3"
         placeholder="语音将自动转成文字，也可手动输入"
         :disabled="submitLoading"
         @input="handleInput"
@@ -271,16 +272,13 @@ onBeforeUnmount(() => {
 
 .whisper-input {
   width: 100%;
-  height: 38px;
-  border: 1px solid #cfd3dc;
-  border-radius: 8px;
-  padding: 0 10px;
-  font-size: 14px;
-  outline: none;
 }
 
-.whisper-input:focus {
-  border-color: #409eff;
+.whisper-input :deep(.el-textarea__inner) {
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 84px !important;
 }
 
 .popup-actions {
