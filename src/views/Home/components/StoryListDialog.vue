@@ -35,7 +35,7 @@
               v-html="parseMarkdown(topic.markdown)"
             ></div>
 
-            <div v-if="Array.isArray(topic.images) && topic.images.length" class="topic-images">
+            <!-- <div v-if="Array.isArray(topic.images) && topic.images.length" class="topic-images">
               <div
                 v-for="(image, imageIndex) in topic.images"
                 :key="image.image_id || image.id || imageIndex"
@@ -50,7 +50,7 @@
                   {{ image.description }}
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
         <div v-else class="no-selected">请创建一个故事</div>
