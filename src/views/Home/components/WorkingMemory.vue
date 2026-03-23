@@ -2179,18 +2179,30 @@ const handleRenderNodes = (canvasIndex) => {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
   .send-menu-item {
-    padding: 8px 5px;
+    padding: 8px 10px;
     cursor: pointer;
-    font-size: 14px;
-    color: #333;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1677ff;
+    background: #e6f4ff;
+    border: 1px solid #91caff;
+    text-align: center;
     transition: all 0.2s;
-    border-radius: 4px;
+    border-radius: 999px;
 
     &:hover {
-      background-color: #f5f5f5;
-      color: #1890ff;
+      background: #d0e9ff;
+      border-color: #69b1ff;
+      color: #0958d9;
+    }
+
+    &:active {
+      background: #bae0ff;
     }
   }
 }

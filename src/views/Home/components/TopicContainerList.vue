@@ -16,6 +16,7 @@
           class="topic-checkbox"
         />
         <div class="topic-container-header">
+          <div class="topic-index">主题 {{ index + 1 }}</div>
           <div class="title-input-wrapper">
             <span class="title-label">一句话主题：</span>
             <div class="title-input-container">
@@ -327,6 +328,18 @@ defineExpose({
         padding: 8px 12px;
         border-radius: 8px;
         margin-bottom: 12px;
+
+        .topic-index {
+          display: inline-block;
+          margin-bottom: 6px;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: #e6f4ff;
+          color: #1677ff;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
         .title-input-wrapper {
           display: flex;
           justify-content: space-between;
