@@ -984,7 +984,7 @@ const handleStageClick = (
 
 // 创建 AI 生成的内容节点（在确认后调用）
 const createAiContentNode = (
-  images?: Array<string | { image_url?: string; imageUrl?: string; url?: string; image_id?: string; imageID?: string; imageId?: string; id?: string; type?: string; customType?: string }>,
+  images?: Array<string | { image_url?: string; imageUrl?: string; url?: string; image_id?: string; imageID?: string; imageId?: string; id?: string; type?: string; customType?: string; reason?: string }>,
   label?: string,
   nodeMeta?: { id?: string; customType?: string },
   options?: {
@@ -1099,6 +1099,9 @@ const createAiContentNode = (
   // 如果有图片，添加图片
   const imageLoadTasks: Promise<void>[] = [];
   if (images && images.length > 0) {
+    const imageToReasonGap = 4;
+    const reasonToNextImageGap = 16;
+    const imageToNextImageGap = 14;
     let imageY = currentY + 5;
     images.forEach((item) => {
       const src = typeof item === "string"
@@ -1110,6 +1113,9 @@ const createAiContentNode = (
       const imageCustomType = typeof item === "string"
         ? ""
         : String(item?.customType || item?.type || "");
+      const imageReason = typeof item === "string"
+        ? ""
+        : String(item?.reason || "").trim();
 
       if (!src || !src.trim()) {
         return;
@@ -1136,7 +1142,27 @@ const createAiContentNode = (
           group.add(konvaImage);
 
           // 更新背景高度
-          imageY += imgHeight + 10;
+          imageY += imgHeight;
+
+          if (imageReason) {
+            imageY += imageToReasonGap;
+            const reasonText = new Konva.Text({
+              x: 10,
+              y: imageY,
+              text: imageReason,
+              fontSize: 12,
+              fontFamily: DEFAULT_FONT_FAMILY,
+              fill: "#475569",
+              width: imgWidth,
+              lineHeight: 1.4,
+              wrap: "word",
+            });
+            group.add(reasonText);
+            imageY += reasonText.height() + reasonToNextImageGap;
+          } else {
+            imageY += imageToNextImageGap;
+          }
+
           bgNode.height(Math.max(bgNode.height(), imageY));
 
           // 每次图片加载完都要重新计算位置，因为高度变了，中心点变了

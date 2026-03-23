@@ -600,7 +600,7 @@ export const initPCMBubbles = (bubbles, options = {}) => {
                         {
                             text: bubble.text,
                             id: bubble.id,
-                            customType: bubble.type,
+                            customType: bubble.type || "bubble",
                         },
                         {
                             startX: x,

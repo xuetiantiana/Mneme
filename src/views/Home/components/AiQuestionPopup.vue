@@ -35,7 +35,12 @@
             <span class="constellate-select-icon">
               <el-icon><Check /></el-icon>
             </span>
-            <img :src="img.url" alt="" />
+            <div class="constellate-image-thumb">
+              <img :src="img.url" alt="" />
+            </div>
+            <div v-if="img.reason" class="constellate-image-reason">
+              {{ img.reason }}
+            </div>
           </button>
         </div>
         <div v-else class="empty-state">暂无图片</div>
@@ -645,11 +650,28 @@ onBeforeUnmount(() => {
 
 .constellate-image-item {
   position: relative;
-  padding: 0;
+  padding: 6px;
   border: 2px solid transparent;
-  background: transparent;
+  background: #fff;
   border-radius: 10px;
   cursor: pointer;
+  text-align: left;
+}
+
+.constellate-image-thumb {
+  width: 100%;
+}
+
+.constellate-image-reason {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .constellate-select-icon {
