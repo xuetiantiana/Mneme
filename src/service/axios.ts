@@ -68,7 +68,7 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
         //请求头
         baseURL: "/api",
         //超时配置
-        timeout: 120000,
+        timeout: 600000,
         //跨域携带cookie
         // withCredentials: true,
         // 自定义配置覆盖基本配置

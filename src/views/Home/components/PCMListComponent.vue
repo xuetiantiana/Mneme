@@ -41,8 +41,10 @@
             :key="imgIndex"
             :src="img.image_url"
             :alt="item.title"
-            class="card-image"
+            class="card-image draggable-item"
             :style="getImageStyle(imgIndex, img.layout)"
+            draggable="true"
+            @dragstart="handlePCMDragStart($event, item)"
           />
         </div>
         <div class="card-footer">
@@ -205,6 +207,17 @@ const handleShowCanvas = (event, item) => {
 const handleCloseCanvasPopup = () => {
   canvasPopupVisible.value = false;
 };
+
+const handlePCMDragStart = (event, item) => {
+  event.dataTransfer.effectAllowed = "copy";
+  const dragData = [
+    {
+      dragType: "PCM",
+      data: item,
+    },
+  ];
+  event.dataTransfer.setData("dragData", JSON.stringify(dragData));
+};
 </script>
 
 <style scoped lang="scss">
@@ -336,6 +349,10 @@ const handleCloseCanvasPopup = () => {
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
+        .draggable-item {
+          cursor: move;
+        }
+
       }
 
       .card-footer {
