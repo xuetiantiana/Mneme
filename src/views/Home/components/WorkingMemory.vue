@@ -287,9 +287,9 @@ const aiQuickTools = computed(() => {
   return [{ label: "📷 Add Memory", value: "Add Memory" }];
 });
 const NAV_HINTS = {
-  Reflect: "先选中一个主图/子图再点击",
-  Constellate: "先选中一个主图/子图/泡泡节点再点击",
-  Resonance: "仅支持选中 Group 按钮创建的 group",
+  Reflect: "反思单个记忆\n先选中一个主图/子图再点击",
+  Constellate: "关联更多记忆\n先选中一个主图/子图/泡泡节点再点击",
+  Resonance: "涌现创意想法\n仅支持选中 Group 按钮创建的 group",
   Whisper: "点击之后选中子图",
   Crop: "点击之后选择主图进行裁剪",
   "Add Memory": "点击画布位置后上传图文",
@@ -2204,6 +2204,7 @@ const handleRenderNodes = (canvasIndex) => {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   padding: 8px 20px;
+  padding-left: 40px;
   border-radius: 24px;
   display: flex;
   align-items: center;
@@ -2254,7 +2255,7 @@ const handleRenderNodes = (canvasIndex) => {
       color: #fff;
       background: rgba(30, 30, 30, 0.92);
       border-radius: 6px;
-      white-space: nowrap;
+      white-space: pre;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.18s ease;
@@ -2277,27 +2278,22 @@ const handleRenderNodes = (canvasIndex) => {
       pointer-events: none;
     }
 
-    &.resonance-nav::after {
-      display: none;
-    }
-
     &.resonance-nav.open .resonance-submenu {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(-50%) translateX(0);
       pointer-events: auto;
     }
 
     .resonance-submenu {
       position: absolute;
-      left: 50%;
-      top: calc(100% + 14px);
-      transform: translateX(-50%) translateY(4px);
-      width: 176px;
+      left: calc(100% + 1px);
+      top: 50%;
+      transform: translateY(-50%) translateX(4px);
+      width: 120px;
       border-radius: 16px;
       background: #f6f6f6;
       border: 2px solid #1f2937;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-      padding: 10px 0;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -2310,7 +2306,7 @@ const handleRenderNodes = (canvasIndex) => {
     .resonance-submenu-btn {
       border: none;
       background: transparent;
-      padding: 12px 16px;
+      padding: 8px 16px;
       font-size: 14px;
       line-height: 1.2;
       font-weight: 500;
