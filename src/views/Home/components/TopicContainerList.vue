@@ -45,6 +45,7 @@
           <div style="height: 300px">
             <konvaComponent
               :ref="(el) => setKonvaRef(el, index)"
+              :enableMouseWheelScroll="false"
               @sendSelectedNodes="handleSelectedNodes"
             >
             </konvaComponent>

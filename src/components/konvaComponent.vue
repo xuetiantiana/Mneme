@@ -163,6 +163,15 @@ const emit = defineEmits([
   "stage-transform",
 ]);
 
+const props = withDefaults(
+  defineProps<{
+    enableMouseWheelScroll?: boolean;
+  }>(),
+  {
+    enableMouseWheelScroll: true,
+  }
+);
+
 // DOM 元素引用
 const container = ref<HTMLDivElement>(); // 画布容器
 const imageInput = ref<HTMLInputElement>(); // 图片上传输入框
@@ -1739,6 +1748,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 // 处理鼠标滚轮事件，实现画布的缩放和滚动功能
 const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+  if (!props.enableMouseWheelScroll) {
+    return;
+  }
+
   // 阻止默认的滚动行为
   e.evt.preventDefault();
 
