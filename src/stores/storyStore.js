@@ -1,23 +1,13 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { getSessionId, setSessionId as setMemorySessionId } from "@/service/session";
+import { GetStoryList } from "@/service/api";
 
 export const useStoryStore = defineStore("story", () => {
-  // 从 localStorage 初始化数据
-  const savedStoryList = localStorage.getItem("storyList");
   const savedUserId = localStorage.getItem("user_id");
-  const storyList = ref(savedStoryList ? JSON.parse(savedStoryList) : []);
+  const storyList = ref([]);
   const user_id = ref(savedUserId || "");
   const session_id = ref(getSessionId());
-
-  // 监听 storyList 变化并同步到 localStorage
-  watch(
-    storyList,
-    (newList) => {
-      localStorage.setItem("storyList", JSON.stringify(newList));
-    },
-    { deep: true }
-  );
 
   watch(user_id, (newValue) => {
     localStorage.setItem("user_id", newValue || "");
@@ -25,6 +15,13 @@ export const useStoryStore = defineStore("story", () => {
 
   const addStory = (story) => {
     storyList.value.unshift(story);
+  };
+
+  const fetchStoryList = async () => {
+    const res = await GetStoryList();
+    const stories = res?.data?.stories;
+    storyList.value = Array.isArray(stories) ? stories : [];
+    return storyList.value;
   };
 
   const clearStoryList = () => {
@@ -43,6 +40,7 @@ export const useStoryStore = defineStore("story", () => {
     storyList,
     user_id,
     session_id,
+    fetchStoryList,
     addStory,
     clearStoryList,
     setUserId,

@@ -15,8 +15,8 @@
           :class="{ active: selectedStoryIndex === index }"
           @click="selectedStoryIndex = index"
         >
-          <div class="story-title">{{ getStoryTitle(story) }}</div>
-          <div class="story-time">{{ getStoryTime(story.createdAt) }}</div>
+          <div class="story-title" :title="getStoryTitle(story)">{{ getStoryTitle(story) }}</div>
+          <div class="story-time">{{ getStoryTime(story.created_at) }}</div>
         </div>
         <div v-if="storyStore.storyList.length === 0" class="no-story">
           暂无故事

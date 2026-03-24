@@ -2722,6 +2722,8 @@ const exportElementInfo = () => {
   return resetNodesData(nodes);
 };
 
+// 将传入的 Konva 节点序列化为可安全透传/持久化的 JSON 快照。
+// 额外补充 imageSrc，避免后续仅凭 toJSON 丢失图片来源信息。
 const resetNodesData = (nodes) => {
   return nodes.map((node) => {
     const json = JSON.parse(node.toJSON());
@@ -2733,7 +2735,7 @@ const resetNodesData = (nodes) => {
         json.attrs.imageSrc = img.src;
       }
     } else if (node instanceof Konva.Group) {
-      // 递归处理 Group 中的 Image 节点
+      // Group 节点需要递归遍历 children，同步补齐嵌套图片的 imageSrc。
       const processGroup = (groupNode: any, groupJson: any) => {
         if (groupJson.children) {
           groupJson.children.forEach((childJson: any, index: number) => {

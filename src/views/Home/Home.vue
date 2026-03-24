@@ -118,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import PCMListComponent from "@/views/Home/components/PCMListComponent.vue";
 import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
@@ -149,6 +149,14 @@ const topicContainerListRef = ref(null);
 const workingMemoryRef = ref(null);
 const exportLoading = ref(false);
 const storyStore = useStoryStore();
+
+onMounted(async () => {
+  try {
+    await storyStore.fetchStoryList();
+  } catch (error) {
+    console.error("GetStoryList error:", error);
+  }
+});
 
 const handleCreateSuccess = (index) => {
   currentStoryIndex.value = index;

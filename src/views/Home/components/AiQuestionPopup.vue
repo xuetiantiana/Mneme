@@ -632,6 +632,7 @@ onBeforeUnmount(() => {
   border: 1px solid #e6edf7;
   border-radius: 8px;
   padding: 10px;
+  white-space: pre-wrap;
 }
 
 .constellate-grid {

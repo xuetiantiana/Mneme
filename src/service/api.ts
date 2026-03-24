@@ -12,6 +12,12 @@ export const GetPCMList = (): any => {
     );
 };
 
+export const GetStoryList = (): any => {
+    return request.get(
+        "/api/story/list",
+    );
+};
+
 export const CreateOnePCM = (data: any): any => {
     return request.post("/api/pcm/create", data);
 
