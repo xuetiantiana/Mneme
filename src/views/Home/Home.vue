@@ -125,7 +125,6 @@ import TopicContainerList from "@/views/Home/components/TopicContainerList.vue";
 import StoryListDialog from "@/views/Home/components/StoryListDialog.vue";
 import { ExportData } from "@/service/api";
 import { useStoryStore } from "@/stores/storyStore";
-import { getSessionId } from "@/service/session";
 
 import WorkingMemory from "@/views/Home/components/WorkingMemory.vue";
 
@@ -185,65 +184,138 @@ const handleLogout = () => {
   window.location.reload();
 };
 
-const parseFileNameFromDisposition = (disposition) => {
-  if (!disposition) return "export-data";
-  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
-  const normalMatch = disposition.match(/filename=\"?([^\";]+)\"?/i);
-  if (normalMatch?.[1]) return normalMatch[1];
-  return "export-data";
-};
-
-const downloadBlob = (blob, fileName) => {
-  const url = URL.createObjectURL(blob);
+const downloadDataUrl = (dataUrl, fileName) => {
   const link = document.createElement("a");
-  link.href = url;
+  link.href = dataUrl;
   link.download = fileName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+};
+
+const dataUrlToBlob = async (dataUrl) => {
+  const response = await fetch(dataUrl);
+  return response.blob();
+};
+
+const downloadBlob = (blob, fileName) => {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(objectUrl);
+};
+
+const parseFileNameFromDisposition = (
+  contentDisposition = "",
+  contentType = "",
+) => {
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const normalMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  if (normalMatch?.[1]) {
+    return normalMatch[1];
+  }
+
+  const lowerContentType = String(contentType).toLowerCase();
+  if (
+    lowerContentType.includes("application/zip") ||
+    lowerContentType.includes("application/x-zip-compressed") ||
+    lowerContentType.includes("application/x-compressed")
+  ) {
+    return `export-${Date.now()}.zip`;
+  }
+
+  return `export-${Date.now()}.zip`;
 };
 
 const handleExport = async () => {
-  const user_id = storyStore.user_id || localStorage.getItem("user_id") || "";
-  const session_id = storyStore.session_id || getSessionId();
-
-  if (!user_id || !session_id) {
-    ElMessage.warning("缺少 user_id 或 session_id，无法导出");
-    return;
-  }
-
   exportLoading.value = true;
   try {
-    const res = await ExportData(
-      { user_id, session_id },
-      { responseType: "blob" }
-    );
+    const screenshotDataUrl =
+      workingMemoryRef.value?.exportCurrentCanvasScreenshot?.() || "";
 
-    const contentType = String(res?.headers?.["content-type"] || "").toLowerCase();
-    const disposition = res?.headers?.["content-disposition"] || "";
+    const formData = new FormData();
 
-    if (contentType.includes("application/json")) {
-      const text = await res.data.text();
-      const json = JSON.parse(text || "{}");
-      const downloadUrl = json?.data?.download_url || json?.download_url;
-      if (downloadUrl) {
-        window.open(downloadUrl, "_blank");
-        ElMessage.success("已获取下载链接");
-        return;
-      }
-      ElMessage.success("导出成功");
-      console.log("ExportData JSON response:", json);
-      return;
+    if (screenshotDataUrl) {
+      const fileName = `canvas-${Date.now()}.png`;
+      // downloadDataUrl(screenshotDataUrl, fileName);
+
+      const screenshotBlob = await dataUrlToBlob(screenshotDataUrl);
+      const screenshotFile = new File([screenshotBlob], fileName, {
+        type: screenshotBlob.type || "image/png",
+      });
+
+      formData.append("working_memory_screenshot", screenshotFile);
     }
 
-    const fileName = parseFileNameFromDisposition(disposition);
-    downloadBlob(res.data, fileName);
-    ElMessage.success("导出文件已下载");
+    // 调试：确认上传前 FormData 中确实包含文件字段。
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log("Export formData field:", key, value.name, value.size, value.type);
+      } else {
+        console.log("Export formData field:", key, value);
+      }
+    }
+
+    const exportResp = await ExportData(formData, {
+      responseType: "blob",
+    });
+
+    const responseBlob = exportResp?.data;
+    const headers = exportResp?.headers || {};
+    const contentType = String(
+      headers["content-type"] || headers["Content-Type"] || "",
+    ).toLowerCase();
+
+    if (responseBlob instanceof Blob) {
+      if (contentType.includes("application/json")) {
+        const text = await responseBlob.text();
+        let payload = {};
+        try {
+          payload = text ? JSON.parse(text) : {};
+        } catch (parseError) {
+          console.warn("Export response JSON parse failed:", parseError);
+        }
+        const downloadUrl =
+          payload?.download_url ||
+          payload?.data?.download_url ||
+          payload?.url ||
+          payload?.data?.url;
+
+        if (downloadUrl) {
+          const fileNameFromUrl =
+            decodeURIComponent(String(downloadUrl).split("/").pop() || "") ||
+            `export-${Date.now()}.zip`;
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = fileNameFromUrl;
+          link.target = "_blank";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      } else {
+        const fileName = parseFileNameFromDisposition(
+          headers["content-disposition"] || headers["Content-Disposition"] || "",
+          contentType,
+        );
+        downloadBlob(responseBlob, fileName);
+      }
+    }
+
+    ElMessage.success(
+      screenshotDataUrl ? "已导出（本次上传截图）" : "已导出（本次未上传截图）",
+    );
   } catch (error) {
-    console.error("ExportData error:", error);
-    ElMessage.error("导出失败，请检查网络或稍后重试");
+    console.error("ExportData screenshot upload error:", error);
+    ElMessage.error("截图导出或上传失败，请稍后重试");
   } finally {
     exportLoading.value = false;
   }

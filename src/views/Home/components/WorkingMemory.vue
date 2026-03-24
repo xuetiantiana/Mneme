@@ -2107,6 +2107,18 @@ const handleRenderNodes = (canvasIndex) => {
     console.log("没有可渲染的节点");
   }
 };
+
+// 给父组件使用：导出当前工作画布截图（dataURL）。
+const exportCurrentCanvasScreenshot = () => {
+  if (!konvaRef.value?.exportCanvas) {
+    return "";
+  }
+  return String(konvaRef.value.exportCanvas() || "");
+};
+
+defineExpose({
+  exportCurrentCanvasScreenshot,
+});
 </script>
 
 <style scoped lang="scss">

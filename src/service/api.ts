@@ -1,4 +1,3 @@
-import axios from "axios";
 import { createAxios } from "./axios";
 
 //其他配置
@@ -1108,12 +1107,46 @@ export const feedbackConfirm = (data: any): any => {
     });
 };
 
-export const ExportData = (data: any, config: any = {}): any => {
-    console.log("ExportData data:", data);
-    return request.get("/api/export/data", {
-        params: data,
-        ...config,
-    });
+export const ExportData = (formData: any, config: any = {}): any => {
+    console.log("ExportData data:", formData);
+    const isFormData = typeof FormData !== "undefined" && formData instanceof FormData;
+
+    if (isFormData) {
+        const entries = Array.from(formData.entries()).map(([key, value]) => {
+            if (value instanceof File) {
+                return {
+                    key,
+                    name: value.name,
+                    size: value.size,
+                    type: value.type,
+                };
+            }
+            return {
+                key,
+                value,
+            };
+        });
+        console.log("ExportData form entries:", entries);
+    }
+
+    const headers: Record<string, any> = {
+        ...(config?.headers || {}),
+    };
+
+    if (isFormData) {
+        // FormData 交给浏览器自动注入 multipart boundary，避免请求体解析失败。
+        delete headers["Content-Type"];
+        delete headers["content-type"];
+    }
+
+    return request.post(
+        "/api/export/data",
+        formData,
+        {
+            ...config,
+            headers,
+        },
+    );
 
 
 };
