@@ -1977,6 +1977,12 @@ const handleKeyDown = (e: KeyboardEvent) => {
     return;
   }
 
+  // 仅在当前画布是最后一次被点击的区域时，才拦截快捷键。
+  // 否则保留浏览器默认行为（例如在弹窗里 Ctrl+C 复制文本）。
+  if (!isCurrentCanvasLastClicked) {
+    return;
+  }
+
   const lowerKey = String(e.key || "").toLowerCase();
   const isMetaPressed = e.ctrlKey || e.metaKey;
   const isUndo = isMetaPressed && !e.shiftKey && lowerKey === "z";

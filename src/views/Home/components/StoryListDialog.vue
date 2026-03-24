@@ -195,6 +195,8 @@ const handleClose = () => {
   display: flex;
   height: 500px;
   gap: 20px;
+  user-select: text;
+  -webkit-user-select: text;
 
   .story-list-left {
     width: 200px;
