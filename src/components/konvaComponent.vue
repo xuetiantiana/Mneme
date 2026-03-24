@@ -188,6 +188,18 @@ let selectedNodes: Konva.Node[] = []; // 当前选中的节点列表
 let clipboardNodes: Konva.Node[] = []; // 复制缓存的节点快照
 let lastPasteOffset = { x: 24, y: 24 }; // 无鼠标位置时的递增偏移
 let isCurrentCanvasLastClicked = false; // 防误删：仅当最后一次点击在当前 canvas 内才允许删除
+
+// 历史栈（Undo/Redo）
+// - historyPast: 已提交快照栈，栈顶是当前状态
+// - historyFuture: 撤回后可前进的快照栈
+// - isApplyingHistory: 正在回放历史时，禁止再次录入历史，避免递归
+type HistorySnapshot = Konva.Node[];
+const HISTORY_MAX_COUNT = 60;
+let historyPast: HistorySnapshot[] = [];
+let historyFuture: HistorySnapshot[] = [];
+let isApplyingHistory = false;
+let historyCaptureTimer: ReturnType<typeof setTimeout> | null = null;
+let lastHistorySignature = "";
 let isDrawing = ref(false); // 是否正在绘制
 let isSelecting = ref(false); // 是否正在框选
 let isPanning = ref(false); // 是否正在平移
@@ -1575,8 +1587,19 @@ onMounted(() => {
   window.addEventListener("mousedown", handleGlobalPointerDown, true);
   window.addEventListener("touchstart", handleGlobalPointerDown, true);
   window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // 历史监听统一挂在图层层级：节点新增/删除、拖拽结束、变换结束都会触发快照采集。
+  // 通过 scheduleHistorySnapshot 做节流，避免一次操作写入过多历史帧。
+  layer.on("add.history", scheduleHistorySnapshot);
+  layer.on("remove.history", scheduleHistorySnapshot);
+  layer.on("dragend.history", scheduleHistorySnapshot);
+  layer.on("transformend.history", scheduleHistorySnapshot);
+
   konvaData.stage = stage;
   konvaData.layer = layer;
+
+  // 记录初始空画布快照，保证第一次 Ctrl+Z 能回到初始状态。
+  commitHistorySnapshot();
 
   // 使用 ResizeObserver 监听容器大小变化
   if (container.value) {
@@ -1595,6 +1618,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   clearAiAssist();
+
+  if (historyCaptureTimer) {
+    clearTimeout(historyCaptureTimer);
+    historyCaptureTimer = null;
+  }
+
+  if (layer) {
+    layer.off(".history");
+  }
+
   if (stage) {
     stage.destroy();
   }
@@ -1648,6 +1681,224 @@ const getNodesTopLeft = (nodes: Konva.Node[]) => {
   }
 
   return { x: minX, y: minY };
+};
+
+// 过滤掉不应进入历史的临时节点（选择框、Transformer、AI 辅助元素等）。
+const isHistoryTransientNode = (node: Konva.Node) => {
+  if (!node) return true;
+  if (node === transformer || node === selectionBox) return true;
+  if (node === aiGuideLine || node === aiGuideEndCircle) return true;
+  if (aiRingSlices.includes(node as Konva.Group)) return true;
+  if (aiRightClockLabels.includes(node as Konva.Text)) return true;
+  const nodeName = String(node.name?.() || "");
+  return nodeName === "slice" || nodeName === "labelGroup" || nodeName === "hover-action-btn";
+};
+
+// 给从历史恢复出的节点重新绑定交互事件。
+const bindNodeEventsForHistoryRestore = (node: Konva.Node) => {
+  if (!node) return;
+
+  node.off();
+
+  if (node.name?.() === "group-ungroup-btn") {
+    const ungroupBtn = node as Konva.Group;
+    const ungroupBtnBg = ungroupBtn.findOne("Rect") as Konva.Rect | null;
+
+    ungroupBtn.on("mousedown touchstart", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      evt.cancelBubble = true;
+    });
+
+    ungroupBtn.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      evt.cancelBubble = true;
+      const targetGroupId = String(ungroupBtn.getAttr("targetGroupId") || "");
+      if (!targetGroupId || !layer) return;
+      const groupNode = layer.findOne(`#${targetGroupId}`);
+      const result = ungroupSelectedNodes(groupNode);
+      if (!result?.success) {
+        console.warn("Ungroup from history-restored button failed:", result?.message || "unknown");
+      }
+    });
+
+    ungroupBtn.on("mouseenter", () => {
+      if (stage) {
+        stage.container().style.cursor = "pointer";
+      }
+      if (ungroupBtnBg) {
+        ungroupBtnBg.fill("rgba(240, 240, 240, 0.98)");
+      }
+      layer?.batchDraw();
+    });
+
+    ungroupBtn.on("mouseleave", () => {
+      if (stage) {
+        stage.container().style.cursor = "default";
+      }
+      if (ungroupBtnBg) {
+        ungroupBtnBg.fill("rgba(255, 255, 255, 0.92)");
+      }
+      layer?.batchDraw();
+    });
+
+    return;
+  }
+
+  if (node instanceof Konva.Group) {
+    node.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      handleNodeClick(evt, node);
+    });
+
+    if (node.getAttr("customType") === "group") {
+      node.on("dragmove transform", () => {
+        if (!layer) return;
+        const groupId = node.id?.();
+        if (!groupId) return;
+        const groupRect = node.getClientRect({
+          relativeTo: layer,
+          skipShadow: true,
+          skipStroke: false,
+        });
+        const floatingBtns = layer.find(".group-ungroup-btn");
+        floatingBtns.forEach((btn: Konva.Node) => {
+          if (String(btn.getAttr("targetGroupId") || "") !== groupId) return;
+          const btnGroup = btn as Konva.Group;
+          const bg = btnGroup.findOne("Rect") as Konva.Rect | null;
+          const btnWidth = bg?.width?.() || 64;
+          const gap = 6;
+          btnGroup.position({
+            x: groupRect.x + groupRect.width - btnWidth - gap,
+            y: groupRect.y + gap,
+          });
+          btnGroup.moveToTop();
+        });
+        layer.batchDraw();
+      });
+    }
+    return;
+  }
+
+  node.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    handleNodeClick(evt, node);
+  });
+};
+
+// 构造当前画布的历史快照：
+// 1) 只取可持久化内容节点（排除临时节点）
+// 2) 克隆并移除选中态，防止“仅选中变化”污染历史
+const buildHistorySnapshot = (): HistorySnapshot => {
+  if (!layer) return [];
+  const snapshot: HistorySnapshot = [];
+  layer.getChildren().forEach((node: Konva.Node) => {
+    if (isHistoryTransientNode(node)) return;
+    const cloned = node.clone({ listening: node.listening() });
+    clearNodeListenersDeep(cloned);
+    removeNodeSelectStyle(cloned);
+    snapshot.push(cloned);
+  });
+  return snapshot;
+};
+
+const getHistorySignature = (snapshot: HistorySnapshot) => {
+  return snapshot.map((node) => node.toJSON()).join("||");
+};
+
+const commitHistorySnapshot = () => {
+  if (!layer || isApplyingHistory) return;
+
+  const snapshot = buildHistorySnapshot();
+  const signature = getHistorySignature(snapshot);
+  if (signature === lastHistorySignature) {
+    return;
+  }
+
+  historyPast.push(snapshot);
+  if (historyPast.length > HISTORY_MAX_COUNT) {
+    historyPast.shift();
+  }
+  historyFuture = [];
+  lastHistorySignature = signature;
+};
+
+const scheduleHistorySnapshot = () => {
+  if (isApplyingHistory) return;
+  if (historyCaptureTimer) {
+    clearTimeout(historyCaptureTimer);
+  }
+  historyCaptureTimer = setTimeout(() => {
+    historyCaptureTimer = null;
+    commitHistorySnapshot();
+  }, 80);
+};
+
+const restoreHistorySnapshot = (snapshot: HistorySnapshot) => {
+  if (!layer || !transformer) return;
+
+  isApplyingHistory = true;
+  clearAiAssist();
+
+  selectedNodes.forEach((node) => removeNodeSelectStyle(node));
+  selectedNodes = [];
+  transformer.nodes([]);
+
+  const rawChildren: any = layer.getChildren();
+  const currentNodes: Konva.Node[] =
+    typeof rawChildren?.each === "function"
+      ? (() => {
+          const snapshot: Konva.Node[] = [];
+          rawChildren.each((child: Konva.Node) => snapshot.push(child));
+          return snapshot;
+        })()
+      : Array.isArray(rawChildren)
+      ? [...rawChildren]
+      : typeof rawChildren?.toArray === "function"
+      ? [...rawChildren.toArray()]
+      : Array.from(rawChildren || []);
+  currentNodes.forEach((node) => {
+    if (isHistoryTransientNode(node)) return;
+    node.destroy();
+  });
+
+  snapshot.forEach((node) => {
+    const restoredNode = node.clone({ listening: node.listening() });
+    bindNodeEventsForHistoryRestore(restoredNode);
+    layer!.add(restoredNode);
+    rebindGroupedChildConstraintsDeep(restoredNode);
+  });
+
+  transformer.moveToTop();
+  layer.batchDraw();
+  updateScrollbars();
+
+  isApplyingHistory = false;
+};
+
+const undoLastStep = () => {
+  if (historyPast.length <= 1) return;
+
+  const current = historyPast.pop();
+  if (current) {
+    historyFuture.push(current);
+  }
+
+  const previous = historyPast[historyPast.length - 1];
+  if (!previous) return;
+
+  restoreHistorySnapshot(previous);
+  lastHistorySignature = getHistorySignature(previous);
+};
+
+const redoNextStep = () => {
+  if (historyFuture.length === 0) return;
+
+  const next = historyFuture.pop();
+  if (!next) return;
+
+  historyPast.push(next);
+  if (historyPast.length > HISTORY_MAX_COUNT) {
+    historyPast.shift();
+  }
+
+  restoreHistorySnapshot(next);
+  lastHistorySignature = getHistorySignature(next);
 };
 
 const copySelectedNodes = () => {
@@ -1726,23 +1977,44 @@ const handleKeyDown = (e: KeyboardEvent) => {
     return;
   }
 
-  const isCopy = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c";
+  const lowerKey = String(e.key || "").toLowerCase();
+  const isMetaPressed = e.ctrlKey || e.metaKey;
+  const isUndo = isMetaPressed && !e.shiftKey && lowerKey === "z";
+  const isRedo =
+    (isMetaPressed && lowerKey === "y") ||
+    (isMetaPressed && e.shiftKey && lowerKey === "z");
+
+  if (isUndo) {
+    e.preventDefault();
+    undoLastStep();
+    return;
+  }
+
+  if (isRedo) {
+    e.preventDefault();
+    redoNextStep();
+    return;
+  }
+
+  const isCopy = isMetaPressed && lowerKey === "c";
   if (isCopy) {
     e.preventDefault();
     copySelectedNodes();
     return;
   }
 
-  const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v";
+  const isPaste = isMetaPressed && lowerKey === "v";
   if (isPaste) {
     e.preventDefault();
     pasteCopiedNodes();
+    scheduleHistorySnapshot();
     return;
   }
   
   if (e.key === "Delete" || e.key === "Backspace") {
     e.preventDefault();
     deleteSelectedNodes();
+    scheduleHistorySnapshot();
   }
 };
 
@@ -2376,6 +2648,8 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
     window.removeEventListener("mousedown", handleOutsideClick);
     window.removeEventListener("touchstart", handleOutsideClick);
     textNodeKonva.visible(true);
+    // 文本编辑结束后补一次历史快照，确保文字修改可撤回/重做。
+    scheduleHistorySnapshot();
   }
 
   function setTextareaWidth(newWidth: number) {
