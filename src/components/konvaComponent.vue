@@ -1356,6 +1356,7 @@ const triggerAiAssist = () => {
       x: aiAssistState.centerX,
       y: aiAssistState.centerY,
       listening: true, // 开启监听，拦截点击事件
+      customType: "ai-assist-slice-group",
     });
 
     // 绑定点击事件，阻止冒泡
@@ -1376,6 +1377,7 @@ const triggerAiAssist = () => {
 
     const slice = new Konva.Arc({
       name: "slice",
+      customType: "ai-assist-slice",
       innerRadius: aiAssistState.innerRadius,
       outerRadius: aiAssistState.outerRadius,
       angle: sliceAngle,
@@ -1394,6 +1396,7 @@ const triggerAiAssist = () => {
     // 创建标签
     const labelGroup = new Konva.Group({
       name: "labelGroup",
+      customType: "ai-assist-label-group",
       listening: false, // 标签本身不需要独立监听，跟随 group
     });
 
@@ -1683,13 +1686,33 @@ const getNodesTopLeft = (nodes: Konva.Node[]) => {
   return { x: minX, y: minY };
 };
 
+// 识别 AI 辅助环相关节点，统一用于“不可被普通选中”的判断。
+const isAiAssistNode = (node?: Konva.Node | null) => {
+  if (!node) return false;
+
+  let current: Konva.Node | null = node;
+  while (current) {
+    if (current === aiGuideLine || current === aiGuideEndCircle) return true;
+    if (aiRingSlices.includes(current as Konva.Group)) return true;
+    if (aiRightClockLabels.includes(current as Konva.Text)) return true;
+
+    const nodeName = String(current.name?.() || "");
+    const customType = String(current.getAttr?.("customType") || "");
+    if (nodeName.startsWith("ai-assist") || customType.startsWith("ai-assist")) {
+      return true;
+    }
+
+    current = current.getParent?.() || null;
+  }
+
+  return false;
+};
+
 // 过滤掉不应进入历史的临时节点（选择框、Transformer、AI 辅助元素等）。
 const isHistoryTransientNode = (node: Konva.Node) => {
   if (!node) return true;
   if (node === transformer || node === selectionBox) return true;
-  if (node === aiGuideLine || node === aiGuideEndCircle) return true;
-  if (aiRingSlices.includes(node as Konva.Group)) return true;
-  if (aiRightClockLabels.includes(node as Konva.Text)) return true;
+  if (isAiAssistNode(node)) return true;
   const nodeName = String(node.name?.() || "");
   return nodeName === "slice" || nodeName === "labelGroup" || nodeName === "hover-action-btn";
 };
@@ -2293,8 +2316,7 @@ const handleMouseUp = () => {
       if (
         shape === transformer ||
         shape === selectionBox ||
-        shape.name() === "slice" ||
-        shape.name() === "labelGroup" ||
+        isAiAssistNode(shape) ||
         shape.listening() === false
       )
         return;
@@ -2385,6 +2407,11 @@ const handleNodeClick = (
 
   // 阻止事件冒泡，避免触发其他点击事件
   e.cancelBubble = true;
+
+  // AI 辅助环及其子节点不进入普通单选/多选逻辑。
+  if (isAiAssistNode(node) || isAiAssistNode(e.target as Konva.Node)) {
+    return;
+  }
 
   // 只按绑定时传入的节点选中；对于 Group，不再穿透选中子节点
   const targetNode: Konva.Node = node;
@@ -4093,6 +4120,7 @@ const addBubblesAroundTarget = async (
     layer!.add(node);
   });
 
+  // ...existing code...
   const topText = String(options?.topText || "").trim();
   if (topText) {
     let minX = Infinity;
@@ -4112,54 +4140,45 @@ const addBubblesAroundTarget = async (
     });
 
     if (Number.isFinite(minX) && Number.isFinite(maxX) && Number.isFinite(minY)) {
-      // 文本宽度跟随泡泡整体包围盒，保证多泡泡场景下仍居中可读。
       const textWidth = Math.max(160, maxX - minX + 24);
       const textAnchorX = minX + (maxX - minX) / 2;
-      const inputTextNode = new Konva.Text({
-        x: textAnchorX,
-        y: minY,
-        width: textWidth,
-        text: topText,
-        fontSize: 14,
-        lineHeight: 1.5,
-        fontFamily: DEFAULT_FONT_FAMILY,
-        fill: "#334155",
-        align: "center",
-        wrap: "word",
-        draggable: true,
-        customType: "whisper-input-text",
-      });
+      const textAnchorY = minY - 16;
 
-      const textHeight = inputTextNode.height();
-      const textLeftX = textAnchorX - textWidth / 2;
-      const textTopY = minY - textHeight - 10;
-      const inputTextBg = new Konva.Rect({
-        x: textLeftX - 8,
-        y: textTopY - 6,
-        width: textWidth + 16,
-        height: textHeight + 12,
-        fill: "rgba(156, 163, 175, 0.22)",
-        stroke: "rgba(107, 114, 128, 0.35)",
-        strokeWidth: 1,
-        cornerRadius: 8,
-        listening: false,
-        draggable: false,
-        name: "whisper-input-text-bg",
-      });
+      try {
+        const topTextNode = await createTextNode(
+          {
+            text: topText,
+            id: `whisper-top-${Date.now()}`,
+            customType: "whisper-input-text",
+          },
+          {
+            startX: textAnchorX,
+            startY: textAnchorY,
+            width: textWidth,
+            align: "center",
+            center: true,
+            fontSize: 14,
+            lineHeight: 1.5,
+            fontFamily: DEFAULT_FONT_FAMILY,
+            fill: "#334155",
+            backgroundColor: "rgba(156, 163, 175, 0.22)", // 灰色背景
+            padding: 8,
+            cornerRadius: 8,
+            isBubble: false,
+          }
+        );
 
-      inputTextNode.offset({
-        x: textWidth / 2,
-        y: textHeight + 10,
-      });
+        topTextNode.on("click tap", (evt) => {
+          handleNodeClick(evt, topTextNode);
+        });
 
-      inputTextNode.on("click tap", (evt) => {
-        handleNodeClick(evt, inputTextNode);
-      });
-
-      layer!.add(inputTextBg);
-      layer!.add(inputTextNode);
+        layer!.add(topTextNode);
+      } catch (error) {
+        console.error("Failed to create whisper top text node:", error);
+      }
     }
   }
+// ...existing code...
 
   selectedNodes = bubbleNodes;
   transformer?.nodes(selectedNodes);
