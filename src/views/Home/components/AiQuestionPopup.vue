@@ -53,9 +53,12 @@
             v-for="(item, index) in resonanceData"
             :key="item?.id || index"
             class="resonance-card"
-            :class="{ active: selectedResonanceIndex === index }"
-            @click="selectResonance(index)"
+            :class="{ active: selectedResonanceIndexes.includes(index) }"
+            @click="toggleResonance(index)"
           >
+            <span class="resonance-select-icon">
+              <el-icon><Check /></el-icon>
+            </span>
             <div class="resonance-card-head">
               <span class="resonance-kind">{{ item?.kind || "analysis" }}</span>
             </div>
@@ -209,7 +212,7 @@ const emit = defineEmits(["confirm", "cancel", "tool-click", "regenerate"]);
 // 通用状态
 // ------------------------
 const selectedIndex = ref(-1);
-const selectedResonanceIndex = ref(-1);
+const selectedResonanceIndexes = ref([]);
 const selectedConstellateImageIndexes = ref([]);
 const popupWrapRef = ref(null);
 const questionCardRefs = ref([]);
@@ -229,7 +232,7 @@ watch(
   (val) => {
     if (val) {
       selectedIndex.value = -1;
-      selectedResonanceIndex.value = -1;
+      selectedResonanceIndexes.value = [];
       selectedConstellateImageIndexes.value = [];
       popupOffset.value = { x: 0, y: 0 };
       nextTick(() => {
@@ -273,7 +276,7 @@ watch(
     }
     if (val === "Resonance") {
       selectedIndex.value = -1;
-      selectedResonanceIndex.value = -1;
+      selectedResonanceIndexes.value = [];
       selectedConstellateImageIndexes.value = [];
     }
   }
@@ -291,7 +294,7 @@ watch(
 watch(
   () => props.resonanceData,
   () => {
-    selectedResonanceIndex.value = -1;
+    selectedResonanceIndexes.value = [];
   },
   { deep: true }
 );
@@ -388,7 +391,7 @@ const confirmDisabled = computed(() => {
     );
   }
   if (isResonanceView.value) {
-    return selectedResonanceIndex.value === -1;
+    return selectedResonanceIndexes.value.length === 0;
   }
   return selectedIndex.value === -1;
 });
@@ -408,9 +411,14 @@ const toolsPanelStyle = computed(() => ({
   top: `${toolsPanelTop.value}px`,
 }));
 
-const selectedResonanceItem = computed(() => {
-  if (selectedResonanceIndex.value < 0) return null;
-  return props.resonanceData?.[selectedResonanceIndex.value] || null;
+const selectedResonanceItems = computed(() => {
+  if (!Array.isArray(props.resonanceData) || selectedResonanceIndexes.value.length === 0) {
+    return [];
+  }
+
+  return selectedResonanceIndexes.value
+    .map((index) => props.resonanceData?.[index])
+    .filter(Boolean);
 });
 
 // ------------------------
@@ -446,8 +454,15 @@ const selectQuestion = (index) => {
   selectedIndex.value = index;
 };
 
-const selectResonance = (index) => {
-  selectedResonanceIndex.value = index;
+const toggleResonance = (index) => {
+  const next = [...selectedResonanceIndexes.value];
+  const found = next.indexOf(index);
+  if (found >= 0) {
+    next.splice(found, 1);
+  } else {
+    next.push(index);
+  }
+  selectedResonanceIndexes.value = next;
 };
 
 // Reflect 项上的快捷工具点击
@@ -540,12 +555,15 @@ const handleConfirm = () => {
 
   // Resonance：提交当前选中的 analysis 项。
   if (isResonanceView.value) {
-    const item = selectedResonanceItem.value;
+    const items = selectedResonanceItems.value;
     emit("confirm", {
       label: props.label,
-      resonanceItem: item,
-      question: String(item?.text || item?.keyword || "").trim(),
-      resonanceIndex: selectedResonanceIndex.value,
+      resonanceItems: items,
+      question: items
+        .map((item) => String(item?.text || item?.keyword || "").trim())
+        .filter(Boolean)
+        .join("\n"),
+      resonanceIndexes: [...selectedResonanceIndexes.value],
     });
   }
 };
@@ -675,7 +693,8 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.constellate-select-icon {
+.constellate-select-icon,
+.resonance-select-icon {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -703,12 +722,19 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
+.resonance-card.active .resonance-select-icon {
+  border-color: #1890ff;
+  background: #1890ff;
+  color: #fff;
+}
+
 /* ===== Resonance 样式 ===== */
 .resonance-content {
   gap: 10px;
 }
 
 .resonance-card {
+  position: relative;
   border: 1px solid #e6edf7;
   border-radius: 10px;
   padding: 10px;

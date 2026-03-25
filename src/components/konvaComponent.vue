@@ -3564,14 +3564,15 @@ const addTextAtPosition = (
 
 const addResonanceGroupAtPosition = (
   resonanceItem: any,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
+  options?: { autoSelect?: boolean }
 ) => {
-  if (!layer || !transformer || !position) return;
+  if (!layer || !transformer || !position) return null;
 
   const mainText = String(
     resonanceItem?.text || resonanceItem?.keyword || ""
   ).trim();
-  if (!mainText) return;
+  if (!mainText) return null;
 
   const kind = String(resonanceItem?.kind || "analysis").trim();
   const keyword = String(resonanceItem?.keyword || "").trim();
@@ -3583,8 +3584,11 @@ const addResonanceGroupAtPosition = (
   const cardPadding = 12;
   const bodyWidth = cardWidth - cardPadding * 2;
 
-  // 先清理旧选中样式，再创建新的 Resonance 结果组。
-  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+  const shouldAutoSelect = options?.autoSelect !== false;
+  // 仅在自动选中时清理旧选中，便于外部批量创建后统一选中。
+  if (shouldAutoSelect) {
+    selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+  }
 
   const group = new Konva.Group({
     x: position.x,
@@ -3708,14 +3712,40 @@ const addResonanceGroupAtPosition = (
 
   layer.add(group);
 
-  selectedNodes = [group];
+  if (shouldAutoSelect) {
+    selectedNodes = [group];
+    transformer.nodes(selectedNodes);
+    addNodeSelectStyle(group);
+    group.moveToTop();
+    transformer.moveToTop();
+  }
+
+  layer.batchDraw();
+  updateScrollbars();
+
+  return group;
+};
+
+// 选中已存在于当前图层中的节点（不会重复 add 到 layer）。
+const selectCanvasNodes = (nodesInput: Konva.Node[] | Konva.Node) => {
+  if (!layer || !transformer) return 0;
+
+  const nodes = Array.isArray(nodesInput) ? nodesInput : [nodesInput];
+  const validNodes = nodes.filter((node) => node instanceof Konva.Node && node.getLayer() === layer);
+  if (validNodes.length === 0) return 0;
+
+  selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+  selectedNodes = validNodes;
   transformer.nodes(selectedNodes);
-  addNodeSelectStyle(group);
-  group.moveToTop();
+  selectedNodes.forEach((n) => {
+    addNodeSelectStyle(n);
+    n.moveToTop();
+  });
   transformer.moveToTop();
 
   layer.batchDraw();
   updateScrollbars();
+  return validNodes.length;
 };
 
 const addPCMAtPosition = (
@@ -4661,6 +4691,7 @@ defineExpose({
   resetNodesData,
   addTextAtPosition,
   addResonanceGroupAtPosition,
+  selectCanvasNodes,
   addPCMAtPosition,
   addMemoryAtPosition,
   addExternalNodes,

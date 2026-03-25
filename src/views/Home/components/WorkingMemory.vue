@@ -1898,7 +1898,12 @@ const resolveConstellateConfirmedIds = (data) => {
 };
 
 const resolveResonanceConfirmedIds = (data) => {
-  return collectConfirmedIds([data?.resonanceItem?.id]);
+  const resonanceItems = Array.isArray(data?.resonanceItems)
+    ? data.resonanceItems
+    : data?.resonanceItem
+    ? [data.resonanceItem]
+    : [];
+  return collectConfirmedIds(resonanceItems.map((item) => item?.id));
 };
 
 const handleAiPopupConfirm = async (data) => {
@@ -1909,17 +1914,18 @@ const handleAiPopupConfirm = async (data) => {
   if (aiPopupData.value?.toolType === "Resonance") {
     submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
 
-    // Resonance 确认后：把选中的分析结果（主文本 + actions）绘制到 group 右侧。
+    // Resonance 确认后：把选中的分析结果（主文本 + actions）依次绘制到 group 右侧。
     const targetGroupNode = reflectTargetNode.value;
     const anchor = getPopupPositionRightOfNode(targetGroupNode);
-    const resonanceItem = data?.resonanceItem || null;
-    const textContent = String(
-      resonanceItem?.text || resonanceItem?.keyword || data?.question || ""
-    ).trim();
+    const resonanceItems = Array.isArray(data?.resonanceItems)
+      ? data.resonanceItems.filter(Boolean)
+      : data?.resonanceItem
+      ? [data.resonanceItem]
+      : [];
 
-    if (!textContent) {
+    if (resonanceItems.length === 0) {
       ElMessage({
-        message: "请选择一条分析结果后再确认",
+        message: "请至少选择一条分析结果后再确认",
         type: "warning",
       });
       return;
@@ -1934,10 +1940,36 @@ const handleAiPopupConfirm = async (data) => {
     }
 
     // 组内文本节点禁用拖拽与编辑；仅外层 group 可整体拖动。
-    konvaRef.value.addResonanceGroupAtPosition(
-      resonanceItem || { text: textContent, actions: [] },
-      anchor.stagePos
-    );
+    // 多选时按真实高度从上到下排布，避免不同内容长度导致重叠。
+    const rowGap = 16;
+    let currentY = anchor.stagePos.y;
+    const createdGroups = [];
+    resonanceItems.forEach((item) => {
+      const createdGroup = konvaRef.value.addResonanceGroupAtPosition(item, {
+        x: anchor.stagePos.x,
+        y: currentY,
+      }, { autoSelect: false });
+
+      if (createdGroup) {
+        createdGroups.push(createdGroup);
+      }
+
+      if (createdGroup?.getClientRect) {
+        const rect = createdGroup.getClientRect({
+          skipShadow: true,
+          skipStroke: false,
+        });
+        const height = Number(rect?.height) || 0;
+        currentY += Math.max(height, 0) + rowGap;
+      } else {
+        currentY += rowGap;
+      }
+    });
+
+    if (createdGroups.length > 0 && konvaRef.value?.selectCanvasNodes) {
+      konvaRef.value.selectCanvasNodes(createdGroups);
+    }
+
     if (konvaRef.value && konvaRef.value.cancelAiAssist) {
       konvaRef.value.cancelAiAssist();
     }
