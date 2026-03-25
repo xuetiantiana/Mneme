@@ -4559,6 +4559,8 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
   }
 
   const groupNode = target as Konva.Group;
+  const layerAbsScale = layer.getAbsoluteScale();
+  const layerAbsRotation = layer.getAbsoluteRotation();
   const groupId = groupNode.id?.() || "";
   if (groupId && layer) {
     const floatingBtns = layer.find(".group-ungroup-btn");
@@ -4602,10 +4604,21 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
     const absRotation = child.getAbsoluteRotation();
     const absScale = child.getAbsoluteScale();
 
+    // 还原到 layer 时要使用“相对 layer 的局部变换”，避免把 stage/layer 缩放重复叠加。
+    const localScaleX =
+      Math.abs(layerAbsScale.x) > Number.EPSILON
+        ? absScale.x / layerAbsScale.x
+        : absScale.x;
+    const localScaleY =
+      Math.abs(layerAbsScale.y) > Number.EPSILON
+        ? absScale.y / layerAbsScale.y
+        : absScale.y;
+    const localRotation = absRotation - layerAbsRotation;
+
     child.moveTo(layer!);
     child.absolutePosition(absPos);
-    child.rotation(absRotation);
-    child.scale({ x: absScale.x, y: absScale.y });
+    child.rotation(localRotation);
+    child.scale({ x: localScaleX, y: localScaleY });
     child.draggable(currentTool.value === "select");
     child.listening(true);
 
