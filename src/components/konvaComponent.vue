@@ -1537,22 +1537,18 @@ onMounted(() => {
   stage.on("dblclick", handleDoubleClick);
   stage.on("wheel", handleWheel);
 
-  // 右键按下切换到 pan 模式，松开恢复
+  // 中键按下切换到 pan 模式，松开恢复（避免干扰外部系统的右键选中）
   let previousTool = "select";
-  let isRightMouseDown = false;
-  let rightMouseDownPos = { x: 0, y: 0 };
-  let rightMouseStartPos = { x: 0, y: 0 };
-
-  stage.on("contextmenu", (e) => {
-    e.evt.preventDefault();
-  });
+  let isMiddleMouseDown = false;
+  let middleMouseDownPos = { x: 0, y: 0 };
+  let middleMouseStartPos = { x: 0, y: 0 };
 
   stage.on("mousedown", (e) => {
-    if (e.evt.button === 2) {
+    if (e.evt.button === 1) {
       e.evt.preventDefault();
-      isRightMouseDown = true;
-      rightMouseStartPos = stage!.getPointerPosition() || { x: 0, y: 0 };
-      rightMouseDownPos = { ...rightMouseStartPos };
+      isMiddleMouseDown = true;
+      middleMouseStartPos = stage!.getPointerPosition() || { x: 0, y: 0 };
+      middleMouseDownPos = { ...middleMouseStartPos };
       previousTool = currentTool.value;
       setTool("pan");
       stage!.container().style.cursor = "grabbing";
@@ -1560,27 +1556,27 @@ onMounted(() => {
   });
 
   stage.on("mousemove", (e) => {
-    if (isRightMouseDown && currentTool.value === "pan") {
+    if (isMiddleMouseDown && currentTool.value === "pan") {
       const pos = stage!.getPointerPosition();
       if (pos) {
-        const dx = pos.x - rightMouseDownPos.x;
-        const dy = pos.y - rightMouseDownPos.y;
+        const dx = pos.x - middleMouseDownPos.x;
+        const dy = pos.y - middleMouseDownPos.y;
         moveStage({ x: dx, y: dy });
-        rightMouseDownPos = { x: pos.x, y: pos.y };
+        middleMouseDownPos = { x: pos.x, y: pos.y };
       }
     }
   });
 
   stage.on("mouseup", (e) => {
-    if (e.evt.button === 2) {
-      isRightMouseDown = false;
+    if (e.evt.button === 1) {
+      isMiddleMouseDown = false;
       setTool(previousTool as any);
     }
   });
 
   stage.on("mouseleave", () => {
-    if (isRightMouseDown) {
-      isRightMouseDown = false;
+    if (isMiddleMouseDown) {
+      isMiddleMouseDown = false;
       setTool(previousTool as any);
     }
   });
@@ -1589,7 +1585,6 @@ onMounted(() => {
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("mousedown", handleGlobalPointerDown, true);
   window.addEventListener("touchstart", handleGlobalPointerDown, true);
-  window.addEventListener("contextmenu", (e) => e.preventDefault());
 
   // 历史监听统一挂在图层层级：节点新增/删除、拖拽结束、变换结束都会触发快照采集。
   // 通过 scheduleHistorySnapshot 做节流，避免一次操作写入过多历史帧。
