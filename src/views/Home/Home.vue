@@ -3,7 +3,7 @@
     <el-button
       style="position: absolute; left: 10px; top: 10px"
       @click="handleLogout"
-      >退出</el-button
+      >Logout</el-button
     >
 
     <el-button
@@ -37,7 +37,7 @@
         <PCMListComponent></PCMListComponent>
       </div>
     </div>
-    <el-tooltip content="显示 Memory Gallery" placement="right">
+    <el-tooltip content="Show Memory Gallery" placement="right">
       <button
         class="toggle-btn fixed-btn"
         style="position: fixed; left: 30px; top: 70px"
@@ -104,7 +104,7 @@
         ></TopicContainerList>
       </div>
     </div>
-    <el-tooltip content="显示 My Story" placement="left">
+    <el-tooltip content="Show My Story" placement="left">
       <button
         class="toggle-btn"
         style="position: fixed; right: 30px; top: 70px"

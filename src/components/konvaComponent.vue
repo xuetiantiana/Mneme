@@ -22,7 +22,7 @@
         :class="['tool-btn', { active: currentTool === 'text' }]"
         @click="setTool('text')"
       >
-        文字
+        Text
       </button>
     </div>
     <div class="toolbar">

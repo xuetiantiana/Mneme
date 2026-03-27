@@ -849,6 +849,7 @@ onBeforeUnmount(() => {
 .tool-mini-btn {
   width: 100%;
   justify-content: center;
+  margin-left: 0;
 }
 
 .image-row {

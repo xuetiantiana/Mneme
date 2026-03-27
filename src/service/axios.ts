@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosInstance, AxiosResponse } from "axios";
 import { ElMessage } from "element-plus";
 import { addOperationLog } from "./operationLogs";
-import { getSessionId } from "./session";
+import { getSessionId, getLanguage } from "./session";
 
 const resolveApiType = (config?: AxiosRequestConfig): string => {
     if (!config) return "";
@@ -80,6 +80,7 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
         (config) => {
             const userId = (localStorage.getItem("user_id") || "").trim();
             const sessionId = getSessionId();
+            const language = getLanguage();
 
             if (!userId) {
                 ElMessage.warning("user_id 不能为空，请先登录");
@@ -93,6 +94,7 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
             config.headers = config.headers || {};
             const encodedUserId = encodeURIComponent(userId);
             (config.headers as any)["X-User-Id"] = encodedUserId;
+            (config.headers as any)["X-Language"] = language;
             if (sessionId) {
                 (config.headers as any)["X-Session-Id"] = sessionId;
             } else {

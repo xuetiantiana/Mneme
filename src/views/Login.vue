@@ -5,6 +5,12 @@
       <p>请输入 user_id 后继续，session_id 将自动生成</p>
 
       <el-form @submit.prevent>
+        <el-form-item label="language">
+          <el-radio-group v-model="form.language" @change="handleLanguageChange">
+            <el-radio-button value="zh">中文</el-radio-button>
+            <el-radio-button value="en">English</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="user_id">
           <el-input v-model="form.user_id" placeholder="请输入 user_id" clearable />
         </el-form-item>
@@ -23,7 +29,7 @@ import { onMounted, reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStoryStore } from "@/stores/storyStore";
-import { getSessionId } from "@/service/session";
+import { getSessionId, getLanguage, setLanguage } from "@/service/session";
 
 const router = useRouter();
 const route = useRoute();
@@ -32,17 +38,24 @@ const storyStore = useStoryStore();
 const form = reactive({
   user_id: "",
   session_id: "",
+  language: "zh",
 });
 
 const submitting = ref(false);
 
 onMounted(() => {
   form.session_id = getSessionId();
+  form.language = getLanguage();
 });
+
+const handleLanguageChange = (value) => {
+  form.language = setLanguage(value);
+};
 
 const handleSubmit = async () => {
   const userId = (form.user_id || "").trim();
   const sessionId = (form.session_id || "").trim();
+  setLanguage(form.language);
 
   if (!userId) {
     ElMessage({
