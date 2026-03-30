@@ -258,6 +258,25 @@ const whisperPopupData = ref({
   targetNode: null,
 });
 const whisperSubmitting = ref(false);
+/** 当前正在展示 Whisper 高亮样式的 node 引用 */
+const whisperHighlightNode = ref(null);
+
+const applyWhisperHighlight = (node) => {
+  if (!node || !konvaRef.value?.setWhisperHighlight) return;
+  // 如果之前已有高亮节点，先移除
+  if (whisperHighlightNode.value && whisperHighlightNode.value !== node) {
+    konvaRef.value.setWhisperHighlight(whisperHighlightNode.value, false);
+  }
+  whisperHighlightNode.value = node;
+  konvaRef.value.setWhisperHighlight(node, true);
+};
+
+const clearWhisperHighlight = () => {
+  if (whisperHighlightNode.value && konvaRef.value?.setWhisperHighlight) {
+    konvaRef.value.setWhisperHighlight(whisperHighlightNode.value, false);
+  }
+  whisperHighlightNode.value = null;
+};
 const AI_RIGHT_LABELS_BY_TOOL = {
   Reflect: ["反思细节", "反思转化"],
   Constellate: ["直接检索", "远距离启发"],
@@ -1132,6 +1151,7 @@ const handleWhisperCanvasClick = (event) => {
       toolType: currentNav.value,
       targetNode,
     };
+    applyWhisperHighlight(targetNode);
   } else {
     whisperPopupData.value = {
       position: {
@@ -1305,6 +1325,7 @@ const openWhisperPopupForNode = (targetNode) => {
     toolType: "Whisper",
     targetNode,
   };
+  applyWhisperHighlight(targetNode);
   whisperPopupVisible.value = true;
 };
 
@@ -1403,6 +1424,7 @@ const handleCanvasClick = (event) => {
 };
 
 const closeWhisperPopup = () => {
+  clearWhisperHighlight();
   whisperPopupVisible.value = false;
   // 关闭时清理节点引用，防止复用上一次的 segment。
   whisperPopupData.value = {

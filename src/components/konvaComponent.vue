@@ -2497,6 +2497,11 @@ const setNodeShadow = (node: Konva.Node, isSelected: boolean) => {
       return;
     }
 
+    // Whisper 高亮优先级高于选中样式，跳过覆盖
+    if (n.getAttr("_whisperActive")) {
+      return;
+    }
+
     if (isSelected) {
       if (!n.getAttr("_originalShadowColor")) {
         n.setAttr("_originalShadowColor", n.shadowColor());
@@ -2537,6 +2542,64 @@ const addNodeSelectStyle = (node: Konva.Node) => {
 // 移除节点的选中样式
 const removeNodeSelectStyle = (node: Konva.Node) => {
   setNodeShadow(node, false);
+};
+
+/**
+ * 为 segment 节点应用/移除 Whisper 高亮（白色描边 + 红色阴影）。
+ * Whisper 样式优先级高于选中样式；移除时若节点仍在选中态则重新补回选中阴影。
+ */
+const setWhisperHighlight = (node: Konva.Node | null, enable: boolean) => {
+  if (!node) return;
+
+  const applyHighlight = (n: Konva.Node) => {
+    if (!(n instanceof Konva.Shape)) return;
+
+    if (enable) {
+      n.setAttr("_whisperActive", true);
+      n.setAttr("_whisperOrigStroke", n.stroke());
+      n.setAttr("_whisperOrigStrokeWidth", n.strokeWidth());
+      n.setAttr("_whisperOrigShadowColor", n.shadowColor());
+      n.setAttr("_whisperOrigShadowBlur", n.shadowBlur());
+      n.setAttr("_whisperOrigShadowOffset", n.shadowOffset());
+      n.setAttr("_whisperOrigShadowOpacity", n.shadowOpacity());
+      n.stroke("white");
+      n.strokeWidth(2);
+      n.shadowColor("red");
+      n.shadowBlur(16);
+      n.shadowOffset({ x: 0, y: 0 });
+      n.shadowOpacity(0.75);
+    } else {
+      n.stroke(n.getAttr("_whisperOrigStroke") ?? null);
+      n.strokeWidth(n.getAttr("_whisperOrigStrokeWidth") ?? 0);
+      n.shadowColor(n.getAttr("_whisperOrigShadowColor") ?? undefined);
+      n.shadowBlur(n.getAttr("_whisperOrigShadowBlur") ?? 0);
+      n.shadowOffset(n.getAttr("_whisperOrigShadowOffset") ?? { x: 0, y: 0 });
+      n.shadowOpacity(n.getAttr("_whisperOrigShadowOpacity") ?? 0);
+      n.setAttr("_whisperActive", undefined);
+      n.setAttr("_whisperOrigStroke", undefined);
+      n.setAttr("_whisperOrigStrokeWidth", undefined);
+      n.setAttr("_whisperOrigShadowColor", undefined);
+      n.setAttr("_whisperOrigShadowBlur", undefined);
+      n.setAttr("_whisperOrigShadowOffset", undefined);
+      n.setAttr("_whisperOrigShadowOpacity", undefined);
+    }
+  };
+
+  if (node instanceof Konva.Group) {
+    node.getChildren().forEach((child) => {
+      if (child instanceof Konva.Arrow || child instanceof Konva.Line) return;
+      applyHighlight(child);
+    });
+  } else {
+    applyHighlight(node);
+  }
+
+  // 移除高亮后，按当前真实选中状态重算阴影，避免残留上一次选中样式
+  if (!enable) {
+    setNodeShadow(node, selectedNodes.includes(node));
+  }
+
+  node.getLayer()?.batchDraw();
 };
 
 // 处理文字添加事件
@@ -4728,6 +4791,7 @@ defineExpose({
   setAiRightLabels,
   groupSelectedNodes,
   ungroupSelectedNodes,
+  setWhisperHighlight,
 });
 </script>
 

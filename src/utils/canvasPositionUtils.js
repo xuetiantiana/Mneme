@@ -130,7 +130,7 @@ export const createImageAndTextNodes = (
 
         if (text) {
           createTextNode(
-            { text, id, customType },
+            { text, id, customType: customType+'-text' },
             {
               startX: isGroup ? 0 : imageX,
               startY: isGroup ? height + titleGap : imageY + height + titleGap,
