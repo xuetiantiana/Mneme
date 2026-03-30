@@ -2073,18 +2073,20 @@ const handleAiPopupCancel = () => {
   if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
     konvaRef.value.clearAiGuideLine();
   }
-  closeAiPopup();
+  closeAiPopup({ preserveReflectContext: true });
 };
 
 // 点击画布其他地方关闭弹窗 (需要在 KonvaComponent 中透传或全局监听，这里简化处理)
 // 实际可以给 AiQuestionPopup 添加 click-outside 指令或遮罩层
-const closeAiPopup = () => {
+const closeAiPopup = ({ preserveReflectContext = false } = {}) => {
   aiPopupVisible.value = false;
-  reflectTargetNode.value = null;
-  reflectTargetType.value = "";
-  reflectPopupTargetNode.value = null;
-  aiPopupData.value.reflectTargetType = "";
-  aiPopupData.value.reflectTargetId = "";
+  if (!preserveReflectContext) {
+    reflectTargetNode.value = null;
+    reflectTargetType.value = "";
+    reflectPopupTargetNode.value = null;
+    aiPopupData.value.reflectTargetType = "";
+    aiPopupData.value.reflectTargetId = "";
+  }
   aiPopupData.value.reflectRequestData = null;
   aiPopupData.value.questionList = [];
   aiPopupData.value.resonanceData = [];
