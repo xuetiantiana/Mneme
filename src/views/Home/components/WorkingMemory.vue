@@ -223,7 +223,7 @@ import {
   cropUpdate,
   whisperUpdate,
 } from "@/service/api";
-import { operation_logs } from "@/service/operationLogs";
+import { consumeOperationLogs } from "@/service/operationLogs";
 import { usePCMStore } from "@/stores/pcmStore";
 
 const props = defineProps({
@@ -432,7 +432,7 @@ const buildHintPayload = (nodeJsonList) => {
     id,
     type,
     content: firstNode || {},
-    operation_logs,
+    operation_logs: consumeOperationLogs(),
   };
 };
 
@@ -522,7 +522,7 @@ const buildResonanceHintPayload = (nodeJsonList) => {
 
   return {
     groups,
-    operation_logs,
+    operation_logs: consumeOperationLogs(),
     group_meaning: String(groupMeaningFromChild || "").trim(),
   };
 };
@@ -1456,7 +1456,7 @@ const handleCropConfirm = async ({ dataUrl }) => {
       "action": "crop",
       "image":dataUrl,
       "parent_ref": node.id?.() || "" ,
-      "operation_logs": operation_logs,
+      "operation_logs": consumeOperationLogs(),
     });
 
     const payload = response?.data?.data ?? response?.data ?? null;
@@ -1640,7 +1640,7 @@ const handleWhisperSubmit = async (payload) => {
         "type": "action",
         "action": "whisper",
         "text" : content,
-        "operation_logs" : operation_logs,
+        "operation_logs" : consumeOperationLogs(),
       });
 
       const result = response?.data?.data ?? response?.data ?? {};

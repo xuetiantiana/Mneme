@@ -12,6 +12,13 @@ const resolveApiType = (config?: AxiosRequestConfig): string => {
     return `${baseURL}${url}`;
 };
 
+const SKIP_LOG_PATTERNS = ["api/pcm/list", "api/story/list"];
+
+const shouldSkipLog = (config?: AxiosRequestConfig): boolean => {
+    const url = String(config?.url || "");
+    return SKIP_LOG_PATTERNS.some((p) => url.includes(p));
+};
+
 const parseJsonSafely = (value: unknown): unknown => {
     if (typeof value !== "string") return value;
     const trimmed = value.trim();
@@ -127,13 +134,15 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
                 headerSessionId ||
                 getSessionId();
 
-            addOperationLog({
-                sessionId,
-                userId,
-                input: resolveInput(config),
-                output: response.data,
-                API_Type: resolveApiType(config),
-            });
+            if (!shouldSkipLog(config)) {
+                addOperationLog({
+                    sessionId,
+                    userId,
+                    input: resolveInput(config),
+                    output: response.data,
+                    API_Type: resolveApiType(config),
+                });
+            }
             return response;
         },
         function (error: any) {
@@ -234,18 +243,20 @@ export const createAxios = (config?: AxiosRequestConfig): AxiosInstance => {
                 headerSessionId ||
                 getSessionId();
 
-            addOperationLog({
-                sessionId,
-                userId,
-                input: resolveInput(config),
-                output: {
-                    message: error?.message || "",
-                    status: error?.response?.status,
-                    data: error?.response?.data ?? null,
-                    text: errorTxt,
-                },
-                API_Type: resolveApiType(config),
-            });
+            if (!shouldSkipLog(config)) {
+                addOperationLog({
+                    sessionId,
+                    userId,
+                    input: resolveInput(config),
+                    output: {
+                        message: error?.message || "",
+                        status: error?.response?.status,
+                        data: error?.response?.data ?? null,
+                        text: errorTxt,
+                    },
+                    API_Type: resolveApiType(config),
+                });
+            }
             // ElMessage.error(errorTxt)
             /***** 处理结束 *****/
             return Promise.reject(error);
