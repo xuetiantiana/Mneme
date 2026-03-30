@@ -279,10 +279,19 @@ const getAiRingSliceIndex = (dx: number, dy: number) => {
   return ((rawIndex % sliceCount) + sliceCount) % sliceCount;
 };
 
-// 圆环背景改为灰色毛玻璃风格
-const AI_RING_BASE_FILL = "rgba(215, 218, 223, 0.90)";
-const AI_RING_ACTIVE_FILL = "rgba(228, 231, 236, 0.90)";
-const AI_RING_STROKE = "rgba(255, 255, 255, 0.38)";
+// 圆环背景改为灰色毛玻璃风格（三层环）
+const AI_RING_BAND_COUNT = 3;
+const AI_RING_BAND_FILLS = [
+  "rgba(223, 238, 255, 1)",  // 内环：最浅
+  "rgba(236, 245, 255, 1)",  // 中环：中等
+  "rgba(247, 251, 255, 1)",  // 外环：最深
+];
+const AI_RING_BAND_ACTIVE_FILLS = [
+   "rgba(223, 238, 255, 1)",  // 内环：最浅
+  "rgba(236, 245, 255, 1)",  // 中环：中等
+  "rgba(247, 251, 255, 1)",  // 外环：最深
+];
+const AI_RING_BAND_STROKE = "rgba(255, 255, 255, 0.45)";
 const AI_RIGHT_LABELS = ["反思细节", "反思转化"];
 let aiRightLabels = [...AI_RIGHT_LABELS];
 const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
@@ -721,16 +730,24 @@ const updateAiAssistPosition = () => {
     group.x(aiAssistState!.centerX);
     group.y(aiAssistState!.centerY);
 
-    const slice = group.findOne(".slice") as Konva.Arc;
-    if (slice) {
-      slice.innerRadius(aiAssistState!.innerRadius);
-      slice.outerRadius(aiAssistState!.outerRadius);
+    // 更新三层环的半径
+    const ringWidth = aiAssistState!.outerRadius - aiAssistState!.innerRadius;
+    const bandWidth = ringWidth / AI_RING_BAND_COUNT;
+    let sliceRotation = 0;
+    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+      const bandArc = group.findOne(`.slice-band-${band}`) as Konva.Arc;
+      if (bandArc) {
+        bandArc.innerRadius(aiAssistState!.innerRadius + band * bandWidth);
+        bandArc.outerRadius(aiAssistState!.innerRadius + (band + 1) * bandWidth);
+        if (band === 0) sliceRotation = bandArc.rotation();
+      }
     }
 
     // 更新文字位置
     const labelGroup = group.findOne(".labelGroup") as Konva.Group;
     if (labelGroup) {
-      const angle = (slice.rotation() + 45) * (Math.PI / 180); // 扇形中心角度
+      const { sliceAngle } = getAiRingGeometry();
+      const angle = (sliceRotation + sliceAngle / 2) * (Math.PI / 180);
       const radius =
         (aiAssistState!.innerRadius + aiAssistState!.outerRadius) / 2;
 
@@ -785,12 +802,14 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
   aiRingSlices.forEach((group, index) => {
     const isActive = index === activeIndex;
 
-    // 更新扇形背景
-    const slice = group.findOne(".slice") as Konva.Arc;
-    if (slice) {
-      slice.fill(
-        isActive ? AI_RING_ACTIVE_FILL : AI_RING_BASE_FILL
-      );
+    // 更新三层环扇形背景
+    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+      const bandArc = group.findOne(`.slice-band-${band}`) as Konva.Arc;
+      if (bandArc) {
+        bandArc.fill(
+          isActive ? AI_RING_BAND_ACTIVE_FILLS[band] : AI_RING_BAND_FILLS[band]
+        );
+      }
     }
 
     // 更新标签样式
@@ -1375,23 +1394,29 @@ const triggerAiAssist = () => {
       if (stage) stage.container().style.cursor = "default";
     });
 
-    const slice = new Konva.Arc({
-      name: "slice",
-      customType: "ai-assist-slice",
-      innerRadius: aiAssistState.innerRadius,
-      outerRadius: aiAssistState.outerRadius,
-      angle: sliceAngle,
-      rotation: index * sliceAngle + rotationOffset,
-      fill: AI_RING_BASE_FILL,
-      // stroke: AI_RING_STROKE,
-      // strokeWidth: 1,
-      stroke: null, // 默认无边框
-      shadowColor: "rgba(120, 126, 138, 0.22)",
-      shadowBlur: 8,
-      shadowOffset: { x: 0, y: 1 },
-      listening: true, // 开启监听
-    });
-    group.add(slice);
+    // 三层环：将环带等分为 3 段
+    const ringWidth = aiAssistState.outerRadius - aiAssistState.innerRadius;
+    const bandWidth = ringWidth / AI_RING_BAND_COUNT;
+    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+      const bandInner = aiAssistState.innerRadius + band * bandWidth;
+      const bandOuter = bandInner + bandWidth;
+      const bandArc = new Konva.Arc({
+        name: `slice-band-${band}`,
+        customType: "ai-assist-slice",
+        innerRadius: bandInner,
+        outerRadius: bandOuter,
+        angle: sliceAngle,
+        rotation: index * sliceAngle + rotationOffset,
+        fill: AI_RING_BAND_FILLS[band],
+        stroke: AI_RING_BAND_STROKE,
+        strokeWidth: 2,
+        shadowColor: band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
+        shadowBlur: band === 0 ? 8 : 0,
+        shadowOffset: band === 0 ? { x: 0, y: 1 } : undefined,
+        listening: true,
+      });
+      group.add(bandArc);
+    }
 
     // 创建标签
     const labelGroup = new Konva.Group({
