@@ -470,9 +470,9 @@ export const initSegmentImagesItem = (segment, options = {}) => {
 
         const bubblePromise =
             initBubbles &&
-            segment.layout.bubbles &&
-            Array.isArray(segment.layout.bubbles)
-                ? initPCMBubbles(segment.layout.bubbles, {
+            layoutData.bubbles &&
+            Array.isArray(layoutData.bubbles)
+                ? initPCMBubbles(layoutData.bubbles, {
                       offsetX: x + offsetX,
                       offsetY: y + offsetY,
                   })
