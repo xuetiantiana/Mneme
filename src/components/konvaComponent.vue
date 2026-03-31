@@ -1593,7 +1593,7 @@ onMounted(() => {
     anchorSize: 10,
     rotateAnchorOffset: 20,
     // 允许在多选框内部空白区域按下并整体拖拽，不会被误判为空白点击清空选中。
-    shouldOverdrawWholeArea: true,
+    // shouldOverdrawWholeArea: true,
     boundBoxFunc: (oldBox, newBox) => {
       // 检查当前选中的节点是否是文本节点
       if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
@@ -1960,7 +1960,7 @@ const restoreHistorySnapshot = (snapshot: HistorySnapshot) => {
 
   selectedNodes.forEach((node) => removeNodeSelectStyle(node));
   selectedNodes = [];
-  transformer.nodes([]);
+  syncTransformerSelectionState();
 
   const rawChildren: any = layer.getChildren();
   const currentNodes: Konva.Node[] =
@@ -2434,7 +2434,7 @@ const handleMouseUp = () => {
     // 为所有选中的节点添加选中样式
     selectedNodes.forEach((n) => addNodeSelectStyle(n));
 
-    transformer!.nodes(selectedNodes);
+    syncTransformerSelectionState();
     selectedNodes.forEach((n) => n.moveToTop());
     transformer!.moveToTop();
     bringRelatedUngroupButtonsToTop(selectedNodes);
@@ -2495,6 +2495,21 @@ const bringRelatedUngroupButtonsToTop = (nodes: Konva.Node[] = []) => {
   });
 };
 
+const syncTransformerSelectionState = () => {
+  if (!transformer) return;
+
+  transformer.nodes(selectedNodes);
+
+  // 只在多选时启用整块覆盖命中区，避免遮住单个文本的双击编辑。
+  transformer.shouldOverdrawWholeArea(selectedNodes.length > 1);
+
+  if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
+    transformer.enabledAnchors(["middle-left", "middle-right"]);
+  } else {
+    transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
+  }
+};
+
 // 处理节点点击事件
 // 用于选中图形，支持单选和多选（按住 Shift/Ctrl/Meta 键）
 // 参数 e: 事件对象
@@ -2550,16 +2565,7 @@ const handleNodeClick = (
   // 为所有选中的节点添加选中样式
   selectedNodes.forEach((n) => addNodeSelectStyle(n));
 
-  // 更新变换器的选中节点列表
-  transformer!.nodes(selectedNodes);
-  
-  // 针对只有文字节点被选中的情况：禁用垂直方向的调整点
-  if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
-    transformer!.enabledAnchors(['middle-left', 'middle-right']);
-  } else {
-    // 其他情况恢复所有的调整锚点
-    transformer!.enabledAnchors(['top-left',  'top-right', 'bottom-left', 'bottom-right']);
-  }
+  syncTransformerSelectionState();
   
   // 将所有选中的节点移到图层顶部
   selectedNodes.forEach((n) => n.moveToTop());
@@ -2727,7 +2733,7 @@ const handleTextClick = (
 
   // 选中新创建的文字节点
   selectedNodes = [textNode];
-  transformer!.nodes(selectedNodes);
+  syncTransformerSelectionState();
   textNode.moveToTop();
   transformer!.moveToTop();
   addNodeSelectStyle(textNode);
@@ -2743,11 +2749,41 @@ const handleTextClick = (
 // 处理双击事件
 // 用于编辑已存在的文字内容
 // 参数 e: 事件对象
+const resolveEditableTextNode = (node?: Konva.Node | null): Konva.Text | null => {
+  if (!node) return null;
+
+  if (node instanceof Konva.Text) {
+    return node;
+  }
+
+  const nodeName = String(node.name?.() || "");
+
+  if (nodeName === "group-meaning-bg") {
+    const parent = node.getParent();
+    const textNode = parent?.findOne?.(".group-meaning-text");
+    return textNode instanceof Konva.Text ? textNode : null;
+  }
+
+  if (node instanceof Konva.Group) {
+    const directTextChild = node.getChildren().find((child: Konva.Node) => child instanceof Konva.Text);
+    return directTextChild instanceof Konva.Text ? directTextChild : null;
+  }
+
+  const parent = node.getParent();
+  if (parent instanceof Konva.Group) {
+    const directTextChild = parent.getChildren().find((child: Konva.Node) => child instanceof Konva.Text);
+    return directTextChild instanceof Konva.Text ? directTextChild : null;
+  }
+
+  return null;
+};
+
 const handleDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
-  const target = e.target;
-  // 检查双击的目标是否是文字节点
-  if (target instanceof Konva.Text) {
-    enterTextEditMode(target);
+  const editableTextNode =
+    resolveEditableTextNode(e.target) ||
+    (selectedNodes.length === 1 ? resolveEditableTextNode(selectedNodes[0]) : null);
+  if (editableTextNode) {
+    enterTextEditMode(editableTextNode);
   }
 };
 
@@ -2969,7 +3005,7 @@ const handleImageUpload = (e: Event) => {
       layer!.add(konvaImage);
       // 选中刚添加的图片
       selectedNodes = [konvaImage];
-      transformer!.nodes(selectedNodes);
+      syncTransformerSelectionState();
       // 将图片和变换器移到最上层
       konvaImage.moveToTop();
       transformer!.moveToTop();
@@ -3000,7 +3036,7 @@ const setTool = (
   if (tool !== "select" && transformer) {
     selectedNodes.forEach((n) => removeNodeSelectStyle(n));
     selectedNodes = [];
-    transformer.nodes([]);
+    syncTransformerSelectionState();
   }
   
   // 设置鼠标指针样式
@@ -4075,7 +4111,7 @@ const addMemoryAtPosition = (
       });
 
       selectedNodes = createdNodes;
-      transformer!.nodes(selectedNodes);
+      syncTransformerSelectionState();
       selectedNodes.forEach((n) => addNodeSelectStyle(n));
       selectedNodes.forEach((n) => n.moveToTop());
       transformer!.moveToTop();
@@ -4188,7 +4224,7 @@ const addImageNodeRightOfTarget = (targetNode: Konva.Node, imageSrc: string) => 
     layer!.add(newNode);
 
     selectedNodes = [newNode];
-    transformer!.nodes(selectedNodes);
+    syncTransformerSelectionState();
     addNodeSelectStyle(newNode);
     newNode.moveToTop();
     transformer!.moveToTop();
@@ -4433,7 +4469,7 @@ const clearSelection = () => {
   selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
   selectedNodes = [];
-  transformer.nodes([]);
+  syncTransformerSelectionState();
   layer?.batchDraw();
 };
 
