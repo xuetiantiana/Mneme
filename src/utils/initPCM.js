@@ -412,7 +412,12 @@ const createTitleNode = (title, mainImages, offsetX, offsetY) => {
 };
 
 export const initSegmentImagesItem = (segment, options = {}) => {
-    const { offsetX = 0, offsetY = 0, initBubbles = true } = options;
+    const {
+        offsetX = 0,
+        offsetY = 0,
+        initBubbles = true,
+        isGroup = false,
+    } = options;
 
     return new Promise((resolve, reject) => {
         if (!segment || !segment.image_url) {
@@ -481,7 +486,95 @@ export const initSegmentImagesItem = (segment, options = {}) => {
         Promise.all([imagePromise, bubblePromise])
             .then(([nodes, bubbles]) => {
                 const images = Array.isArray(nodes) ? nodes : [nodes];
-                resolve({ images, bubbles });
+
+                if (!isGroup) {
+                    resolve({ images, bubbles });
+                    return;
+                }
+
+                const mergedNodes = [...images, ...bubbles].filter(Boolean);
+                if (mergedNodes.length === 0) {
+                    resolve({ images: [], bubbles: [] });
+                    return;
+                }
+
+                const group = new Konva.Group({
+                    draggable: true,
+                    name: "segment-bubble-group",
+                    id: segment?.id ? `segment_group_${segment.id}` : undefined,
+                    customType: "segment_group",
+                });
+
+                const frameRect = new Konva.Rect({
+                    name: "segment-group-frame",
+                    listening: false,
+                    stroke: "#1677ff",
+                    strokeWidth: 1.5,
+                    dash: [6, 4],
+                    cornerRadius: 10,
+                    fill: "rgba(22, 119, 255, 0.05)",
+                });
+                group.add(frameRect);
+
+                const refreshGroupFrame = () => {
+                    if (!group || !frameRect) return;
+
+                    const children = group
+                        .getChildren()
+                        .filter((child) => child !== frameRect);
+
+                    if (!children.length) {
+                        frameRect.visible(false);
+                        return;
+                    }
+
+                    let minX = Infinity;
+                    let minY = Infinity;
+                    let maxX = -Infinity;
+                    let maxY = -Infinity;
+
+                    children.forEach((child) => {
+                        const rect = child.getClientRect({
+                            relativeTo: group,
+                            skipShadow: true,
+                        });
+                        minX = Math.min(minX, rect.x);
+                        minY = Math.min(minY, rect.y);
+                        maxX = Math.max(maxX, rect.x + rect.width);
+                        maxY = Math.max(maxY, rect.y + rect.height);
+                    });
+
+                    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+                        frameRect.visible(false);
+                        return;
+                    }
+
+                    const padding = 12;
+                    frameRect.setAttrs({
+                        x: minX - padding,
+                        y: minY - padding,
+                        width: Math.max(1, maxX - minX + padding * 2),
+                        height: Math.max(1, maxY - minY + padding * 2),
+                        visible: true,
+                    });
+
+                    frameRect.moveToBottom();
+                };
+
+                mergedNodes.forEach((node) => {
+                    // 组内元素保留可拖拽能力，支持局部调整位置。
+                    if (node && typeof node.draggable === "function") {
+                        node.draggable(true);
+                    }
+                    group.add(node);
+                    if (node && typeof node.on === "function") {
+                        node.on("dragmove transform", refreshGroupFrame);
+                    }
+                });
+
+                refreshGroupFrame();
+
+                resolve({ images: [group], bubbles: [] });
             })
             .catch((error) => {
                 resolve({ images: [], bubbles: [] });

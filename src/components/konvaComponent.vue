@@ -2610,6 +2610,9 @@ const setNodeShadow = (node: Konva.Node, isSelected: boolean) => {
       if (child instanceof Konva.Arrow || child instanceof Konva.Line) {
         return;
       }
+      if (String(child.name?.() || "") === "segment-group-frame") {
+        return;
+      }
       applyShadow(child);
     });
     return;
@@ -2672,6 +2675,7 @@ const setWhisperHighlight = (node: Konva.Node | null, enable: boolean) => {
   if (node instanceof Konva.Group) {
     node.getChildren().forEach((child) => {
       if (child instanceof Konva.Arrow || child instanceof Konva.Line) return;
+      if (String(child.name?.() || "") === "segment-group-frame") return;
       applyHighlight(child);
     });
   } else {
@@ -3512,9 +3516,40 @@ const handleDrop = (e: DragEvent) => {
         });
         const nodes = [...result.images, ...result.bubbles];
         nodes.forEach((node) => {
-          node.on("click tap", (evt) => {
-            handleNodeClick(evt, node);
-          });
+          const isSegmentGroup =
+            node instanceof Konva.Group &&
+            String(node.getAttr("customType") || "") === "segment_group";
+
+          if (isSegmentGroup) {
+            const bindChildClick = (childNode: Konva.Node) => {
+              if (String(childNode.name?.() || "") === "segment-group-frame") {
+                return;
+              }
+
+              childNode.on("click tap", (evt) => {
+                handleNodeClick(evt, childNode);
+              });
+            };
+
+            node.getChildren().forEach((child: Konva.Node) => {
+              bindChildClick(child);
+            });
+
+            // 仅点击 group 边框（或 group 空白命中）时选中整个组。
+            node.on("click tap", (evt) => {
+              const hitNode = evt.target as Konva.Node;
+              const isFrame =
+                String(hitNode?.name?.() || "") === "segment-group-frame";
+              if (isFrame || hitNode === node) {
+                handleNodeClick(evt, node);
+              }
+            });
+          } else {
+            node.on("click tap", (evt) => {
+              handleNodeClick(evt, node);
+            });
+          }
+
           layer!.add(node);
         });
         setTimeout(() => updateScrollbars(), 1000);
