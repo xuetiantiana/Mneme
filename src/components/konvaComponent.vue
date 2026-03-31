@@ -1592,6 +1592,8 @@ onMounted(() => {
     anchorFill: "#ffffff",
     anchorSize: 10,
     rotateAnchorOffset: 20,
+    // 允许在多选框内部空白区域按下并整体拖拽，不会被误判为空白点击清空选中。
+    shouldOverdrawWholeArea: true,
     boundBoxFunc: (oldBox, newBox) => {
       // 检查当前选中的节点是否是文本节点
       if (selectedNodes.length === 1 && selectedNodes[0] instanceof Konva.Text) {
