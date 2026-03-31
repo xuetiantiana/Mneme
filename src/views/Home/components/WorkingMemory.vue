@@ -72,7 +72,7 @@
         :data-tip="getNavHint('Constellate')"
         @click="handleNavClick('Constellate')"
       >
-        Constellate
+        Connect
         <el-icon v-if="hintLoading && pendingAiTool === 'Constellate'" class="nav-loading-inline is-loading">
           <Loading />
         </el-icon>
@@ -84,7 +84,7 @@
         @mouseenter="handleResonanceMenuEnter"
         @mouseleave="handleResonanceMenuLeave"
       >
-        Resonance
+        Compose
         <el-icon v-if="hintLoading && pendingAiTool === 'Resonance'" class="nav-loading-inline is-loading">
           <Loading />
         </el-icon>

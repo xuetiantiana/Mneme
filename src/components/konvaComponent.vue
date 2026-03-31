@@ -327,6 +327,31 @@ const updateAiRightClockLabelsPosition = () => {
   aiRightClockLabels[1].position({ x: outerX, y: outerY });
 };
 
+// 仅补偿文字可读性：当画布缩小时放大标签，避免环上文案太小看不清。
+const updateAiAssistLabelScale = () => {
+  if (!stage || !aiAssistState) return;
+
+  const currentScale = Math.max(stage.scaleX(), 0.001);
+  const compensate = 1 / currentScale;
+
+  // 环内标签最多放大到 2.4 倍，避免遮挡过多扇区。
+  const ringLabelScale = Math.max(1, Math.min(2.4, compensate));
+  aiRingSlices.forEach((group) => {
+    const labelGroup = group.findOne(".labelGroup") as Konva.Group;
+    if (labelGroup) {
+      labelGroup.scale({ x: ringLabelScale, y: ringLabelScale });
+    }
+  });
+
+  // 右侧两段标签同步补偿，略小于环内标签，避免拥挤。
+  const rightLabelScale = Math.max(1, Math.min(2.1, compensate));
+  aiRightClockLabels.forEach((label) => {
+    label.scale({ x: rightLabelScale, y: rightLabelScale });
+  });
+
+  updateAiRightClockLabelsPosition();
+};
+
 // 根据“引导线长度 - 内环半径”动态调节右侧两个标签颜色：
 // 线越长（越靠外），外侧标签颜色越深，内侧标签颜色越浅。
 const updateAiRightClockLabelsColorByGuideLength = (distanceFromCenter: number) => {
@@ -429,7 +454,7 @@ const brushColor = ref("#000000"); // 画笔颜色
 const lineWidth = ref(5); // 线条粗细
 const fontSize = ref(14); // 文字大小
 const scale = ref(1); // 当前缩放比例
-const minScale = 0.5; // 最小缩放比例
+const minScale = 0.2; // 最小缩放比例
 const maxScale = 1.5; // 最大缩放比例
 
 const konvaData = reactive({
@@ -1313,6 +1338,57 @@ const clearAiGuideLine = () => {
   layer?.batchDraw();
 };
 
+// 启动 Hint 后，若 AI 环过大或偏移，自动缩小并居中，确保整环可见。
+const ensureAiRingVisible = () => {
+  if (!stage || !aiAssistState) {
+    return;
+  }
+
+  const topOcclusion = 50;
+  const bottomOcclusion = 50;
+  const viewportWidth = stage.width();
+  const viewportHeight = stage.height();
+  const effectiveHeight = viewportHeight - topOcclusion - bottomOcclusion;
+  if (viewportWidth <= 0 || viewportHeight <= 0) {
+    return;
+  }
+  if (effectiveHeight <= 0) {
+    return;
+  }
+
+  const safePadding = 36;
+  const ringDiameter = aiAssistState.outerRadius * 2 + safePadding * 2;
+  const currentScale = stage.scaleX();
+
+  // 仅在环超出可视范围时缩小，避免无故改变用户缩放级别。
+  const fitScale = Math.min(viewportWidth / ringDiameter, effectiveHeight / ringDiameter);
+  let nextScale = currentScale;
+  if (fitScale < currentScale) {
+    nextScale = Math.max(minScale, fitScale);
+  }
+
+  stage.scale({ x: nextScale, y: nextScale });
+  scale.value = nextScale;
+
+  // 将环中心移动到“有效可视区域”中心，避开上下遮挡区。
+  const nextPos = {
+    x: viewportWidth / 2 - aiAssistState.centerX * nextScale,
+    y:
+      topOcclusion + effectiveHeight / 2 - aiAssistState.centerY * nextScale,
+  };
+  stage.position(nextPos);
+
+  updateAiAssistLabelScale();
+
+  stage.batchDraw();
+  updateScrollbars();
+  emit("stage-transform", {
+    x: nextPos.x,
+    y: nextPos.y,
+    scale: nextScale,
+  });
+};
+
 // 触发 AI 辅助功能
 // 在选中元素周围生成交互式圆环
 // 返回值: 包含成功状态和消息的对象
@@ -1484,6 +1560,7 @@ const triggerAiAssist = () => {
     layer!.add(labelNode);
     labelNode.moveToTop();
   });
+  updateAiAssistLabelScale();
   updateAiRightClockLabelsPosition();
   resetAiRightClockLabelsDefaultColor();
 
@@ -1492,6 +1569,7 @@ const triggerAiAssist = () => {
     transformer.moveToTop();
   }
   layer.batchDraw();
+  ensureAiRingVisible();
   updateScrollbars();
 
   return { success: true };
@@ -2110,6 +2188,10 @@ const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     stage!.position(newPos);
     // 更新缩放比例的响应式变量
     scale.value = newScale;
+
+    if (aiAssistState) {
+      updateAiAssistLabelScale();
+    }
 
     // 触发 stage-transform 事件
     emit("stage-transform", {
