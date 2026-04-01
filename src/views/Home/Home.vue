@@ -333,9 +333,9 @@ const handleExport = async () => {
   gap: 14px;
 
   .left-panel {
-    width: 240px;
-    min-width: 240px;
-    max-width: 240px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
     background-color: #ffff;
     display: flex;
     flex-direction: column;

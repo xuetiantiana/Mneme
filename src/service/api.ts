@@ -7,7 +7,13 @@ const request = createAxios({
 
 export const GetPCMList = (): any => {
     return request.get(
-        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/pcm/list",
+        "/api/pcm/list",
+    );
+};
+
+export const GetPCMGallery = (): any => {
+    return request.get(
+        "/api/pcm/gallery",
     );
 };
 

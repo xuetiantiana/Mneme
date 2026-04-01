@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
-import { GetPCMList } from "@/service/api";
+import { computed, ref } from "vue";
+import { GetPCMGallery } from "@/service/api";
 import { getImageProxyUrl } from "@/utils/initPCM";
 import { ElMessage } from "element-plus";
 
@@ -14,7 +14,7 @@ const mapPCMUnitToCard = (unit = {}) => {
 
   return {
     id: unit.id,
-    title: unit.unit_summary || "未命名记忆",
+    title: unit.unit_summary,
     selected: false,
     images:
       unit.user_input?.images?.map((img) => getImageProxyUrl(img)) || [],
@@ -25,41 +25,69 @@ const mapPCMUnitToCard = (unit = {}) => {
     segments: unit.segments || [],
     user_input: unit.user_input || {},
     layout: unit.layout || {},
-    type: unit.type || "pcm_unit",
+    type: unit.type,
+  };
+};
+
+const normalizePCMKind = (kind) => {
+  return String(kind || "").trim().toLowerCase();
+};
+
+const mapPCMTopic = (topic = {}) => {
+  const kind = normalizePCMKind(topic.kind);
+  const label = String(topic.label || "").trim();
+  const thematicSynthesis = String(topic.thematic_synthesis || "").trim();
+  const count = Number(topic.count || 0);
+  const groups = Array.isArray(topic.groups)
+    ? topic.groups.map((group = {}) => ({
+        groupId: String(group.group_id || "").trim(),
+        title: String(group.title || "").trim(),
+        items: Array.isArray(group.items)
+          ? group.items.map((unit) => mapPCMUnitToCard(unit))
+          : [],
+      }))
+    : [];
+
+  return {
+    kind,
+    label,
+    count,
+    thematicSynthesis,
+    groups,
   };
 };
 
 export const usePCMStore = defineStore("pcm", () => {
   const memoryItems = ref([]);
+  const pcmTopicGroups = ref([]);
   const isLoading = ref(false);
 
-  const resolvePCMUnits = (payload) => {
-    if (Array.isArray(payload)) return payload;
-
-    return (
-      (Array.isArray(payload?.units) && payload.units) ||
-      (Array.isArray(payload?.data?.units) && payload.data.units) ||
-      (Array.isArray(payload?.pcm_list) && payload.pcm_list) ||
-      (Array.isArray(payload?.data?.pcm_list) && payload.data.pcm_list) ||
-      (Array.isArray(payload?.items) && payload.items) ||
-      (Array.isArray(payload?.data?.items) && payload.data.items) ||
-      []
-    );
-  };
+  const pcmKinds = computed(() =>
+    pcmTopicGroups.value
+      .map((section) => String(section?.kind || "").trim())
+      .filter(Boolean)
+  );
 
   const fetchPCMList = async () => {
     isLoading.value = true;
     try {
-      const response = await GetPCMList();
-      const payload = response?.data || {};
-      const units = resolvePCMUnits(payload);
+      const response = await GetPCMGallery();
+      const topicList = Array.isArray(response?.data?.topics)
+        ? response.data.topics.map((topic) => mapPCMTopic(topic))
+        : [];
 
-      if (!units.length) {
+      pcmTopicGroups.value = topicList;
+      memoryItems.value = topicList.flatMap((section) =>
+        (Array.isArray(section?.groups) ? section.groups : []).flatMap((group) =>
+          Array.isArray(group?.items) ? group.items : []
+        )
+      );
+
+      if (!memoryItems.value.length) {
         ElMessage.warning("PCM为空");
       }
 
-      memoryItems.value = units.map((unit) => mapPCMUnitToCard(unit));
-      return memoryItems.value;
+      return pcmTopicGroups.value;
     } finally {
       isLoading.value = false;
     }
@@ -82,6 +110,8 @@ export const usePCMStore = defineStore("pcm", () => {
 
   return {
     memoryItems,
+    pcmTopicGroups,
+    pcmKinds,
     isLoading,
     fetchPCMList,
     insertPCMDetailToFront,

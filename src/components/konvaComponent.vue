@@ -3525,7 +3525,7 @@ const handleDrop = (e: DragEvent) => {
       const dropPos = getDropPosition(e);
 
       createTextNode(
-        { text: textContent, id },
+        { text: textContent, id, customType: "bubble" },
         {
           startX: dropPos.x,
           startY: dropPos.y,

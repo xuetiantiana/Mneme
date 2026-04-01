@@ -1,57 +1,68 @@
 <template>
   <div class="pcm-list-container">
-    <!-- <div class="select-all-bar">
-      <span>Select all memories</span>
-      <input type="checkbox" v-model="selectAll" @change="handleSelectAll" />
-    </div> -->
-
     <div v-if="isLoading" class="loading-tip">Loading PCM list...</div>
 
-    <ul v-else class="cards-grid">
-      <li
-        v-for="(item, index) in memoryItems"
-        :key="index"
-        class="card-item"
-        :class="{ selected: item.selected }"
-        @click="handleItemClick($event, item)"
-      >
-        <!-- <button
-          class="add-btn"
-          :class="{ active: item.selected }"
-          @click.stop="toggleItem(item)"
+    <template v-else>
+      <div v-if="kindTabs.length > 0" class="kind-tabs">
+        <button
+          v-for="tab in kindTabs"
+          :key="tab.kind"
+          type="button"
+          class="kind-tab"
+          :class="{ active: activeKind === tab.kind }"
+          @click="activeKind = tab.kind"
         >
-          <svg
-            v-if="item.selected"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="3"
-          >
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span v-else>+</span>
-        </button> -->
+          <span class="kind-tab-icon">{{ tab.icon }}</span>
+          <span class="kind-tab-label">{{ tab.label }}</span>
+        </button>
+      </div>
 
-        <!-- <button @click.stop="handleShowCanvas($event, item)">展示PCM canvas</button> -->
-        <div class="card-images">
-          <img
-            v-for="(img, imgIndex) in item.mainImages"
-            :key="imgIndex"
-            :src="img.image_url"
-            :alt="item.title"
-            class="card-image draggable-item"
-            :style="getImageStyle(imgIndex, img.layout)"
-            draggable="true"
-            @dragstart="handlePCMDragStart($event, item)"
-          />
+      <section v-if="currentThematicSynthesis" class="thematic-synthesis-card">
+        <div class="thematic-synthesis-title">
+          <span class="thematic-synthesis-icon">✨</span>
+          <span>Thematic Synthesis</span>
         </div>
-        <div class="card-footer">
-          <span class="card-title">{{ item.title }}</span>
-        </div>
-      </li>
-    </ul>
+        <p class="thematic-synthesis-text">{{ currentThematicSynthesis }}</p>
+      </section>
+
+      <div v-if="visibleGroups.length > 0" class="groups-scroll">
+        <section
+          v-for="(group, groupIndex) in visibleGroups"
+          :key="`${activeKind}-${group.title}-${groupIndex}`"
+          class="group-section"
+        >
+          <h3 class="group-title">{{ group.title }}</h3>
+
+          <ul class="cards-grid">
+            <li
+              v-for="(item, index) in group.items"
+              :key="item.id || index"
+              class="card-item"
+              :class="{ selected: item.selected }"
+              @click="handleItemClick($event, item)"
+            >
+              <div class="card-images">
+                <img
+                  v-for="(img, imgIndex) in item.mainImages"
+                  :key="imgIndex"
+                  :src="img.image_url"
+                  :alt="item.title"
+                  class="card-image draggable-item"
+                  :style="getImageStyle(imgIndex, img.layout)"
+                  draggable="true"
+                  @dragstart="handlePCMDragStart($event, item)"
+                />
+              </div>
+              <div class="card-footer">
+                <span class="card-title">{{ item.title }}</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <div v-else class="empty-tip">当前分类下暂无 PCM 记忆</div>
+    </template>
 
     <PCMDetailPopup
       :visible="popupVisible"
@@ -70,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import PCMDetailPopup from "@/components/PCMDetailPopup.vue";
 import PCMCanvasPopup from "@/components/PCMCanvasPopup.vue";
@@ -83,9 +94,61 @@ const popupPosition = ref({ top: 0, left: 0 });
 const canvasPopupVisible = ref(false);
 const canvasPopupPosition = ref({ top: 0, left: 0 });
 const currentCanvasItem = ref({});
+const activeKind = ref("");
 
 const pcmStore = usePCMStore();
-const { memoryItems, isLoading } = storeToRefs(pcmStore);
+const { pcmTopicGroups, isLoading } = storeToRefs(pcmStore);
+
+const KIND_META = {
+  sensory: { label: "Sensory", icon: "👁️" },
+  emotion: { label: "Emotion", icon: "😊" },
+  meaning: { label: "Meaning", icon: "✨" },
+  aesthetic: { label: "Aesthetic", icon: "🎨" },
+  all: { label: "All", icon: "🗂️" },
+};
+
+const kindTabs = computed(() => {
+  return pcmTopicGroups.value.map((section) => {
+    const kind = String(section?.kind || "").trim();
+    return {
+      kind,
+      label: String(section?.label || "").trim() || KIND_META[kind]?.label || kind,
+      icon: KIND_META[kind]?.icon || "🗂️",
+    };
+  });
+});
+
+const visibleGroups = computed(() => {
+  const currentSection = pcmTopicGroups.value.find((section) => section.kind === activeKind.value);
+
+  return Array.isArray(currentSection?.groups) ? currentSection.groups : [];
+});
+
+const currentThematicSynthesis = computed(() => {
+  const currentSection = pcmTopicGroups.value.find((section) => section.kind === activeKind.value);
+
+  return String(currentSection?.thematicSynthesis || "").trim();
+});
+
+const visibleItems = computed(() =>
+  visibleGroups.value.flatMap((group) => (Array.isArray(group?.items) ? group.items : []))
+);
+
+watch(
+  kindTabs,
+  (tabs) => {
+    if (!tabs.length) {
+      activeKind.value = "";
+      return;
+    }
+
+    const hasCurrentKind = tabs.some((tab) => tab.kind === activeKind.value);
+    if (!hasCurrentKind) {
+      activeKind.value = tabs[0].kind;
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
   try {
@@ -114,13 +177,14 @@ const toggleItem = (item) => {
 };
 
 const handleSelectAll = () => {
-  memoryItems.value.forEach((item) => {
+  visibleItems.value.forEach((item) => {
     item.selected = selectAll.value;
   });
 };
 
 const updateSelectAll = () => {
-  selectAll.value = memoryItems.value.every((item) => item.selected);
+  selectAll.value =
+    visibleItems.value.length > 0 && visibleItems.value.every((item) => item.selected);
 };
 
 const handleItemClick = (event, item) => {
@@ -225,8 +289,102 @@ const handlePCMDragStart = (event, item) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 0;
+  gap: 30px;
+  padding: 12px 10px 14px;
   overflow: hidden;
+  background: linear-gradient(180deg, #fbfbfc 0%, #f5f5f7 100%);
+
+  .kind-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .kind-tab {
+    border: none;
+    background: transparent;
+    border-radius: 18px;
+    padding: 12px 6px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+
+    &.active {
+      background: linear-gradient(180deg, #dcebff 0%, #eef4ff 100%);
+      color: #1677ff;
+      box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.08);
+    }
+  }
+
+  .kind-tab-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .kind-tab-label {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .thematic-synthesis-card {
+    flex-shrink: 0;
+    border-radius: 28px;
+    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 8px 20px 20px;
+    box-shadow: 0 12px 30px rgba(39, 148, 248, 0.08);
+  }
+
+  .thematic-synthesis-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #7a7a7a;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .thematic-synthesis-icon {
+    font-size: 22px;
+    line-height: 1;
+    color: #ffbf00;
+  }
+
+  .thematic-synthesis-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #6d6d6d;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .groups-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .group-section + .group-section {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .group-title {
+    margin: 0 0 12px;
+    font-size: 15px;
+    line-height: 1.25;
+    font-weight: 500;
+    color: #767676;
+  }
 
   .loading-tip {
     flex: 1;
@@ -239,6 +397,18 @@ const handlePCMDragStart = (event, item) => {
     border: 1px dashed #d9d9d9;
     border-radius: 10px;
     margin: 0.5em;
+  }
+
+  .empty-tip {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #7a7a7a;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(15, 23, 42, 0.06);
   }
 
   .select-all-bar {
@@ -261,27 +431,29 @@ const handlePCMDragStart = (event, item) => {
 
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 0.5em;
-    padding: 0.5em;
-    border-radius: 12px;
-    overflow-y: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
 
     .card-item {
       position: relative;
-      border: 1px solid transparent;
+      border: 1px solid rgba(15, 23, 42, 0.06);
       border-radius: 12px;
-      padding: .5em;
+      padding: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
-      background-color: #f1f1f1;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
 
       &.selected {
-        border-color: #333;
+        border-color: rgba(22, 119, 255, 0.4);
+        box-shadow: 0 18px 38px rgba(22, 119, 255, 0.12);
       }
 
       &:hover {
-        // border-color: #999;
+        transform: translateY(-1px);
       }
 
       button {
@@ -338,21 +510,23 @@ const handlePCMDragStart = (event, item) => {
 
       .card-images {
         position: relative;
-        height: 200px;
-        margin-bottom: 12px;
+        height: 120px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        overflow: hidden;
 
         .card-image {
           position: absolute;
           width: 100%;
-          height: 200px;
+          height: 120px;
           object-fit: cover;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          border-radius: 10px;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
         }
+
         .draggable-item {
           cursor: move;
         }
-
       }
 
       .card-footer {
@@ -361,8 +535,9 @@ const handlePCMDragStart = (event, item) => {
         align-items: center;
 
         .card-title {
-          font-size: 0.875em;
-          color: #333;
+          font-size: 12px;
+          line-height: 1.35;
+          color: #616161;
         }
       }
     }
