@@ -2653,9 +2653,9 @@ const setWhisperHighlight = (node: Konva.Node | null, enable: boolean) => {
       n.setAttr("_whisperOrigShadowOffset", n.shadowOffset());
       n.setAttr("_whisperOrigShadowOpacity", n.shadowOpacity());
       n.stroke("white");
-      n.strokeWidth(2);
+      n.strokeWidth(6);
       n.shadowColor("red");
-      n.shadowBlur(16);
+      n.shadowBlur(24);
       n.shadowOffset({ x: 0, y: 0 });
       n.shadowOpacity(0.75);
     } else {
