@@ -19,13 +19,13 @@
 
       <!-- Constellate 专区：文本 + 可多选图片 -->
       <div v-else-if="isConstellateView" class="popup-content constellate-content">
-        <div class="constellate-text">{{ String(constellateData?.title || "").trim() }}</div>
+        <div class="constellate-text">{{ String(title || "").trim() }}</div>
         <div
-          v-if="constellateImageItems.length > 0"
+          v-if="items.length > 0"
           class="constellate-grid"
         >
           <button
-            v-for="(img, i) in constellateImageItems"
+            v-for="(img, i) in items"
             :key="i"
             type="button"
             class="constellate-image-item"
@@ -36,7 +36,7 @@
               <el-icon><Check /></el-icon>
             </span>
             <div class="constellate-image-thumb">
-              <img :src="img.url" alt="" />
+              <img :src="img.image_url" alt="" />
             </div>
             <div v-if="img.reason" class="constellate-image-reason">
               {{ img.reason }}
@@ -48,9 +48,9 @@
 
       <!-- Resonance 专区：analysis 列表 -->
       <div v-else-if="isResonanceView" class="popup-content resonance-content">
-        <template v-if="resonanceData && resonanceData.length > 0">
+        <template v-if="items.length > 0">
           <div
-            v-for="(item, index) in resonanceData"
+            v-for="(item, index) in items"
             :key="item?.id || index"
             class="resonance-card"
             :class="{ active: selectedResonanceIndexes.includes(index) }"
@@ -60,17 +60,17 @@
               <el-icon><Check /></el-icon>
             </span>
             <div class="resonance-card-head">
-              <span class="resonance-kind">{{ item?.kind || "analysis" }}</span>
+              <span class="resonance-kind">{{ item.kind }}</span>
             </div>
-            <div v-if="item?.keyword" class="resonance-keyword">{{ item.keyword }}</div>
-            <div class="resonance-text">{{ item?.text || "" }}</div>
-            <div v-if="Array.isArray(item?.actions) && item.actions.length > 0" class="resonance-actions">
+            <div v-if="item.keyword" class="resonance-keyword">{{ item.keyword }}</div>
+            <div class="resonance-text">{{ item.text }}</div>
+            <div v-if="Array.isArray(item.actions) && item.actions.length > 0" class="resonance-actions">
               <div
                 v-for="action in item.actions"
-                :key="action?.id || `${index}-${action?.kind || ''}`"
+                :key="action.id || `${index}-${action.kind || ''}`"
                 class="resonance-action-item"
               >
-                {{ action?.description || action?.kind || "" }}
+                {{ action.description }}
               </div>
             </div>
           </div>
@@ -80,11 +80,11 @@
 
       <!-- Reflect 专区：问题卡片列表 -->
       <div
-        v-else-if="isReflectView && questionList && questionList.length > 0"
+        v-else-if="isReflectView && items.length > 0"
         class="popup-content"
       >
         <div
-          v-for="(item, index) in questionList"
+          v-for="(item, index) in items"
           :key="index"
           :ref="(el) => setQuestionCardRef(el, index)"
           class="question-card"
@@ -93,16 +93,13 @@
         >
           <div class="question-main">
             <div class="question-text">
-              {{ item?.text || item?.question || "" }}
+              {{ item.text }}
             </div>
-            <div
-              v-if="((Array.isArray(item?.images) && item.images.length > 0) ? item.images.filter(Boolean) : ((Array.isArray(item?.memory) && item.memory.length > 0) ? item.memory.map((m) => m?.image_url).filter((url) => typeof url === 'string' && url.trim().length > 0) : [])).length"
-              class="image-row"
-            >
+            <div v-if="Array.isArray(item.memory) && item.memory.length > 0" class="image-row">
               <img
-                v-for="(img, i) in ((Array.isArray(item?.images) && item.images.length > 0) ? item.images.filter(Boolean) : ((Array.isArray(item?.memory) && item.memory.length > 0) ? item.memory.map((m) => m?.image_url).filter((url) => typeof url === 'string' && url.trim().length > 0) : []))"
+                v-for="(img, i) in item.memory"
                 :key="i"
-                :src="img"
+                :src="img.image_url"
                 alt=""
               />
             </div>
@@ -147,7 +144,7 @@
         :key="tool.value"
         class="tool-mini-btn"
         size="small"
-        @click.stop="handleToolClick(tool.value, selectedItem, selectedIndex)"
+        @click.stop="handleToolClick(tool.value, items[selectedIndex], selectedIndex)"
       >
         {{ tool.label }}
       </el-button>
@@ -180,17 +177,13 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  questionList: {
+  items: {
     type: Array,
     default: () => [],
   },
-  resonanceData: {
-    type: Array,
-    default: () => [],
-  },
-  constellateData: {
-    type: Object,
-    default: () => ({}),
+  title: {
+    type: String,
+    default: "",
   },
   loading: {
     type: Boolean,
@@ -239,7 +232,6 @@ watch(
         updateToolsPanelTop();
       });
     } else {
-      // 弹窗关闭时确保注销全局拖拽监听
       stopDragging();
     }
   }
@@ -247,11 +239,9 @@ watch(
 
 // Reflect 列表更新时，重算右侧工具栏锚点
 watch(
-  () => props.questionList,
+  () => props.items,
   (val) => {
     if (val && val.length > 0) {
-      // 默认选中第一个? 或者不选中
-      // selectedIndex.value = 0;
     }
     nextTick(() => {
       updateToolsPanelTop();
@@ -266,7 +256,7 @@ watch(selectedIndex, () => {
   });
 });
 
-// 切到 Constellate 时清空 Reflect/Constellate 选中态
+// 切到 Constellate / Resonance 时清空其他选中态
 watch(
   () => props.toolType,
   (val) => {
@@ -282,19 +272,12 @@ watch(
   }
 );
 
-// Constellate 数据更新后清空图片勾选
+// 数据更新后清空多选勾选状态
 watch(
-  () => props.constellateData,
-  () => {
-    selectedConstellateImageIndexes.value = [];
-  },
-  { deep: true }
-);
-
-watch(
-  () => props.resonanceData,
+  () => props.items,
   () => {
     selectedResonanceIndexes.value = [];
+    selectedConstellateImageIndexes.value = [];
   },
   { deep: true }
 );
@@ -319,76 +302,18 @@ const style = computed(() => {
   };
 });
 
-const selectedItem = computed(() => {
-  if (selectedIndex.value < 0) return null;
-  return props.questionList?.[selectedIndex.value] || null;
-});
-
 const isReflectView = computed(() => props.toolType === "Reflect");
 const isResonanceView = computed(() => props.toolType === "Resonance");
 const isDraggableView = computed(
   () => props.toolType === "Reflect" || props.toolType === "Constellate"
 );
-
-// 区分 Constellate / Reflect 渲染分支
 const isConstellateView = computed(() => props.toolType === "Constellate");
-
-const constellateImageItems = computed(() => {
-  const source = Array.isArray(props.constellateData?.images)
-    ? props.constellateData.images
-    : [];
-
-  return source
-    .map((item) => {
-      if (typeof item === "string") {
-        const url = item.trim();
-        return url
-          ? {
-              url,
-              imageID: "",
-              type: "",
-              pcmRef: "",
-              reason: "",
-              raw: { image_url: url },
-            }
-          : null;
-      }
-
-      if (!item || typeof item !== "object") {
-        return null;
-      }
-
-      const url =
-        (typeof item.image_url === "string" && item.image_url.trim()) ||
-        (typeof item.imageUrl === "string" && item.imageUrl.trim()) ||
-        (typeof item.url === "string" && item.url.trim()) ||
-        "";
-
-      if (!url) {
-        return null;
-      }
-
-      return {
-        url,
-        imageID:
-          item.imageID || item.imageId || item.image_id || item.id || "",
-        type: item.type || item.customType || "",
-        pcmRef: item.pcm_ref || item.pcmRef || "",
-        reason: item.reason || "",
-        raw: item,
-      };
-    })
-    .filter(Boolean);
-});
 
 // Constellate：必须至少选择 1 张图片
 // Reflect：必须选择 1 个问题项
 const confirmDisabled = computed(() => {
   if (isConstellateView.value) {
-    return (
-      constellateImageItems.value.length === 0 ||
-      selectedConstellateImageIndexes.value.length === 0
-    );
+    return props.items.length === 0 || selectedConstellateImageIndexes.value.length === 0;
   }
   if (isResonanceView.value) {
     return selectedResonanceIndexes.value.length === 0;
@@ -410,16 +335,6 @@ const toggleConstellateImage = (index) => {
 const toolsPanelStyle = computed(() => ({
   top: `${toolsPanelTop.value}px`,
 }));
-
-const selectedResonanceItems = computed(() => {
-  if (!Array.isArray(props.resonanceData) || selectedResonanceIndexes.value.length === 0) {
-    return [];
-  }
-
-  return selectedResonanceIndexes.value
-    .map((index) => props.resonanceData?.[index])
-    .filter(Boolean);
-});
 
 // ------------------------
 // Reflect 交互
@@ -517,62 +432,35 @@ const stopDragging = () => {
 };
 
 // ------------------------
-// Constellate 交互
+// Constellate / Resonance 确认
 // ------------------------
 const handleConfirm = () => {
-  // Constellate：提交被勾选的图片，并附带首张图片元信息
-  if (isConstellateView.value) {
-    const text = String(props.constellateData?.title || "").trim();
-    const allImageItems = constellateImageItems.value;
+  let selectedItems = [];
 
-    const selectedImageItems = selectedConstellateImageIndexes.value
-      .map((idx) => allImageItems[idx])
+  if (props.toolType === "Constellate") {
+    selectedItems = selectedConstellateImageIndexes.value
+      .map((idx) => props.items[idx])
       .filter(Boolean);
-    const images = selectedImageItems
-      .map((item) => ({
-        ...((item.raw && typeof item.raw === "object") ? item.raw : {}),
-        image_id: item.imageID || item.raw?.image_id || item.raw?.id || "",
-        image_url: item.url,
-        pcm_ref: item.pcmRef || item.raw?.pcm_ref || "",
-        reason: item.reason || item.raw?.reason || "",
-      }))
-      .filter((item) => typeof item.image_url === "string" && item.image_url.trim().length > 0);
-    const firstMeta = selectedImageItems[0] || null;
-
-    emit("confirm", {
-      label: props.label,
-      question: text,
-      images,
-      title: props.constellateData?.title || "",
-      nodeMeta: {
-        id: firstMeta?.imageID || "",
-        imageID: firstMeta?.imageID || "",
-        customType: firstMeta?.type || "",
-      },
-    });
-    return;
+  } else if (props.toolType === "Resonance") {
+    selectedItems = selectedResonanceIndexes.value
+      .map((index) => props.items[index])
+      .filter(Boolean);
+  } else if (selectedIndex.value >= 0) {
+    selectedItems = [props.items[selectedIndex.value]].filter(Boolean);
   }
 
-  // Resonance：提交当前选中的 analysis 项。
-  if (isResonanceView.value) {
-    const items = selectedResonanceItems.value;
-    emit("confirm", {
-      label: props.label,
-      resonanceItems: items,
-      question: items
-        .map((item) => String(item?.text || item?.keyword || "").trim())
-        .filter(Boolean)
-        .join("\n"),
-      resonanceIndexes: [...selectedResonanceIndexes.value],
-    });
-  }
+  emit("confirm", {
+    toolType: props.toolType,
+    label: props.label,
+    title: props.toolType === "Constellate" ? props.title || "" : "",
+    selectedItems,
+  });
 };
 
 const handleRegenerate = () => {
   emit("regenerate");
 };
 
-// 通用关闭事件
 const handleCancel = () => {
   emit("cancel");
 };
@@ -599,7 +487,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
-  /* transform: translate(20px, 20px); Offset from cursor */
 }
 
 .popup-header {
@@ -637,7 +524,6 @@ onBeforeUnmount(() => {
   overflow-y: auto;
 }
 
-/* ===== Constellate 样式 ===== */
 .constellate-content {
   gap: 10px;
 }
@@ -728,7 +614,6 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
-/* ===== Resonance 样式 ===== */
 .resonance-content {
   gap: 10px;
 }
@@ -792,7 +677,6 @@ onBeforeUnmount(() => {
   padding: 6px 8px;
 }
 
-/* ===== Reflect 样式 ===== */
 .popup-footer {
   padding: 12px;
   border-top: 1px solid #f0f0f0;
@@ -831,7 +715,6 @@ onBeforeUnmount(() => {
   padding-right: 28px;
 }
 
-/* ===== Reflect 右侧工具栏 ===== */
 .popup-tools-panel {
   position: absolute;
   left: calc(100% + 12px);

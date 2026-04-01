@@ -24,9 +24,8 @@
         :label="aiPopupData.label"
         :tool-type="aiPopupData.toolType"
         :line-length="aiPopupData.lineLength"
-        :question-list="aiPopupData.questionList"
-        :resonance-data="aiPopupData.resonanceData"
-        :constellate-data="aiPopupData.constellateData"
+        :items="aiPopupData.items"
+        :title="aiPopupData.title"
         :loading="aiPopupData.loading"
         :quick-tools="aiQuickTools"
         @confirm="handleAiPopupConfirm"
@@ -413,9 +412,8 @@ const aiPopupData = ref({
   label: "",
   lineLength: 0,
   position: { x: 0, y: 0 },
-  questionList: [], // 新增：存储接口返回的问题列表
-  resonanceData: [],
-  constellateData: {},
+  items: [],
+  title: "",
   loading: false, // 新增：加载状态
   targetNodeId: null, // 新增：记录点击时关联的节点ID或唯一标识，用于后续位置追踪
   relativePos: { x: 0, y: 0 }, // 新增：记录点击点相对于舞台原点的坐标（未缩放）
@@ -576,13 +574,19 @@ const applyHintRingLabels = async (toolType = "Reflect") => {
   } catch (error) {
     currentHintPerspectives.value = [];
     konvaRef.value.setAiRingLabels();
+    const detail = String(
+      error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "未知错误"
+    ).trim();
     ElMessage({
       message:
         toolType === "Constellate"
-          ? "ConstellateHint 获取失败，已使用默认标签"
+          ? `ConstellateHint 获取失败，已使用默认标签：${detail}`
           : toolType === "Resonance"
-          ? "ResonanceHint 获取失败，已使用默认标签"
-          : "ReflectHint 获取失败，已使用默认标签",
+          ? `ResonanceHint 获取失败，已使用默认标签：${detail}`
+          : `ReflectHint 获取失败，已使用默认标签：${detail}`,
       type: "warning",
     });
     return false;
@@ -1760,9 +1764,8 @@ const handleAiRingClick = async (data) => {
       x: data.position.x,
       y: data.position.y - wmContainer.value.getBoundingClientRect().top,
     },
-    questionList: [], // 重置问题列表
-    resonanceData: [],
-    constellateData: {},
+    items: [],
+    title: "",
     loading: true, // 开始加载
     relativePos: { x: relativeX, y: relativeY },
     reflectTargetType: reflectTargetType.value || "",
@@ -1815,19 +1818,16 @@ const fetchAiPopupSuggestions = async (toolType, requestData) => {
     if (toolType === "Constellate") {
       res = await ConstellateSuggest(requestData);
       const payload = res?.data || {};
-      aiPopupData.value.constellateData = payload;
-      aiPopupData.value.questionList = [];
-      aiPopupData.value.resonanceData = [];
+      aiPopupData.value.items = Array.isArray(payload?.images) ? payload.images : [];
+      aiPopupData.value.title = String(payload?.title || "").trim();
     } else if (toolType === "Resonance") {
       res = await ResonanceAnalysis(requestData);
       const resonanceList = Array.isArray(res?.data?.analysis)
         ? res.data.analysis
         : [];
 
-      // Resonance 数据直接透传给弹窗，不做字段转换。
-      aiPopupData.value.resonanceData = resonanceList;
-      aiPopupData.value.questionList = [];
-      aiPopupData.value.constellateData = {};
+      aiPopupData.value.items = resonanceList;
+      aiPopupData.value.title = "";
     } else {
       res = await ReflectQuestions(requestData);
       const questionList =
@@ -1835,9 +1835,8 @@ const fetchAiPopupSuggestions = async (toolType, requestData) => {
         (Array.isArray(res?.data?.data) && res.data.data) ||
         (Array.isArray(res?.data?.questionList) && res.data.questionList) ||
         [];
-      aiPopupData.value.questionList = questionList;
-      aiPopupData.value.resonanceData = [];
-      aiPopupData.value.constellateData = {};
+      aiPopupData.value.items = questionList;
+      aiPopupData.value.title = "";
     }
   } catch (error) {
     console.error(`Failed to fetch ${toolType} tool data:`, error);
@@ -1912,45 +1911,61 @@ const submitFeedbackConfirm = async (candidateIds) => {
 };
 
 const resolveConstellateConfirmedIds = (data) => {
-  const selectedImageIds = Array.isArray(data?.images)
-    ? data.images.map((item) => extractImageId(item))
+  const selectedImageIds = Array.isArray(data?.selectedItems)
+    ? data.selectedItems.map((item) => extractImageId(item))
     : [];
 
   return collectConfirmedIds(selectedImageIds);
 };
 
 const resolveResonanceConfirmedIds = (data) => {
-  const resonanceItems = Array.isArray(data?.resonanceItems)
-    ? data.resonanceItems
-    : data?.resonanceItem
-    ? [data.resonanceItem]
-    : [];
+  const resonanceItems = Array.isArray(data?.selectedItems) ? data.selectedItems : [];
   return collectConfirmedIds(resonanceItems.map((item) => item?.id));
 };
 
-const handleAiPopupConfirm = async (data) => {
-  if (aiPopupData.value?.toolType === "Constellate") {
-    submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
+const resolveReflectConfirmedIds = (data) => {
+  const reflectItems = Array.isArray(data?.selectedItems) ? data.selectedItems : [];
+  return collectConfirmedIds(reflectItems.map((item) => item?.id));
+};
+
+const buildReflectConfirmPayload = (item) => {
+  if (!item || typeof item !== "object") {
+    return null;
   }
 
-  if (aiPopupData.value?.toolType === "Resonance") {
-    submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
+  return {
+    toolType: aiPopupData.value?.toolType || "Reflect",
+    label: aiPopupData.value?.label || String(item.text || "").trim(),
+    title: "",
+    selectedItems: [item],
+  };
+};
+
+const commitAiPopupSelection = async (
+  data,
+  {
+    preserveReflectContext = false,
+    clearCurrentNav = true,
+    cancelAiAssist = true,
+  } = {}
+) => {
+  const selectedItems = Array.isArray(data?.selectedItems) ? data.selectedItems.filter(Boolean) : [];
+  const toolType = data?.toolType || aiPopupData.value?.toolType;
+
+  if (toolType === "Resonance") {
+    await submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
 
     // Resonance 确认后：把选中的分析结果（主文本 + actions）依次绘制到 group 右侧。
     const targetGroupNode = reflectTargetNode.value;
     const anchor = getPopupPositionRightOfNode(targetGroupNode);
-    const resonanceItems = Array.isArray(data?.resonanceItems)
-      ? data.resonanceItems.filter(Boolean)
-      : data?.resonanceItem
-      ? [data.resonanceItem]
-      : [];
+    const resonanceItems = selectedItems;
 
     if (resonanceItems.length === 0) {
       ElMessage({
         message: "请至少选择一条分析结果后再确认",
         type: "warning",
       });
-      return;
+      return false;
     }
 
     if (!anchor?.stagePos || !konvaRef.value?.addResonanceGroupAtPosition) {
@@ -1958,11 +1973,9 @@ const handleAiPopupConfirm = async (data) => {
         message: "Resonance 文本绘制失败，画布未准备好",
         type: "warning",
       });
-      return;
+      return false;
     }
 
-    // 组内文本节点禁用拖拽与编辑；仅外层 group 可整体拖动。
-    // 多选时按真实高度从上到下排布，避免不同内容长度导致重叠。
     const rowGap = 16;
     let currentY = anchor.stagePos.y;
     const createdGroups = [];
@@ -1992,34 +2005,60 @@ const handleAiPopupConfirm = async (data) => {
       konvaRef.value.selectCanvasNodes(createdGroups);
     }
 
-    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+    if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {
       konvaRef.value.cancelAiAssist();
     }
-    closeAiPopup();
-    currentNav.value = "";
-    return;
+    closeAiPopup({ preserveReflectContext });
+    if (clearCurrentNav) {
+      currentNav.value = "";
+    }
+    return true;
   }
 
-  if (konvaRef.value && konvaRef.value.createAiContentNode) {
-    const isConstellate = aiPopupData.value?.toolType === "Constellate";
-    // 传入问题（作为标题/label）、图片列表
-    konvaRef.value.createAiContentNode(
-      data.images,
-      data.question,
-      data.nodeMeta,
-      {
-        flattenToNodes: isConstellate,
-        // Constellate 确认后，新增节点自动进入选中态，便于继续拖拽/发送。
-        autoSelectOnFlatten: isConstellate,
-      }
-    );
+  if (toolType === "Constellate") {
+    // Constellate：先确认选中的图片，再把图片和标题一起绘制到画布。
+    await submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
+
+    if (konvaRef.value?.createAiContentNode) {
+      konvaRef.value.createAiContentNode(
+        selectedItems,
+        String(data?.title || "").trim(),
+        {
+          flattenToNodes: true,
+          autoSelectOnFlatten: true,
+        }
+      );
+    }
+  } else if (toolType === "Reflect") {
+    // Reflect：先确认当前问题卡片，再把卡片文本和 memory 中的图片绘制到画布。
+    await submitFeedbackConfirm(resolveReflectConfirmedIds(data));
+
+    if (konvaRef.value?.createAiContentNode) {
+      konvaRef.value.createAiContentNode(
+        Array.isArray(selectedItems[0]?.memory)
+          ? selectedItems[0].memory.filter(Boolean)
+          : [],
+        String(selectedItems[0]?.text || "").trim(),
+        {
+          flattenToNodes: true,
+          autoSelectOnFlatten: false,
+        }
+      );
+    }
   }
-  if (konvaRef.value && konvaRef.value.cancelAiAssist) {
+
+  if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {
     konvaRef.value.cancelAiAssist();
   }
-  closeAiPopup();
-  // AI操作完成后，取消高亮状态/工具状态
-  currentNav.value = "";
+  closeAiPopup({ preserveReflectContext });
+  if (clearCurrentNav) {
+    currentNav.value = "";
+  }
+  return true;
+};
+
+const handleAiPopupConfirm = async (data) => {
+  await commitAiPopupSelection(data);
 };
 
 const handleAiPopupToolClick = async ({ tool, item }) => {
@@ -2027,29 +2066,45 @@ const handleAiPopupToolClick = async ({ tool, item }) => {
 
   const inReflectPopup = aiPopupData.value?.toolType === "Reflect";
   if (inReflectPopup) {
-    if (tool === "Crop" || tool === "Add Memory" || tool === "Whisper") {
-      submitFeedbackConfirm([item?.id]);
-    }
-
+    const reflectConfirmPayload =
+      tool === "Crop" || tool === "Add Memory" || tool === "Whisper"
+        ? buildReflectConfirmPayload(item)
+        : null;
     const popupNode = reflectPopupTargetNode.value || reflectTargetNode.value;
+    let shouldCommitReflectSelection = false;
+
+    if (tool === "Crop" || tool === "Add Memory" || tool === "Whisper") {
+      if (!reflectConfirmPayload) {
+        ElMessage({
+          message: "请先选择一条 Reflect 建议",
+          type: "warning",
+        });
+        return;
+      }
+    }
 
     if (tool === "Crop") {
       const node = popupNode;
-      exitReflectMode();
+      // exitReflectMode();
       openCropPopupForNode(node);
-      return;
-    }
-
-    if (tool === "Whisper") {
+      shouldCommitReflectSelection = true;
+    } else if (tool === "Whisper") {
       const node = popupNode;
-      exitReflectMode();
+      // exitReflectMode();
       openWhisperPopupForNode(node);
-      return;
+      shouldCommitReflectSelection = true;
+    } else if (tool === "Add Memory") {
+      // exitReflectMode();
+      handleNavClick(tool);
+      shouldCommitReflectSelection = true;
     }
 
-    if (tool === "Add Memory") {
-      exitReflectMode();
-      handleNavClick(tool);
+    if (shouldCommitReflectSelection) {
+      await commitAiPopupSelection(reflectConfirmPayload, {
+        preserveReflectContext: true,
+        clearCurrentNav: false,
+        cancelAiAssist: false,
+      });
       return;
     }
   }
@@ -2088,9 +2143,8 @@ const closeAiPopup = ({ preserveReflectContext = false } = {}) => {
     aiPopupData.value.reflectTargetId = "";
   }
   aiPopupData.value.reflectRequestData = null;
-  aiPopupData.value.questionList = [];
-  aiPopupData.value.resonanceData = [];
-  aiPopupData.value.constellateData = {};
+  aiPopupData.value.items = [];
+  aiPopupData.value.title = "";
 };
 
 // 复用：将 stage 坐标转换为 WorkingMemory 容器内的弹窗坐标

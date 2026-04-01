@@ -1051,7 +1051,6 @@ const handleStageClick = (
 const createAiContentNode = (
   images?: Array<string | { image_url?: string; imageUrl?: string; url?: string; image_id?: string; imageID?: string; imageId?: string; id?: string; type?: string; customType?: string; reason?: string }>,
   label?: string,
-  nodeMeta?: { id?: string; customType?: string },
   options?: {
     flattenToNodes?: boolean;
     // 扁平化后立即选中新生成节点（用于 Constellate 确认后的连续操作）。
@@ -1076,8 +1075,6 @@ const createAiContentNode = (
   const group = new Konva.Group({
     draggable: true,
     name: "ai-content-node",
-    id: nodeMeta?.id || undefined,
-    customType: nodeMeta?.customType || undefined,
   });
 
   let currentY = 0;
