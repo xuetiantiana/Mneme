@@ -208,7 +208,7 @@ import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
 import CropImagePopup from "./CropImagePopup.vue";
-import { createImageAndTextNodes } from "@/utils/canvasPositionUtils";
+import { createImageAndTextNodes, createTextNode } from "@/utils/canvasPositionUtils";
 import {
   CreateOnePCM,
   ConstellateSuggest,
@@ -216,7 +216,7 @@ import {
   ConstellateHint,
   ResonanceHint,
   ResonanceAnalysis,
-  ResonanceFuse,
+  ResonanceFuseNew,
   ReflectQuestions,
   feedbackConfirm,
   cropUpdate,
@@ -957,6 +957,149 @@ const captureGroupScreenshotForFuse = (groupNode) => {
   }
 };
 
+const buildResonanceFuseImageEntries = (fuseData, fallbackScreenshot = "") => {
+  const images = Array.isArray(fuseData?.images) ? fuseData.images : [];
+
+  const normalized = images
+    .map((item, index) => ({
+      index,
+      imageSrc: String(item?.image_url || "").trim(),
+      text: "",
+    }))
+    .filter((item) => item.imageSrc);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  if (!fallbackScreenshot) {
+    return [];
+  }
+
+  return [
+    {
+      index: 0,
+      imageSrc: fallbackScreenshot,
+      text: "",
+    },
+  ];
+};
+
+const createResonanceFuseNode = async ({
+  fuseData,
+  startX,
+  startY,
+  fallbackScreenshot = "",
+}) => {
+  const nodeId = String(fuseData?.id || "").trim();
+  const nodeType = String(fuseData?.type || "fuse_new").trim();
+  const description = String(fuseData?.description || "").trim();
+  const imageEntries = buildResonanceFuseImageEntries(fuseData, fallbackScreenshot);
+
+  if (!description && imageEntries.length === 0) {
+    throw new Error("Fuse 返回缺少 description 与 images");
+  }
+
+  const createdNodes = [];
+
+  let currentY = 0;
+
+  if (description) {
+    const descriptionNode = await createTextNode(
+      {
+        text: description,
+        id: nodeId ? `${nodeId}-description` : "",
+        customType: `${nodeType}-description`,
+      },
+      {
+        startX,
+        startY,
+        width: 560,
+        fontSize: 15,
+        fill: "#1f2937",
+        backgroundColor: "#ffffff",
+        padding: 14,
+        cornerRadius: 14,
+      }
+    );
+
+    const descriptionRect = descriptionNode.getClientRect({
+      skipShadow: true,
+      skipStroke: false,
+    });
+    currentY += Math.max(Number(descriptionRect?.height) || 0, 0) + 18;
+
+    createdNodes.push(descriptionNode);
+  }
+
+  if (imageEntries.length === 0) {
+    return createdNodes;
+  }
+
+  const imageGap = 18;
+  const imageNodes = [];
+
+  for (const entry of imageEntries) {
+    try {
+      const created = await createImageAndTextNodes(
+        {
+          imageSrc: entry.imageSrc,
+          text: entry.text,
+          id: nodeId ? `${nodeId}-image-${entry.index}` : "",
+          customType: `${nodeType}-image`,
+        },
+        {
+          startX: startX + imageNodes.length * (168 + imageGap),
+          startY: startY + currentY,
+          mainImageWidth: 168,
+          titleGap: 8,
+          fontSize: 13,
+          center: false,
+          group: false,
+        }
+      );
+
+      const nodes = Array.isArray(created) ? created : [created];
+      nodes.forEach((node) => {
+        if (!(node instanceof Konva.Node)) return;
+        imageNodes.push(node);
+      });
+    } catch (error) {
+      if (!fallbackScreenshot || entry.imageSrc === fallbackScreenshot) {
+        throw error;
+      }
+
+      const fallbackCreated = await createImageAndTextNodes(
+        {
+          imageSrc: fallbackScreenshot,
+          text: entry.text,
+          id: nodeId ? `${nodeId}-image-${entry.index}` : "",
+          customType: `${nodeType}-image`,
+        },
+        {
+          startX: startX + imageNodes.length * (168 + imageGap),
+          startY: startY + currentY,
+          mainImageWidth: 168,
+          titleGap: 8,
+          fontSize: 13,
+          center: false,
+          group: false,
+        }
+      );
+
+      const nodes = Array.isArray(fallbackCreated) ? fallbackCreated : [fallbackCreated];
+      nodes.forEach((node) => {
+        if (!(node instanceof Konva.Node)) return;
+        imageNodes.push(node);
+      });
+    }
+  }
+
+  createdNodes.push(...imageNodes);
+
+  return createdNodes;
+};
+
 const runResonanceFuse = async () => {
   const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
   if (selectedNodes.length !== 1) {
@@ -991,24 +1134,16 @@ const runResonanceFuse = async () => {
   pendingAiTool.value = "Resonance";
   hintLoading.value = true;
   try {
-    const res = await ResonanceFuse(payload);
+    const res = await ResonanceFuseNew(payload);
     const fuseData = res?.data || {};
 
-    const imageSrc = String(
-      fuseData?.image_url || fuseData?.imageUrl || fuseData?.imageSrc || ""
-    ).trim();
-    const description = String(
-      fuseData?.description || fuseData?.text || ""
-    ).trim();
-    const nodeId = String(fuseData?.id || "").trim();
-    const nodeType = String(fuseData?.type || "resonance_fuse").trim();
-
     const fallbackScreenshot = String(payload?.screenshot || "").trim();
-    let renderImageSrc = imageSrc || fallbackScreenshot;
+    const imageEntries = buildResonanceFuseImageEntries(fuseData, fallbackScreenshot);
+    const description = String(fuseData?.description || "").trim();
 
-    if (!renderImageSrc) {
+    if (!description && imageEntries.length === 0) {
       ElMessage({
-        message: "Fuse 返回缺少图片，无法创建图文节点",
+        message: "Fuse 返回为空，无法创建节点",
         type: "warning",
       });
       return;
@@ -1024,67 +1159,14 @@ const runResonanceFuse = async () => {
       return;
     }
 
-    let created;
-    try {
-      created = await createImageAndTextNodes(
-        {
-          imageSrc: renderImageSrc,
-          text: description || "Fuse",
-          id: nodeId,
-          customType: nodeType,
-        },
-        {
-          startX: anchor.stagePos.x,
-          startY: anchor.stagePos.y,
-          center: false,
-          group: false,
-        }
-      );
-    } catch (imageError) {
-      // 接口图片加载失败时，自动回退到截图，避免 Fuse 直接失败。
-      if (!fallbackScreenshot || renderImageSrc === fallbackScreenshot) {
-        throw imageError;
-      }
-
-      renderImageSrc = fallbackScreenshot;
-      created = await createImageAndTextNodes(
-        {
-          imageSrc: renderImageSrc,
-          text: description || "Fuse",
-          id: nodeId,
-          customType: nodeType,
-        },
-        {
-          startX: anchor.stagePos.x,
-          startY: anchor.stagePos.y,
-          center: false,
-          group: true,
-        }
-      );
-    }
-
-    const createdNodes = Array.isArray(created) ? created : [created];
-    createdNodes.forEach((node) => {
-      if (!(node instanceof Konva.Node)) return;
-
-      if (nodeId) {
-        node.id(nodeId);
-      }
-      if (nodeType) {
-        node.setAttr("customType", nodeType);
-      }
-
-      if (node instanceof Konva.Group) {
-        const children = node.getChildren();
-        children.forEach((child) => {
-          if (child instanceof Konva.Image) {
-            child.setAttr("imageSrc", renderImageSrc);
-          }
-        });
-      } else if (node instanceof Konva.Image) {
-        node.setAttr("imageSrc", renderImageSrc);
-      }
+    const createdNode = await createResonanceFuseNode({
+      fuseData,
+      startX: anchor.stagePos.x,
+      startY: anchor.stagePos.y,
+      fallbackScreenshot,
     });
+
+    const createdNodes = Array.isArray(createdNode) ? createdNode : [createdNode];
 
     if (konvaRef.value?.addExternalNodes) {
       konvaRef.value.addExternalNodes(createdNodes, { autoSelect: true });
@@ -1097,7 +1179,7 @@ const runResonanceFuse = async () => {
     }
 
     ElMessage({
-      message: "Fuse 已生成图文节点",
+      message: "Fuse 已生成多图节点",
       type: "success",
     });
   } catch (error) {

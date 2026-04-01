@@ -4180,7 +4180,8 @@ const addExternalNodes = (
   if (validNodes.length === 0) return 0;
 
   validNodes.forEach((node) => {
-    // 外部节点默认不带当前画布的选中逻辑，这里补绑统一点击处理。
+    // 外部节点只给最外层节点补绑选中事件，不递归处理内部子元素。
+    node.off("click tap");
     node.on("click tap", (evt) => {
       handleNodeClick(evt, node);
     });

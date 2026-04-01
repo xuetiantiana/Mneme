@@ -809,6 +809,44 @@ export const ResonanceFuse = (_data: any): any => {
 };
 
 
+export const ResonanceFuseNew = (_data: any): any => {
+    return request.post("/api/resonance/fuse_new", _data);
+
+    const response = {
+        success: true,
+        data: {
+  "id": "fuse-20260331100000000-a1b2c3d4e5",
+  "type": "fuse_new",
+  "description": "小猫从窗台上醒来，阳光正好落在它蜷曲的尾巴尖上，把那一小撮毛照得透亮。它伸了个懒腰，跳下窗台，穿过满是旧书和干花的走廊，每一步都踩出细碎的灰尘光斑。走廊尽头是一扇半开的门，门外是被雨洗过的小院，石板缝里长出青苔和一株不知名的小花，小猫趴在门槛上，眯着眼看雨后的水洼里映出整片天空的倒影。",
+  "keywords": ["窗台暖光", "旧书走廊", "雨后小院"],
+  "images": [
+    {
+      "index": 0,
+      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-0.png",
+      "image_prompt": "A soft picture-book collage illustration of a small tabby cat waking up on a sunlit windowsill..."
+    },
+    {
+      "index": 1,
+      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-1.png",
+      "image_prompt": "A soft picture-book collage illustration of a narrow corridor filled with old books and dried flowers..."
+    },
+    {
+      "index": 2,
+      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-2.png",
+      "image_prompt": "A soft picture-book collage illustration of a rain-washed courtyard with moss between stone tiles..."
+    }
+  ],
+  "created_at": "2026-03-31T10:00:00.000Z"
+},
+    };
+
+    return new Promise(function (resolve) {
+        setTimeout(function () {
+            resolve(response);
+        }, 1000);
+    });
+};
+
 
 
 export const cropUpdate = (data: any): any => {
