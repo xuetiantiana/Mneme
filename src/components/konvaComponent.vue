@@ -2790,31 +2790,11 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   if (!stage) return;
   const isGroupMeaningText = textNodeKonva?.name?.() === "group-meaning-text";
 
-  const textPosition = textNodeKonva.getAbsolutePosition(stage);
-  const stageBox = stage!.container().getBoundingClientRect();
-  const stageScaleX = stage.scaleX() || 1;
-  const stageScaleY = stage.scaleY() || 1;
-  const absScale = textNodeKonva.getAbsoluteScale();
-  // Whisper 文本会以中心点作为 offset，编辑器定位需要换算为可见文本左上角
-  const nodeScaleX = absScale.x / stageScaleX;
-  const nodeScaleY = absScale.y / stageScaleY;
-  const textTopLeft = {
-    x: textPosition.x - textNodeKonva.offsetX() * nodeScaleX,
-    y: textPosition.y - textNodeKonva.offsetY() * nodeScaleY,
-  };
-
-  const areaPosition = {
-    x: stageBox.left + stage.x() + textTopLeft.x * stageScaleX,
-    y: stageBox.top + stage.y() + textTopLeft.y * stageScaleY,
-  };
-
   const textarea = document.createElement("textarea");
   document.body.appendChild(textarea);
 
   textarea.value = textNodeKonva.text();
-  textarea.style.position = "absolute";
-  textarea.style.top = areaPosition.y + "px";
-  textarea.style.left = areaPosition.x + "px";
+  textarea.style.position = "fixed";
   textarea.style.width =
     (textNodeKonva.width() || 200) - textNodeKonva.padding() * 2 + "px";
   // 确保初始高度，即使文字为空也有一行高度
@@ -2836,14 +2816,38 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   textarea.style.color = textNodeKonva.fill().toString();
   textarea.style.zIndex = "1001";
 
-  const rotation = textNodeKonva.rotation();
-  let transform = "";
-  if (rotation) {
-    transform += `rotateZ(${rotation}deg) `;
-  }
-  transform += `scaleX(${nodeScaleX}) scaleY(${nodeScaleY}) `;
-  textarea.style.transform = transform;
-  textarea.style.transformOrigin = "left top";
+  const syncTextareaTransform = () => {
+    const stageBox = stage.container().getBoundingClientRect();
+    const stageScaleX = stage.scaleX() || 1;
+    const stageScaleY = stage.scaleY() || 1;
+    const absScale = textNodeKonva.getAbsoluteScale();
+    const nodeScaleX = absScale.x / stageScaleX;
+    const nodeScaleY = absScale.y / stageScaleY;
+    const textPosition = textNodeKonva.getAbsolutePosition(stage);
+    // Whisper 文本会以中心点作为 offset，编辑器定位需要换算为可见文本左上角
+    const textTopLeft = {
+      x: textPosition.x - textNodeKonva.offsetX() * nodeScaleX,
+      y: textPosition.y - textNodeKonva.offsetY() * nodeScaleY,
+    };
+    const areaPosition = {
+      x: stageBox.left + stage.x() + textTopLeft.x * stageScaleX,
+      y: stageBox.top + stage.y() + textTopLeft.y * stageScaleY,
+    };
+
+    textarea.style.left = areaPosition.x + "px";
+    textarea.style.top = areaPosition.y + "px";
+
+    const rotation = textNodeKonva.getAbsoluteRotation();
+    let transform = "";
+    if (rotation) {
+      transform += `rotateZ(${rotation}deg) `;
+    }
+    transform += `scaleX(${absScale.x}) scaleY(${absScale.y})`;
+    textarea.style.transform = transform;
+    textarea.style.transformOrigin = "left top";
+  };
+
+  syncTextareaTransform();
 
   // 使用 setTimeout 确保 DOM 渲染后再 focus
   setTimeout(() => {
@@ -2855,6 +2859,11 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   textNodeKonva.visible(false);
 
   let isRemoving = false;
+
+  const handleViewportOrStageChange = () => {
+    if (isRemoving) return;
+    syncTextareaTransform();
+  };
 
   const resizeGroupMeaningBg = () => {
     if (!isGroupMeaningText) {
@@ -2882,6 +2891,20 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
     if (textarea.parentNode) {
       textarea.parentNode.removeChild(textarea);
     }
+    stage.off("xChange.textEdit", handleViewportOrStageChange);
+    stage.off("yChange.textEdit", handleViewportOrStageChange);
+    stage.off("scaleXChange.textEdit", handleViewportOrStageChange);
+    stage.off("scaleYChange.textEdit", handleViewportOrStageChange);
+    stage.off("rotationChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("xChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("yChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("scaleXChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("scaleYChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("rotationChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("offsetXChange.textEdit", handleViewportOrStageChange);
+    textNodeKonva.off("offsetYChange.textEdit", handleViewportOrStageChange);
+    window.removeEventListener("resize", handleViewportOrStageChange);
+    window.removeEventListener("scroll", handleViewportOrStageChange, true);
     window.removeEventListener("mousedown", handleOutsideClick);
     window.removeEventListener("touchstart", handleOutsideClick);
     textNodeKonva.visible(true);
@@ -2935,6 +2958,21 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
       }
     }
   }
+
+  stage.on("xChange.textEdit", handleViewportOrStageChange);
+  stage.on("yChange.textEdit", handleViewportOrStageChange);
+  stage.on("scaleXChange.textEdit", handleViewportOrStageChange);
+  stage.on("scaleYChange.textEdit", handleViewportOrStageChange);
+  stage.on("rotationChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("xChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("yChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("scaleXChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("scaleYChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("rotationChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("offsetXChange.textEdit", handleViewportOrStageChange);
+  textNodeKonva.on("offsetYChange.textEdit", handleViewportOrStageChange);
+  window.addEventListener("resize", handleViewportOrStageChange);
+  window.addEventListener("scroll", handleViewportOrStageChange, true);
   
   // 使用 setTimeout 并在 mousedown 事件处理点击外部，避免因 click 冒泡直接触发
   setTimeout(() => {
