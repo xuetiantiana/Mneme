@@ -757,6 +757,83 @@ const moveStage = (pos: { x: number; y: number }) => {
   });
 };
 
+const applyStageWheelInteraction = (payload: {
+  clientX: number;
+  clientY: number;
+  deltaX?: number;
+  deltaY?: number;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+}) => {
+  // 供外层覆盖 UI（例如 crop 覆盖层）转发滚轮事件，
+  // 这样即使鼠标落在 overlay 上，也能复用 Konva 原本的缩放/滚动逻辑。
+  if (!props.enableMouseWheelScroll || !stage || !container.value) {
+    return;
+  }
+
+  const containerRect = container.value.getBoundingClientRect();
+  const pointer = {
+    x: payload.clientX - containerRect.left,
+    y: payload.clientY - containerRect.top,
+  };
+
+  if (payload.ctrlKey) {
+    const oldScale = scale.value;
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const scaleBy = 1.1;
+    const deltaY = Number(payload.deltaY) || 0;
+    let newScale = deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    newScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+    stage.scale({ x: newScale, y: newScale });
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+
+    stage.position(newPos);
+    scale.value = newScale;
+
+    if (aiAssistState) {
+      updateAiAssistLabelScale();
+    }
+
+    stage.batchDraw();
+    updateScrollbars();
+    emit("stage-transform", {
+      x: newPos.x,
+      y: newPos.y,
+      scale: newScale,
+    });
+    return;
+  }
+
+  let dx = Number(payload.deltaX) || 0;
+  let dy = Number(payload.deltaY) || 0;
+
+  if (payload.shiftKey && dx === 0) {
+    dx = dy;
+    dy = 0;
+  }
+
+  stage.position({
+    x: stage.x() - dx,
+    y: stage.y() - dy,
+  });
+  stage.batchDraw();
+  updateScrollbars();
+  emit("stage-transform", {
+    x: stage.x(),
+    y: stage.y(),
+    scale: stage.scaleX(),
+  });
+};
+
 // 清除 AI 辅助相关的图形和状态
 // 在切换工具、取消选中或重新触发时调用
 const clearAiAssist = () => {
@@ -5090,6 +5167,8 @@ defineExpose({
   groupSelectedNodes,
   ungroupSelectedNodes,
   setWhisperHighlight,
+  panStageBy: moveStage,
+  applyStageWheelInteraction,
 });
 </script>
 

@@ -1,26 +1,13 @@
 <template>
-  <div v-if="visible" class="crop-popup-mask" @click.self="$emit('cancel')">
-    <div class="crop-popup">
-      <div class="crop-title">Crop Image</div>
-
-      <div v-if="imgLoaded" class="size-info">
-        原图尺寸: {{ naturalWidth }} x {{ naturalHeight }}，拖拽鼠标在原图上画矩形进行裁剪
+  <div v-if="visible" ref="overlayRef" class="crop-overlay" @click.self="$emit('cancel')">
+    <div v-if="imgLoaded" class="crop-toolbar" :style="toolbarStyle">
+      <div class="crop-title">Crop on Canvas</div>
+      <div class="size-info">
+        原图尺寸: {{ naturalWidth }} x {{ naturalHeight }}，请直接在当前主图上框选
       </div>
-      <div v-if="imgLoaded" class="analyze-tip">
-        裁剪完成后点击“确认并分析”，系统会调用接口并在主图周边生成 segment 图与泡泡。
+      <div class="analyze-tip">
+        裁剪范围仅作用于当前选中的这张图，确认后会调用接口并在主图周边生成 segment 与泡泡。
       </div>
-
-      <div v-if="imgLoaded" class="crop-canvas-wrap">
-        <canvas
-          ref="cropCanvasRef"
-          class="crop-canvas"
-          @mousedown="handleMouseDown"
-          @mousemove="handleMouseMove"
-          @mouseup="handleMouseUp"
-          @mouseleave="handleMouseUp"
-        ></canvas>
-      </div>
-
       <div class="crop-actions">
         <button class="btn" type="button" :disabled="confirmLoading" @click="$emit('cancel')">取消</button>
         <button class="btn primary" type="button" :disabled="!selection || confirmLoading" @click="handleConfirm">
@@ -28,11 +15,27 @@
         </button>
       </div>
     </div>
+
+    <div
+      v-if="imgLoaded && hasFrame"
+      class="crop-frame"
+      :style="frameStyle"
+    >
+      <canvas
+        ref="cropCanvasRef"
+        class="crop-canvas"
+        @mousedown="handleMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseUp"
+        @wheel.prevent="handleWheel"
+      ></canvas>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 const props = defineProps({
   visible: {
@@ -43,17 +46,22 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  frame: {
+    type: Object,
+    default: null,
+  },
   confirmLoading: {
     type: Boolean,
     default: false,
   },
 });
 
-const emit = defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(["confirm", "cancel", "stage-pan-by", "stage-wheel"]);
 
-const MAX_CANVAS_WIDTH = 720;
-const MAX_CANVAS_HEIGHT = 420;
 const MIN_CROP_SIZE = 8;
+const TOOLBAR_WIDTH = 320;
+const TOOLBAR_GAP = 16;
+const VIEWPORT_GAP = 16;
 
 const imageObj = ref(null);
 const imgLoaded = ref(false);
@@ -62,11 +70,73 @@ const naturalHeight = ref(0);
 const displayWidth = ref(0);
 const displayHeight = ref(0);
 
+const overlayRef = ref(null);
 const cropCanvasRef = ref(null);
 
 const isDragging = ref(false);
+const isStagePanning = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
+const stagePanLast = ref({ x: 0, y: 0 });
 const selection = ref(null);
+
+const hasFrame = computed(() => {
+  return !!(
+    props.frame &&
+    Number(props.frame.width) > 0 &&
+    Number(props.frame.height) > 0
+  );
+});
+
+const frameStyle = computed(() => {
+  if (!hasFrame.value) {
+    return {};
+  }
+
+  return {
+    // 使用 transform 而不是 left/top，降低画布连续缩放时的布局抖动。
+    transform: `translate3d(${Math.round(props.frame.x)}px, ${Math.round(props.frame.y)}px, 0)`,
+    width: `${Math.round(props.frame.width)}px`,
+    height: `${Math.round(props.frame.height)}px`,
+  };
+});
+
+const toolbarStyle = computed(() => {
+  if (!hasFrame.value) {
+    return {};
+  }
+
+  const frameX = Number(props.frame.x) || 0;
+  const frameY = Number(props.frame.y) || 0;
+  const frameWidth = Number(props.frame.width) || 0;
+  const frameHeight = Number(props.frame.height) || 0;
+
+  const overlayWidth = overlayRef.value?.clientWidth || frameX + frameWidth + TOOLBAR_WIDTH;
+  const overlayHeight = overlayRef.value?.clientHeight || frameY + frameHeight;
+
+  const rightCandidateLeft = frameX + frameWidth + TOOLBAR_GAP;
+  const leftCandidateLeft = frameX - TOOLBAR_WIDTH - TOOLBAR_GAP;
+  const rightSpace = overlayWidth - rightCandidateLeft - VIEWPORT_GAP;
+  const leftSpace = frameX - TOOLBAR_GAP - VIEWPORT_GAP;
+
+  let left = rightCandidateLeft;
+  if (rightSpace >= TOOLBAR_WIDTH) {
+    left = rightCandidateLeft;
+  } else if (leftSpace >= TOOLBAR_WIDTH) {
+    // 右侧放不下就切到左侧，避免介绍面板与 crop 区域重叠。
+    left = leftCandidateLeft;
+  } else {
+    const maxLeft = Math.max(VIEWPORT_GAP, overlayWidth - TOOLBAR_WIDTH - VIEWPORT_GAP);
+    left = rightSpace >= leftSpace ? maxLeft : VIEWPORT_GAP;
+  }
+
+  const maxTop = Math.max(VIEWPORT_GAP, overlayHeight - 220);
+  const top = Math.min(Math.max(frameY, VIEWPORT_GAP), maxTop);
+
+  return {
+    transform: `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`,
+    width: `${TOOLBAR_WIDTH}px`,
+  };
+});
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -122,8 +192,50 @@ const drawCanvas = () => {
   ctx.setLineDash([]);
 };
 
+const cleanupStagePanListeners = () => {
+  window.removeEventListener("mousemove", handleStagePanMove);
+  window.removeEventListener("mouseup", handleStagePanEnd);
+};
+
+const handleStagePanMove = (event) => {
+  if (!isStagePanning.value) {
+    return;
+  }
+
+  // 中键拖拽不操作 crop 选区，而是把位移转发给底层 Konva 舞台。
+  const dx = event.clientX - stagePanLast.value.x;
+  const dy = event.clientY - stagePanLast.value.y;
+  stagePanLast.value = { x: event.clientX, y: event.clientY };
+
+  emit("stage-pan-by", { dx, dy });
+};
+
+const handleStagePanEnd = () => {
+  if (!isStagePanning.value) {
+    return;
+  }
+
+  isStagePanning.value = false;
+  cleanupStagePanListeners();
+};
+
 const handleMouseDown = (event) => {
   if (!imgLoaded.value) return;
+
+  if (event.button === 1) {
+    // 在 crop 覆盖层里保留中键平移画布，避免进入裁剪模式后无法导航。
+    event.preventDefault();
+    isStagePanning.value = true;
+    stagePanLast.value = { x: event.clientX, y: event.clientY };
+    window.addEventListener("mousemove", handleStagePanMove);
+    window.addEventListener("mouseup", handleStagePanEnd);
+    return;
+  }
+
+  if (event.button !== 0) {
+    return;
+  }
+
   const p = getCanvasPoint(event);
   dragStart.value = p;
   selection.value = { x: p.x, y: p.y, w: 0, h: 0 };
@@ -157,11 +269,48 @@ const handleMouseUp = () => {
   drawCanvas();
 };
 
+const handleWheel = (event) => {
+  // 覆盖层自己不处理缩放，只把原始滚轮信息转发给 Konva 画布。
+  emit("stage-wheel", {
+    clientX: event.clientX,
+    clientY: event.clientY,
+    deltaX: event.deltaX,
+    deltaY: event.deltaY,
+    ctrlKey: event.ctrlKey,
+    shiftKey: event.shiftKey,
+  });
+};
+
+const syncDisplaySizeFromFrame = (preserveSelection = true) => {
+  // 画布缩放只会改变覆盖层显示尺寸，不应该重新加载图片；
+  // 若已有选区，则按比例同步到新尺寸上。
+  const nextWidth = Math.max(Math.round(Number(props.frame?.width) || 0), 1);
+  const nextHeight = Math.max(Math.round(Number(props.frame?.height) || 0), 1);
+
+  const prevWidth = Math.max(displayWidth.value || 0, 1);
+  const prevHeight = Math.max(displayHeight.value || 0, 1);
+
+  if (preserveSelection && selection.value) {
+    const scaleX = nextWidth / prevWidth;
+    const scaleY = nextHeight / prevHeight;
+    selection.value = {
+      x: selection.value.x * scaleX,
+      y: selection.value.y * scaleY,
+      w: selection.value.w * scaleX,
+      h: selection.value.h * scaleY,
+    };
+  }
+
+  displayWidth.value = nextWidth;
+  displayHeight.value = nextHeight;
+};
+
 const loadImage = async () => {
   imgLoaded.value = false;
   selection.value = null;
 
   if (!props.imageSrc) return;
+  if (!hasFrame.value) return;
 
   const img = new Image();
   img.crossOrigin = "anonymous";
@@ -178,14 +327,7 @@ const loadImage = async () => {
   naturalWidth.value = img.width;
   naturalHeight.value = img.height;
 
-  const scale = Math.min(
-    MAX_CANVAS_WIDTH / img.width,
-    MAX_CANVAS_HEIGHT / img.height,
-    1
-  );
-
-  displayWidth.value = Math.round(img.width * scale);
-  displayHeight.value = Math.round(img.height * scale);
+  syncDisplaySizeFromFrame(false);
 
   imgLoaded.value = true;
   await nextTick();
@@ -246,26 +388,63 @@ watch(
     }
   }
 );
+
+watch(
+  () => props.imageSrc,
+  () => {
+    if (props.visible && props.imageSrc) {
+      loadImage();
+    }
+  }
+);
+
+watch(
+  () => [props.frame?.width, props.frame?.height],
+  async () => {
+    if (!props.visible || !imgLoaded.value || !hasFrame.value) {
+      return;
+    }
+
+    syncDisplaySizeFromFrame(true);
+    await nextTick();
+    drawCanvas();
+  }
+);
+
+watch(
+  () => props.visible,
+  (visible) => {
+    if (!visible) {
+      isDragging.value = false;
+      handleStagePanEnd();
+    }
+  }
+);
+
+onBeforeUnmount(() => {
+  handleStagePanEnd();
+});
 </script>
 
 <style scoped>
-.crop-popup-mask {
+.crop-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(15, 23, 42, 0.14);
   z-index: 1300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* 空白区域不拦截事件，让底层画布仍可继续接收交互。 */
+  pointer-events: none;
 }
 
-.crop-popup {
-  width: 780px;
-  max-width: calc(100% - 24px);
+.crop-toolbar {
+  position: absolute;
+  max-width: min(320px, calc(100% - 32px));
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
   padding: 14px;
+  pointer-events: auto;
+  will-change: transform;
 }
 
 .crop-title {
@@ -292,18 +471,20 @@ watch(
   padding: 8px 10px;
 }
 
-.crop-canvas-wrap {
-  display: flex;
-  justify-content: center;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  background: #fafafa;
-  padding: 10px;
+.crop-frame {
+  position: absolute;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.65), 0 12px 28px rgba(15, 23, 42, 0.18);
+  background: rgba(255, 255, 255, 0.2);
+  pointer-events: auto;
+  will-change: transform, width, height;
 }
 
 .crop-canvas {
   display: block;
-  max-width: 100%;
+  width: 100%;
+  height: 100%;
   cursor: crosshair;
 }
 

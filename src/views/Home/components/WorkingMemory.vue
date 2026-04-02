@@ -42,12 +42,16 @@
         @submit="handleWhisperSubmit"
         @cancel="handleWhisperPopupCancel"
       />
+      <!-- Crop 覆盖层内部仍允许中键拖动画布与滚轮缩放/滚动画布 -->
       <CropImagePopup
         :visible="cropPopupVisible"
         :image-src="cropPopupData.imageSrc"
+        :frame="cropPopupData.frame"
         :confirm-loading="cropSubmitting"
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
+        @stage-pan-by="handleCropStagePanBy"
+        @stage-wheel="handleCropStageWheel"
       />
     </div>
 
@@ -322,8 +326,11 @@ const cropPopupVisible = ref(false);
 const cropPopupData = ref({
   imageSrc: "",
   targetNode: null,
+  frame: null,
 });
 const cropSubmitting = ref(false);
+let cropFrameUpdateRaf = 0;
+let pendingCropFrame = null;
 let whisperCanvasEl = null;
 
 // 处理点击外部区域取消选中的逻辑
@@ -1367,6 +1374,89 @@ const getPopupPositionRightOfNode = (targetNode) => {
   };
 };
 
+const getNodeFrameInWorkingMemory = (targetNode) => {
+  // 把 Konva 节点当前的舞台包围盒换算成 WorkingMemory 容器坐标，
+  // 供 crop 覆盖层直接贴在原图上方渲染。
+  const stage = konvaRef.value?.konvaData?.stage;
+  const layer = konvaRef.value?.konvaData?.layer;
+  const wmRect = wmContainer.value?.getBoundingClientRect?.();
+  if (!stage || !layer || !targetNode || !wmRect) {
+    return null;
+  }
+
+  const nodeRect = targetNode.getClientRect({
+    relativeTo: layer,
+    skipShadow: true,
+    skipStroke: true,
+  });
+
+  if (!Number.isFinite(nodeRect?.width) || !Number.isFinite(nodeRect?.height)) {
+    return null;
+  }
+
+  const stageRect = stage.container().getBoundingClientRect();
+  const transform = stage.getAbsoluteTransform();
+  const topLeft = transform.point({ x: nodeRect.x, y: nodeRect.y });
+  const bottomRight = transform.point({
+    x: nodeRect.x + nodeRect.width,
+    y: nodeRect.y + nodeRect.height,
+  });
+
+  return {
+    x: stageRect.left - wmRect.left + topLeft.x,
+    y: stageRect.top - wmRect.top + topLeft.y,
+    width: Math.max(bottomRight.x - topLeft.x, 1),
+    height: Math.max(bottomRight.y - topLeft.y, 1),
+  };
+};
+
+const applyCropPopupFrame = (frame) => {
+  if (!frame) {
+    cropPopupData.value.frame = null;
+    return;
+  }
+
+  if (!cropPopupData.value.frame) {
+    cropPopupData.value.frame = { ...frame };
+    return;
+  }
+
+  // 只更新 frame 数值，避免整对象替换导致 crop 覆盖层额外重渲染。
+  cropPopupData.value.frame.x = frame.x;
+  cropPopupData.value.frame.y = frame.y;
+  cropPopupData.value.frame.width = frame.width;
+  cropPopupData.value.frame.height = frame.height;
+};
+
+const scheduleCropPopupFrameUpdate = (frame) => {
+  // 画布拖拽/缩放时 stage-transform 触发非常频繁，
+  // 这里合并到下一帧统一更新，减少 crop 覆盖层抖动。
+  pendingCropFrame = frame;
+  if (cropFrameUpdateRaf) {
+    return;
+  }
+
+  cropFrameUpdateRaf = requestAnimationFrame(() => {
+    cropFrameUpdateRaf = 0;
+    applyCropPopupFrame(pendingCropFrame);
+    pendingCropFrame = null;
+  });
+};
+
+const resetCropPopupState = () => {
+  // 关闭 crop 时顺带清掉未执行的 frame 更新，避免旧帧回写到新状态。
+  if (cropFrameUpdateRaf) {
+    cancelAnimationFrame(cropFrameUpdateRaf);
+    cropFrameUpdateRaf = 0;
+  }
+  pendingCropFrame = null;
+  cropPopupData.value = {
+    imageSrc: "",
+    targetNode: null,
+    frame: null,
+  };
+};
+
 const exitReflectMode = () => {
   // 工具跳转时仅退出 Reflect 交互态，不主动关闭已打开的 AI 弹窗。
   currentNav.value = "";
@@ -1407,9 +1497,20 @@ const openCropPopupForNode = (targetNode) => {
     return;
   }
 
+  const frame = getNodeFrameInWorkingMemory(targetNode);
+  if (!frame) {
+    ElMessage({
+      message: "Crop 覆盖层定位失败",
+      type: "warning",
+    });
+    return;
+  }
+
+  // Crop 改为直接贴在画布原图上操作，因此打开时要同时带上目标图位置。
   cropPopupData.value = {
     imageSrc,
     targetNode,
+    frame: { ...frame },
   };
   cropPopupVisible.value = true;
 };
@@ -1491,14 +1592,7 @@ const handleCropCanvasClick = (event) => {
   const target = getImageTargetAtPointer(event);
   if (!target) return;
 
-  const img = target.image?.();
-  const imageSrc = img?.src || "";
-
-  cropPopupData.value = {
-    imageSrc,
-    targetNode: target,
-  };
-  cropPopupVisible.value = true;
+  openCropPopupForNode(target);
 };
 
 const handleCanvasMouseMove = (event) => {
@@ -1610,10 +1704,7 @@ const handleCropConfirm = async ({ dataUrl }) => {
     }
 
     cropPopupVisible.value = false;
-    cropPopupData.value = {
-      imageSrc: "",
-      targetNode: null,
-    };
+    resetCropPopupState();
 
     const stage = konvaRef.value?.konvaData?.stage;
     if (stage) {
@@ -1643,10 +1734,7 @@ const handleCropCancel = () => {
   }
 
   cropPopupVisible.value = false;
-  cropPopupData.value = {
-    imageSrc: "",
-    targetNode: null,
-  };
+  resetCropPopupState();
 
   const stage = konvaRef.value?.konvaData?.stage;
   if (stage) {
@@ -1657,6 +1745,26 @@ const handleCropCancel = () => {
   if (currentNav.value === "Crop") {
     currentNav.value = "";
   }
+};
+
+const handleCropStagePanBy = (payload) => {
+  // Crop 覆盖层内部的中键拖拽，最终仍复用 Konva 的舞台平移逻辑。
+  const dx = Number(payload?.dx) || 0;
+  const dy = Number(payload?.dy) || 0;
+  if (!dx && !dy) {
+    return;
+  }
+
+  konvaRef.value?.panStageBy?.({ dx, dy });
+};
+
+const handleCropStageWheel = (payload) => {
+  // Crop 覆盖层内部的滚轮缩放/滚动，同样转发给 Konva 统一处理。
+  if (!payload) {
+    return;
+  }
+
+  konvaRef.value?.applyStageWheelInteraction?.(payload);
 };
 
 const handleWhisperSubmit = async (payload) => {
@@ -2300,6 +2408,14 @@ const handleStageTransform = () => {
 
     if (whisperPos) {
       whisperPopupData.value.position = whisperPos;
+    }
+  }
+
+  if (cropPopupVisible.value && cropPopupData.value.targetNode) {
+    // Crop 覆盖层跟随目标主图位置同步，但更新节流到 rAF，避免视觉闪烁。
+    const frame = getNodeFrameInWorkingMemory(cropPopupData.value.targetNode);
+    if (frame) {
+      scheduleCropPopupFrameUpdate(frame);
     }
   }
 
