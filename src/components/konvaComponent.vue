@@ -954,96 +954,109 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
   layer.batchDraw();
 };
 
-// 处理舞台点击事件，用于检测 AI 辅助环的点击
+// 统一的 stage 点击入口。
+// 当前这层承担两类职责：
+// 1) AI 辅助环命中检测与事件派发；
+// 2) 普通内容节点的事件委托选中。
+// 这样做之后，新增节点只需要 add 到 layer，不需要在每条创建路径里重复绑定 click/tap。
+// 事件流约定如下：
+// - 先判断是否命中 AI 环；命中则直接消费事件并返回。
+// - 未命中 AI 环时，再根据 evt.target 反向解析“真正应该被选中的节点”。
+// - 解析成功后，统一复用 handleNodeClick，保持原有单选/多选/transformer 行为不变。
 const handleStageClick = (
   e: Konva.KonvaEventObject<MouseEvent | TouchEvent>
 ) => {
-  // 如果 AI 辅助未激活，不处理
-  if (!aiAssistState || !layer) return;
+  // AI 环属于高优先级交互。只要当前 AI 辅助处于激活态，就先做圆环命中判断，
+  // 避免点击扇区时又落入普通节点选中逻辑。
+  if (aiAssistState && layer) {
+    const pos = getPointerPos(e);
+  
+    const dx = pos.x - aiAssistState.centerX;
+    const dy = pos.y - aiAssistState.centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const inRing =
+      distance >= aiAssistState.innerRadius &&
+      distance <= aiAssistState.outerRadius;
 
-  const pos = getPointerPos(e);
+    if (inRing) {
+      // AI 环点击一旦命中就完全消费，防止继续冒泡到普通节点选择流程。
+      e.cancelBubble = true;
 
-  // 计算鼠标相对于圆心的距离和角度
-  const dx = pos.x - aiAssistState.centerX;
-  const dy = pos.y - aiAssistState.centerY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
+      // 弹窗已经锁定时，不重复触发同一轮 AI 交互。
+      if (aiAssistState.isLocked) return;
 
-  // 判断点击是否在圆环范围内
-  const inRing =
-    distance >= aiAssistState.innerRadius &&
-    distance <= aiAssistState.outerRadius;
+      const index = getAiRingSliceIndex(dx, dy);
+      const label = aiRingLabels[index];
+      const lineLength = distance - aiAssistState.innerRadius;
+      const ringWidth = Math.max(
+        0,
+        aiAssistState.outerRadius - aiAssistState.innerRadius
+      );
 
-  if (inRing) {
-    // 阻止事件继续传播，避免触发取消选中等逻辑
-    e.cancelBubble = true;
+      const pointerPos = stage!.getPointerPosition();
+      const screenPos = pointerPos
+        ? {
+            x: pointerPos.x + container.value!.getBoundingClientRect().left,
+            y: pointerPos.y + container.value!.getBoundingClientRect().top,
+          }
+        : { x: 0, y: 0 };
 
-    // 如果已经锁定（弹窗已显示），则不再响应点击
-    if (aiAssistState.isLocked) return;
+      // 进入锁定态后，鼠标移动不会再刷新当前这次 AI 引导结果，
+      // 直到上层流程显式结束或清理 AI 辅助状态。
+      aiAssistState.isLocked = true;
 
-    // 计算点击的扇区索引
-    const index = getAiRingSliceIndex(dx, dy);
+      if (aiGuideLine) {
+        // 点击时把引导线终点固定到当前命中位置，
+        // 这样后续 createAiContentNode 会以用户最终点击位置作为布局基准。
+        aiGuideLine.points([
+          aiAssistState.centerX,
+          aiAssistState.centerY,
+          pos.x,
+          pos.y,
+        ]);
+        const endColor = updateAiGuideLineGradient(aiGuideLine, pos);
+        updateAiRightClockLabelsColorByGuideLength(distance);
+        aiGuideLine.show();
 
-    // 获取标签和连线长度
-    const label = aiRingLabels[index];
-    const lineLength = distance - aiAssistState.innerRadius;
-    const ringWidth = Math.max(
-      0,
-      aiAssistState.outerRadius - aiAssistState.innerRadius
-    );
-
-    // 获取屏幕坐标用于定位弹窗
-    const pointerPos = stage!.getPointerPosition();
-    const screenPos = pointerPos
-      ? {
-          x: pointerPos.x + container.value!.getBoundingClientRect().left,
-          y: pointerPos.y + container.value!.getBoundingClientRect().top,
+        if (!aiGuideEndCircle) {
+          aiGuideEndCircle = new Konva.Circle({
+            x: pos.x,
+            y: pos.y,
+            radius: 5,
+            fill: endColor || AI_GUIDE_START_COLOR,
+            stroke: "rgba(255, 255, 255, 0.9)",
+            strokeWidth: 1.5,
+            listening: false,
+          });
+          layer.add(aiGuideEndCircle);
+        } else {
+          aiGuideEndCircle.position({ x: pos.x, y: pos.y });
+          aiGuideEndCircle.fill(endColor || AI_GUIDE_START_COLOR);
         }
-      : { x: 0, y: 0 };
-
-    // 停止 AI 交互更新，锁定引导线位置
-    aiAssistState.isLocked = true;
-
-    // 如果已经锁定，需要更新引导线的位置到新的点击点，以便 createAiContentNode 获取正确的终点
-    if (aiGuideLine) {
-      aiGuideLine.points([
-        aiAssistState.centerX,
-        aiAssistState.centerY,
-        pos.x,
-        pos.y,
-      ]);
-      const endColor = updateAiGuideLineGradient(aiGuideLine, pos);
-      updateAiRightClockLabelsColorByGuideLength(distance);
-      aiGuideLine.show(); // 确保显示
-
-      if (!aiGuideEndCircle) {
-        aiGuideEndCircle = new Konva.Circle({
-          x: pos.x,
-          y: pos.y,
-          radius: 5,
-          fill: endColor || AI_GUIDE_START_COLOR,
-          stroke: "rgba(255, 255, 255, 0.9)",
-          strokeWidth: 1.5,
-          listening: false,
-        });
-        layer.add(aiGuideEndCircle);
-      } else {
-        aiGuideEndCircle.position({ x: pos.x, y: pos.y });
-        aiGuideEndCircle.fill(endColor || AI_GUIDE_START_COLOR);
+        aiGuideEndCircle.show();
+        aiGuideEndCircle.moveToTop();
+        layer.batchDraw();
       }
-      aiGuideEndCircle.show();
-      aiGuideEndCircle.moveToTop();
-      layer.batchDraw();
+
+      emit("ai-ring-click", {
+        label,
+        lineLength,
+        ringWidth,
+        position: screenPos,
+      });
+
+      console.log("AI Ring Click:", { label, lineLength, ringWidth, screenPos });
+      return;
     }
+  }
 
-    // 触发事件通知父组件
-    emit("ai-ring-click", {
-      label,
-      lineLength,
-      ringWidth,
-      position: screenPos,
-    });
-
-    console.log("AI Ring Click:", { label, lineLength, ringWidth, screenPos });
+  // 未命中 AI 环时，走普通节点选择委托：
+  // 根据真正被点击的 target，推导出“业务上应该选中的节点”。
+  const targetNode = resolveSelectableNodeFromTarget(
+    e.target as Konva.Node | null
+  );
+  if (targetNode) {
+    handleNodeClick(e, targetNode);
   }
 };
 
@@ -1260,10 +1273,6 @@ const createAiContentNode = (
       });
 
       childNode.draggable(true);
-
-      childNode.on("click tap", (evt) => {
-        handleNodeClick(evt, childNode);
-      });
 
       layer!.add(childNode);
       return childNode;
@@ -1805,6 +1814,111 @@ const isAiAssistNode = (node?: Konva.Node | null) => {
   return false;
 };
 
+// 识别“舞台系统节点”，这些节点只负责交互辅助，不应该进入普通选择逻辑。
+// 典型例子：
+// - transformer / selectionBox：选择器自身的控制层
+// - group-ungroup-btn：分组后的悬浮操作按钮
+// - hover-action-btn：hover 工具按钮
+// 如果不在这里排除，stage 委托会把这些控制节点误当成业务内容选中。
+const isStageSystemNode = (node?: Konva.Node | null) => {
+  if (!node) return false;
+
+  let current: Konva.Node | null = node;
+  while (current) {
+    if (current === transformer || current === selectionBox) {
+      return true;
+    }
+
+    const nodeName = String(current.name?.() || "");
+    if (nodeName === "group-ungroup-btn" || nodeName === "hover-action-btn") {
+      return true;
+    }
+
+    current = current.getParent?.() || null;
+  }
+
+  return false;
+};
+
+const WM_GROUP_SCAFFOLD_NODE_NAMES = new Set([
+  "group-bg",
+  "group-meaning-text",
+  "group-meaning-bg",
+]);
+
+// 根据实际命中的 Konva target，反推出“最终应该被选中的节点”。
+// 这是事件委托方案的核心：
+// - 用户点击的往往是 group 内部的 rect/text/image，而不是我们真正想选中的外层容器；
+// - 这里统一处理各种结构差异，避免每种节点创建时都手工绑定一遍 click。
+// 解析规则从高优先级到低优先级依次为：
+// 1) 过滤 stage/layer/system 控件/AI 节点；
+// 2) segment_group 特殊处理：点 frame 选整个组，点内容选具体子节点；
+// 3) customType=group 的业务组按命中区域分流：点背景/标题区选 group，点真实内容选子节点；
+// 4) 对 createTextNode 这类显式标记为文本包装组的结构，向上折叠为外层节点；
+// 5) 其余普通顶层节点，直接返回当前节点。
+const resolveSelectableNodeFromTarget = (target?: Konva.Node | null) => {
+  if (!target || !layer || !stage) return null;
+  if (target === stage || target === layer) return null;
+  if (isAiAssistNode(target) || isStageSystemNode(target)) return null;
+
+  let current: Konva.Node | null = target;
+  while (current && current !== layer) {
+    const currentName = String(current.name?.() || "");
+    const parent = current.getParent?.() || null;
+
+    // segment_group 的 frame 只是边框命中层。
+    // 点击它时，业务上希望选中整个 group，而不是这条 frame 本身。
+    if (currentName === "segment-group-frame") {
+      return parent instanceof Konva.Group ? parent : null;
+    }
+
+    // 走到顶层时，说明当前节点已经是可直接参与选择的内容节点。
+    if (!(parent instanceof Konva.Group) || parent === layer) {
+      return current;
+    }
+
+    const parentName = String(parent.name?.() || "");
+    const parentCustomType = String(parent.getAttr?.("customType") || "");
+    const currentCustomType = String(current.getAttr?.("customType") || "");
+    const parentId = typeof parent.id === "function" ? parent.id() : "";
+    const currentId = typeof current.id === "function" ? current.id() : "";
+
+    // 即便命中的是按钮内部文本/背景，也不要进入内容选择。
+    if (parentName === "group-ungroup-btn" || parentName === "hover-action-btn") {
+      return null;
+    }
+
+    // createTextNode 返回的文本包装 group 会显式打标。
+    // 点到它内部的 rect/text 时，统一折叠为外层文本 group，避免继续依赖同 id / 同 customType 猜结构。
+    if (parent.getAttr?.("selectAsTextWrapperGroup")) {
+      return parent;
+    }
+
+    // 对 Group 按钮创建的业务组，只有点击“壳层节点”时才选整个 group；
+    // 点击组内真实内容（图片、segment、bubble 等）时，允许选中具体子节点。
+    if (parentCustomType === "group") {
+      return WM_GROUP_SCAFFOLD_NODE_NAMES.has(currentName) ? parent : current;
+    }
+
+    // segment_group 允许“边框选组、内容选子节点”的混合行为。
+    if (parentCustomType === "segment_group") {
+      return currentName === "segment-group-frame" ? parent : current;
+    }
+
+    // 兼容旧包装结构：若父子共用 id 或 customType，仍向上折叠为外层节点。
+    if (
+      (parentId && currentId && parentId === currentId) ||
+      (parentCustomType && currentCustomType && parentCustomType === currentCustomType)
+    ) {
+      return parent;
+    }
+
+    current = parent;
+  }
+
+  return null;
+};
+
 // 过滤掉不应进入历史的临时节点（选择框、Transformer、AI 辅助元素等）。
 const isHistoryTransientNode = (node: Konva.Node) => {
   if (!node) return true;
@@ -1815,9 +1929,14 @@ const isHistoryTransientNode = (node: Konva.Node) => {
 };
 
 // 给从历史恢复出的节点重新绑定交互事件。
+// 这里在委托重构后有一个重要约束：
+// - 普通节点不再恢复 click/tap 选中事件；
+// - 只恢复那些“无法依赖 stage 委托”的特殊控件事件，例如 ungroup 按钮、group 的拖拽联动等。
+// 这样可以避免历史恢复之后重新回到“每个节点都各绑一次 click”的旧模式。
 const bindNodeEventsForHistoryRestore = (node: Konva.Node) => {
   if (!node) return;
 
+  // 先清空序列化/克隆带回来的旧监听，避免历史节点上的回调引用旧实例状态。
   node.off();
 
   if (node.name?.() === "group-ungroup-btn") {
@@ -1863,11 +1982,8 @@ const bindNodeEventsForHistoryRestore = (node: Konva.Node) => {
   }
 
   if (node instanceof Konva.Group) {
-    node.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      handleNodeClick(evt, node);
-    });
-
     if (node.getAttr("customType") === "group") {
+      // 分组节点仍需保留位置同步逻辑：拖动/缩放 group 时，悬浮 ungroup 按钮要跟着更新。
       node.on("dragmove transform", () => {
         if (!layer) return;
         const groupId = node.id?.();
@@ -1895,10 +2011,6 @@ const bindNodeEventsForHistoryRestore = (node: Konva.Node) => {
     }
     return;
   }
-
-  node.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    handleNodeClick(evt, node);
-  });
 };
 
 // 构造当前画布的历史快照：
@@ -2060,9 +2172,6 @@ const pasteCopiedNodes = () => {
     pastedNode.position({
       x: sourceNode.x() + dx,
       y: sourceNode.y() + dy,
-    });
-    pastedNode.on("click tap", (evt: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      handleNodeClick(evt, pastedNode);
     });
     currentLayer.add(pastedNode);
     rebindGroupedChildConstraintsDeep(pastedNode);
@@ -2319,10 +2428,6 @@ const handleMouseDown = (
     lineJoin: "round",
     points: [pos.x, pos.y],
     draggable: true,
-  });
-
-  lastLine.on("click tap", (evt) => {
-    handleNodeClick(evt, lastLine!);
   });
 
   layer!.add(lastLine);
@@ -2716,11 +2821,6 @@ const handleTextClick = (
     wrap: "word", // 按单词换行
   });
 
-  // 为文字节点添加点击事件，用于选中
-  textNode.on("click tap", (evt) => {
-    handleNodeClick(evt, textNode);
-  });
-
   // 将文字节点添加到图层
   layer!.add(textNode);
   currentTool.value = "select";
@@ -3029,11 +3129,6 @@ const handleImageUpload = (e: Event) => {
         width: width,
         height: height,
         draggable: true,
-      });
-
-      // 为图片添加点击事件，用于选中
-      konvaImage.on("click tap", (evt) => {
-        handleNodeClick(evt, konvaImage);
       });
 
       // 将图片添加到图层
@@ -3451,10 +3546,6 @@ const handleDrop = (e: DragEvent) => {
               const imageNode = nodes[0] as Konva.Image;
             }
 
-            node.on("click tap", (evt) => {
-              handleNodeClick(evt, node);
-            });
-
             layer!.add(node);
           });
 
@@ -3495,9 +3586,6 @@ const handleDrop = (e: DragEvent) => {
             })
               .then((interpretationNodes) => {
                 interpretationNodes.forEach((interpretationNode) => {
-                  interpretationNode.on("click tap", (evt) => {
-                    handleNodeClick(evt, interpretationNode);
-                  });
                   layer!.add(interpretationNode);
                 });
                 setTimeout(() => updateScrollbars(), 1000);
@@ -3537,10 +3625,6 @@ const handleDrop = (e: DragEvent) => {
         }
       )
         .then((konvaText) => {
-          konvaText.on("click tap", (evt) => {
-            handleNodeClick(evt, konvaText);
-          });
-
           layer!.add(konvaText);
           // // 选中刚添加的文本
           // selectedNodes = [konvaText];
@@ -3587,40 +3671,6 @@ const handleDrop = (e: DragEvent) => {
         });
         const nodes = [...result.images, ...result.bubbles];
         nodes.forEach((node) => {
-          const isSegmentGroup =
-            node instanceof Konva.Group &&
-            String(node.getAttr("customType") || "") === "segment_group";
-
-          if (isSegmentGroup) {
-            const bindChildClick = (childNode: Konva.Node) => {
-              if (String(childNode.name?.() || "") === "segment-group-frame") {
-                return;
-              }
-
-              childNode.on("click tap", (evt) => {
-                handleNodeClick(evt, childNode);
-              });
-            };
-
-            node.getChildren().forEach((child: Konva.Node) => {
-              bindChildClick(child);
-            });
-
-            // 仅点击 group 边框（或 group 空白命中）时选中整个组。
-            node.on("click tap", (evt) => {
-              const hitNode = evt.target as Konva.Node;
-              const isFrame =
-                String(hitNode?.name?.() || "") === "segment-group-frame";
-              if (isFrame || hitNode === node) {
-                handleNodeClick(evt, node);
-              }
-            });
-          } else {
-            node.on("click tap", (evt) => {
-              handleNodeClick(evt, node);
-            });
-          }
-
           layer!.add(node);
         });
         setTimeout(() => updateScrollbars(), 1000);
@@ -3679,7 +3729,6 @@ const renderNodes = (nodesData) => {
     clearNodeListenersDeep(clonedNode);
     // 移除选中阴影
     removeNodeSelectStyle(clonedNode);
-    clonedNode.on("click tap", (evt) => handleNodeClick(evt, clonedNode));
     clonedNodes.push(clonedNode);
   });
 
@@ -3822,10 +3871,6 @@ const addTextAtPosition = (
     draggable: true,
     width: 220,
     wrap: "word",
-  });
-
-  textNode.on("click tap", (evt) => {
-    handleNodeClick(evt, textNode);
   });
 
   layer.add(textNode);
@@ -3984,10 +4029,6 @@ const addResonanceGroupAtPosition = (
 
   cardBg.height(currentY + cardPadding);
 
-  group.on("click tap", (evt) => {
-    handleNodeClick(evt, group);
-  });
-
   layer.add(group);
 
   if (shouldAutoSelect) {
@@ -4078,9 +4119,6 @@ const addPCMAtPosition = (
       })
         .then((nodes: any[]) => {
           nodes.forEach((segmentNode: any) => {
-            segmentNode.on("click tap", (evt: any) => {
-              handleNodeClick(evt, segmentNode);
-            });
             layer!.add(segmentNode);
           });
 
@@ -4093,9 +4131,6 @@ const addPCMAtPosition = (
   })
     .then((nodes: any[]) => {
       nodes.forEach((node: any) => {
-        node.on("click tap", (evt: any) => {
-          handleNodeClick(evt, node);
-        });
         layer!.add(node);
       });
       setTimeout(() => updateScrollbars(), 1000);
@@ -4139,9 +4174,6 @@ const addMemoryAtPosition = (
       const createdNodes = nodes instanceof Konva.Group ? [nodes] : nodes;
 
       createdNodes.forEach((node) => {
-        node.on("click tap", (evt) => {
-          handleNodeClick(evt, node);
-        });
         layer!.add(node);
       });
 
@@ -4159,11 +4191,11 @@ const addMemoryAtPosition = (
     });
 };
 
-// 将外部创建的 Konva 节点安全挂载到当前图层，并补齐可选中能力。
+// 将外部创建的 Konva 节点安全挂载到当前图层，并由 stage 事件委托接管选中。
 // 典型场景：WorkingMemory 中先异步创建节点（如 Resonance Fuse），再交给画布统一接管交互。
 // 处理规则：
 // 1) 入参支持单节点或节点数组；非 Konva.Node 会被自动忽略。
-// 2) 为每个有效节点绑定 click/tap，统一复用 handleNodeClick，保证后续可单选/多选。
+// 2) 不再逐个绑定 click/tap，统一由 stage 级别委托处理单选/多选。
 // 3) 当 autoSelect=true 时，会清空旧选中并选中新节点，同时更新 transformer 与选中样式。
 // 4) 统一调用 updateDraggableState / batchDraw / updateScrollbars，保证交互状态与视图同步。
 // 返回值：实际成功添加到 layer 的节点数量。
@@ -4180,11 +4212,8 @@ const addExternalNodes = (
   if (validNodes.length === 0) return 0;
 
   validNodes.forEach((node) => {
-    // 外部节点只给最外层节点补绑选中事件，不递归处理内部子元素。
-    node.off("click tap");
-    node.on("click tap", (evt) => {
-      handleNodeClick(evt, node);
-    });
+    // 这里只负责把节点接管进当前 layer。
+    // 选中交互已经统一改为 stage 委托，所以这里不再补绑 click/tap。
     layer!.add(node);
   });
 
@@ -4252,10 +4281,6 @@ const addImageNodeRightOfTarget = (targetNode: Konva.Node, imageSrc: string) => 
       customType: "crop-image",
     });
     newNode.setAttr("originId", originId);
-
-    newNode.on("click tap", (evt) => {
-      handleNodeClick(evt, newNode);
-    });
 
     layer!.add(newNode);
 
@@ -4336,9 +4361,6 @@ const addSegmentsAroundTarget = async (
   selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
   createdNodes.forEach((node: Konva.Node) => {
-    node.on("click tap", (evt) => {
-      handleNodeClick(evt, node);
-    });
     layer!.add(node);
   });
 
@@ -4418,9 +4440,6 @@ const addBubblesAroundTarget = async (
   selectedNodes.forEach((n) => removeNodeSelectStyle(n));
 
   bubbleNodes.forEach((node: Konva.Node) => {
-    node.on("click tap", (evt) => {
-      handleNodeClick(evt, node);
-    });
     layer!.add(node);
   });
 
@@ -4471,10 +4490,6 @@ const addBubblesAroundTarget = async (
             isBubble: false,
           }
         );
-
-        topTextNode.on("click tap", (evt) => {
-          handleNodeClick(evt, topTextNode);
-        });
 
         layer!.add(topTextNode);
       } catch (error) {
@@ -4816,10 +4831,6 @@ const groupSelectedNodes = () => {
   nodesToGroup.forEach((node) => {
     node.moveTo(group);
     applyGroupedChildDragConstraint(node, group, bgRect);
-  });
-
-  group.on("click tap", (evt) => {
-    handleNodeClick(evt, group);
   });
   group.on("dragmove transform", () => {
     updateUngroupBtnPosition();

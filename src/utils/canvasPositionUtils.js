@@ -263,6 +263,7 @@ export const createTextNode = ({ text, id, customType }, options = {}) => {
           id: id || "",
           customType: customType || "", // 使用自定义属性存储类型
         });
+        group.setAttr("selectAsTextWrapperGroup", true);
 
         group.add(background);
         group.add(konvaText);
