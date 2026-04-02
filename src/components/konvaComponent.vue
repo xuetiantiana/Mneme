@@ -189,6 +189,10 @@ let selectedNodes: Konva.Node[] = []; // 当前选中的节点列表
 let clipboardNodes: Konva.Node[] = []; // 复制缓存的节点快照
 let lastPasteOffset = { x: 24, y: 24 }; // 无鼠标位置时的递增偏移
 let isCurrentCanvasLastClicked = false; // 防误删：仅当最后一次点击在当前 canvas 内才允许删除
+// Alt+拖拽时，记录当前由“副本”接管拖拽的临时状态，避免一次拖拽重复触发复制。
+let altDragDuplicateState: {
+  draggedClone: Konva.Node;
+} | null = null;
 
 // 历史栈（Undo/Redo）
 // - historyPast: 已提交快照栈，栈顶是当前状态
@@ -1821,6 +1825,7 @@ onMounted(() => {
   stage.on("mouseleave touchcancel", handleMouseUp);
   stage.on("dblclick", handleDoubleClick);
   stage.on("wheel", handleWheel);
+  stage.on("dragstart.altDuplicate", handleAltDragDuplicateStart);
 
   // 中键按下切换到 pan 模式，松开恢复（避免干扰外部系统的右键选中）
   let previousTool = "select";
@@ -1966,7 +1971,74 @@ const getNodesTopLeft = (nodes: Konva.Node[]) => {
   return { x: minX, y: minY };
 };
 
+// 判断当前命中的节点是否落在某个已选节点的子树内。
+// 多选时鼠标往往点中的是 group/text wrapper 内部节点，不能只靠 === 判断归属。
+const isNodeWithinSelection = (
+  target: Konva.Node | null | undefined,
+  selectedNode: Konva.Node | null | undefined
+) => {
+  if (!target || !selectedNode) return false;
+
+  let current: Konva.Node | null = target;
+  while (current) {
+    if (current === selectedNode) {
+      return true;
+    }
+    current = current.getParent?.() || null;
+  }
+
+  return false;
+};
+
+// 识别“业务 group 的子节点”。
+// 这类节点在 group 内通常带有 dragBoundFunc 约束，单独复制出去后需要主动解除旧约束。
+const isGroupedChildNode = (node: Konva.Node | null | undefined) => {
+  if (!node) return false;
+
+  let current: Konva.Node | null = node.getParent?.() || null;
+  while (current) {
+    if (
+      current instanceof Konva.Group &&
+      current.getAttr("customType") === "group"
+    ) {
+      return true;
+    }
+    current = current.getParent?.() || null;
+  }
+
+  return false;
+};
+
 // 识别 AI 辅助环相关节点，统一用于“不可被普通选中”的判断。
+
+// 把来自 group 内部的节点克隆后，重新换算到当前 layer 坐标系。
+// 否则 clone 会保留 group-local 的 x/y，直接 add 到 layer 后就会“跳”到 group 原点附近。
+const syncClonedNodeToLayerSpace = (
+  sourceNode: Konva.Node,
+  clonedNode: Konva.Node
+) => {
+  if (!layer) return;
+
+  const absPos = sourceNode.getAbsolutePosition();
+  const absScale = sourceNode.getAbsoluteScale();
+  const absRotation = sourceNode.getAbsoluteRotation();
+  const layerAbsScale = layer.getAbsoluteScale();
+  const layerAbsRotation = layer.getAbsoluteRotation();
+
+  const localScaleX =
+    Math.abs(layerAbsScale.x) > Number.EPSILON
+      ? absScale.x / layerAbsScale.x
+      : absScale.x;
+  const localScaleY =
+    Math.abs(layerAbsScale.y) > Number.EPSILON
+      ? absScale.y / layerAbsScale.y
+      : absScale.y;
+  const localRotation = absRotation - layerAbsRotation;
+
+  clonedNode.absolutePosition(absPos);
+  clonedNode.rotation(localRotation);
+  clonedNode.scale({ x: localScaleX, y: localScaleY });
+};
 const isAiAssistNode = (node?: Konva.Node | null) => {
   if (!node) return false;
 
@@ -2187,6 +2259,157 @@ const bindNodeEventsForHistoryRestore = (node: Konva.Node) => {
   }
 };
 
+// 统一的节点克隆入口，供 Ctrl+C/Ctrl+V 与 Alt+拖拽复制复用。
+// clone 后需要补三件事：
+// 1) 重新绑定运行时事件；
+// 2) 把 clone 加回当前图层；
+// 3) 重绑/清理 group 相关的拖拽约束。
+const cloneNodesIntoLayer = (
+  sourceNodes: Konva.Node[],
+  options?: {
+    // 为 true 时，如果复制的是 group 内部 child，则解除它继承来的旧 group 边界约束。
+    detachGroupedChildConstraints?: boolean;
+  }
+) => {
+  if (!layer) return [];
+
+  const { detachGroupedChildConstraints = false } = options || {};
+
+  return sourceNodes.map((sourceNode) => {
+    const clonedNode = sourceNode.clone({ listening: true });
+    bindNodeEventsForHistoryRestore(clonedNode);
+    layer!.add(clonedNode);
+    syncClonedNodeToLayerSpace(sourceNode, clonedNode);
+    rebindGroupedChildConstraintsDeep(clonedNode);
+
+    if (
+      detachGroupedChildConstraints &&
+      !(clonedNode instanceof Konva.Group && clonedNode.getAttr("customType") === "group") &&
+      isGroupedChildNode(sourceNode)
+    ) {
+      // 从 group 内单独拖出来的副本应该是自由节点，不能继续继承原 group 的边界限制。
+      restoreGroupedChildDragConstraint(clonedNode);
+    }
+
+    removeNodeSelectStyle(clonedNode);
+    return clonedNode;
+  });
+};
+
+// Alt+拖拽的交互语义：
+// - 单节点：复制当前节点，并直接拖动副本；
+// - 多选：复制整个当前选中集，并拖动副本集合；
+// - 如果命中的是 group 内 child，优先根据当前选中集归属来决定复制范围。
+const handleAltDragDuplicateStart = (
+  e: Konva.KonvaEventObject<DragEvent | MouseEvent>
+) => {
+  if (!stage || !layer || !transformer) return;
+  if (currentTool.value !== "select") return;
+  if (altDragDuplicateState) return;
+
+  const nativeEvent = e.evt as MouseEvent | undefined;
+  if (!nativeEvent?.altKey) return;
+
+  const rawTarget = e.target as Konva.Node | null;
+  if (!rawTarget || isStageSystemNode(rawTarget) || isAiAssistNode(rawTarget)) {
+    return;
+  }
+
+  const dragTarget = resolveSelectableNodeFromTarget(rawTarget) || rawTarget;
+  if (!dragTarget || dragTarget === layer || dragTarget === stage) {
+    return;
+  }
+
+  // 先把实际命中的内部节点，映射回当前真正参与拖拽的选中节点。
+  const draggedSelectionNode =
+    selectedNodes.find(
+      (selectedNode) =>
+        isNodeWithinSelection(rawTarget, selectedNode) ||
+        isNodeWithinSelection(dragTarget, selectedNode)
+    ) || dragTarget;
+
+  const sourceNodes = selectedNodes.includes(draggedSelectionNode)
+    ? [...selectedNodes]
+    : [draggedSelectionNode];
+
+  if (sourceNodes.length === 0) return;
+
+  const draggedIndex = Math.max(sourceNodes.indexOf(draggedSelectionNode), 0);
+  const sourceAbsolutePositions = sourceNodes.map((node) =>
+    node.getAbsolutePosition()
+  );
+
+  // 原节点只作为“被复制源”，接下来的拖拽应完全由副本接管。
+  selectedNodes.forEach((node) => removeNodeSelectStyle(node));
+  transformer.nodes([]);
+
+  const clonedNodes = cloneNodesIntoLayer(sourceNodes, {
+    detachGroupedChildConstraints: true,
+  });
+  if (clonedNodes.length === 0) return;
+
+  const draggedClone = clonedNodes[draggedIndex] || clonedNodes[0];
+  const clonedAbsolutePositions = clonedNodes.map((node) =>
+    node.getAbsolutePosition()
+  );
+
+  // 立即把原节点钉回起始位置，避免原集合继续跟着这次拖拽移动。
+  sourceNodes.forEach((node, index) => {
+    node.stopDrag();
+    node.absolutePosition(sourceAbsolutePositions[index]);
+  });
+
+  selectedNodes = clonedNodes;
+  selectedNodes.forEach((node) => addNodeSelectStyle(node));
+  syncTransformerSelectionState();
+  selectedNodes.forEach((node) => node.moveToTop());
+  transformer.moveToTop();
+  bringRelatedUngroupButtonsToTop(selectedNodes);
+
+  altDragDuplicateState = { draggedClone };
+
+  const syncClonedSelectionOffset = () => {
+    const currentPos = draggedClone.getAbsolutePosition();
+    const startPos = clonedAbsolutePositions[draggedIndex] || currentPos;
+    const dx = currentPos.x - startPos.x;
+    const dy = currentPos.y - startPos.y;
+
+    // 拖拽过程中持续把原节点钉回原位，避免旧选中集残留联动。
+    sourceNodes.forEach((node, index) => {
+      const nodeStartPos = sourceAbsolutePositions[index];
+      if (!nodeStartPos) return;
+      node.absolutePosition(nodeStartPos);
+    });
+
+    // 其余副本节点跟随“主拖拽副本”的位移量整体平移，保持复制集相对布局不变。
+    clonedNodes.forEach((node, index) => {
+      if (node === draggedClone) return;
+      const nodeStartPos = clonedAbsolutePositions[index];
+      if (!nodeStartPos) return;
+      node.absolutePosition({
+        x: nodeStartPos.x + dx,
+        y: nodeStartPos.y + dy,
+      });
+    });
+
+    layer?.batchDraw();
+  };
+
+  draggedClone.off(".altDuplicate");
+  draggedClone.on("dragmove.altDuplicate", syncClonedSelectionOffset);
+  draggedClone.on("dragend.altDuplicate", () => {
+    draggedClone.off(".altDuplicate");
+    altDragDuplicateState = null;
+    // Alt+拖拽复制本质上产生了新内容，结束后补录历史，保证可撤销。
+    scheduleHistorySnapshot();
+  });
+
+  // 把当前鼠标位置重新灌回 stage，然后显式把拖拽切换到副本节点上。
+  stage.setPointersPositions(nativeEvent);
+  draggedClone.startDrag();
+  e.cancelBubble = true;
+};
+
 // 构造当前画布的历史快照：
 // 1) 只取可持久化内容节点（排除临时节点）
 // 2) 克隆并移除选中态，防止“仅选中变化”污染历史
@@ -2341,15 +2564,15 @@ const pasteCopiedNodes = () => {
   clearAiAssist();
   selectedNodes.forEach((node) => removeNodeSelectStyle(node));
 
-  const pastedNodes: Konva.Node[] = clipboardNodes.map((sourceNode) => {
-    const pastedNode = sourceNode.clone({ listening: true });
+  const pastedNodes: Konva.Node[] = cloneNodesIntoLayer(clipboardNodes);
+
+  pastedNodes.forEach((pastedNode, index) => {
+    const sourceNode = clipboardNodes[index];
+    if (!sourceNode) return;
     pastedNode.position({
       x: sourceNode.x() + dx,
       y: sourceNode.y() + dy,
     });
-    currentLayer.add(pastedNode);
-    rebindGroupedChildConstraintsDeep(pastedNode);
-    return pastedNode;
   });
 
   selectedNodes = pastedNodes;
