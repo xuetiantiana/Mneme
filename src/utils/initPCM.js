@@ -30,6 +30,93 @@ export const getImageProxyUrl = (url) => {
     return url;
 };
 
+export const refreshSegmentGroupFrame = (groupNode, padding = 12) => {
+    // segment_group 的外框不存固定尺寸，而是始终根据内部真实内容重新包裹。
+    if (!(groupNode instanceof Konva.Group)) return;
+
+    const frameRect = groupNode.findOne(".segment-group-frame");
+    if (!(frameRect instanceof Konva.Rect)) return;
+
+    const children = groupNode
+        .getChildren()
+        .filter((child) => child !== frameRect);
+
+    if (!children.length) {
+        frameRect.visible(false);
+        return;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    children.forEach((child) => {
+        const rect = child.getClientRect({
+            relativeTo: groupNode,
+            skipShadow: true,
+        });
+        minX = Math.min(minX, rect.x);
+        minY = Math.min(minY, rect.y);
+        maxX = Math.max(maxX, rect.x + rect.width);
+        maxY = Math.max(maxY, rect.y + rect.height);
+    });
+
+    if (
+        !isFinite(minX) ||
+        !isFinite(minY) ||
+        !isFinite(maxX) ||
+        !isFinite(maxY)
+    ) {
+        frameRect.visible(false);
+        return;
+    }
+
+    frameRect.setAttrs({
+        x: minX - padding,
+        y: minY - padding,
+        width: Math.max(1, maxX - minX + padding * 2),
+        height: Math.max(1, maxY - minY + padding * 2),
+        visible: true,
+    });
+    frameRect.moveToBottom();
+};
+
+export const bindSegmentGroupFrameSync = (groupNode, options = {}) => {
+    // 复制、粘贴、历史恢复后，运行时事件不会跟着 clone 保留下来；
+    // 这里统一把 frame 跟随逻辑重新挂回到当前 group 实例上。
+    if (!(groupNode instanceof Konva.Group)) return;
+    if (groupNode.getAttr("customType") !== "segment_group") return;
+
+    const {
+        eventNamespace = "segmentGroupFrame",
+        afterRefresh = null,
+    } = options;
+
+    const frameRect = groupNode.findOne(".segment-group-frame");
+    if (!(frameRect instanceof Konva.Rect)) return;
+
+    const eventSuffix = `.${eventNamespace}`;
+    const refreshFrame = () => {
+        // 每次组内节点或 group 自身发生位移/变换时，都重算外框。
+        refreshSegmentGroupFrame(groupNode);
+        if (typeof afterRefresh === "function") {
+            afterRefresh(groupNode);
+        }
+    };
+
+    groupNode.off(eventSuffix);
+    groupNode.on(`dragmove${eventSuffix} transform${eventSuffix}`, refreshFrame);
+
+    groupNode.getChildren().forEach((child) => {
+        if (child === frameRect) return;
+        child.off(eventSuffix);
+        child.on(`dragmove${eventSuffix} transform${eventSuffix}`, refreshFrame);
+    });
+
+    refreshFrame();
+};
+
 // 全局 Konva 按钮组，用于图片 hover 时显示
 let hoverButtonGroup = null;
 
@@ -507,7 +594,8 @@ export const initSegmentImagesItem = (segment, options = {}) => {
 
                 const frameRect = new Konva.Rect({
                     name: "segment-group-frame",
-                    listening: false,
+                    // frame 需要参与命中，这样点击边框时才能把事件解析到整个 segment_group。
+                    listening: true,
                     stroke: "#1677ff",
                     strokeWidth: 1.5,
                     dash: [6, 4],
@@ -516,63 +604,18 @@ export const initSegmentImagesItem = (segment, options = {}) => {
                 });
                 group.add(frameRect);
 
-                const refreshGroupFrame = () => {
-                    if (!group || !frameRect) return;
-
-                    const children = group
-                        .getChildren()
-                        .filter((child) => child !== frameRect);
-
-                    if (!children.length) {
-                        frameRect.visible(false);
-                        return;
-                    }
-
-                    let minX = Infinity;
-                    let minY = Infinity;
-                    let maxX = -Infinity;
-                    let maxY = -Infinity;
-
-                    children.forEach((child) => {
-                        const rect = child.getClientRect({
-                            relativeTo: group,
-                            skipShadow: true,
-                        });
-                        minX = Math.min(minX, rect.x);
-                        minY = Math.min(minY, rect.y);
-                        maxX = Math.max(maxX, rect.x + rect.width);
-                        maxY = Math.max(maxY, rect.y + rect.height);
-                    });
-
-                    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
-                        frameRect.visible(false);
-                        return;
-                    }
-
-                    const padding = 12;
-                    frameRect.setAttrs({
-                        x: minX - padding,
-                        y: minY - padding,
-                        width: Math.max(1, maxX - minX + padding * 2),
-                        height: Math.max(1, maxY - minY + padding * 2),
-                        visible: true,
-                    });
-
-                    frameRect.moveToBottom();
-                };
-
                 mergedNodes.forEach((node) => {
                     // 组内元素保留可拖拽能力，支持局部调整位置。
                     if (node && typeof node.draggable === "function") {
                         node.draggable(true);
                     }
                     group.add(node);
-                    if (node && typeof node.on === "function") {
-                        node.on("dragmove transform", refreshGroupFrame);
-                    }
                 });
 
-                refreshGroupFrame();
+                // 初次创建时也走同一套监听绑定，避免初始化与 clone 后行为不一致。
+                bindSegmentGroupFrameSync(group, {
+                    eventNamespace: "segmentGroupInitFrame",
+                });
 
                 resolve({ images: [group], bubbles: [] });
             })

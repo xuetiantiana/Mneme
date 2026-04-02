@@ -154,6 +154,7 @@ import {
   initSegmentsImages,
   initSegmentImagesItem,
   initPCMBubbles,
+  bindSegmentGroupFrameSync,
 } from "@/utils/initPCM";
 
 const emit = defineEmits([
@@ -4801,6 +4802,14 @@ const rebindGroupedChildConstraintsDeep = (node: Konva.Node) => {
       });
     }
   }
+
+  // segment_group 的外框刷新依赖运行时事件；节点一旦经过 clone，必须在当前实例上重新绑定。
+  bindSegmentGroupFrameSync(node, {
+    eventNamespace: "segmentGroupFrame",
+    afterRefresh: () => {
+      node.getLayer()?.batchDraw();
+    },
+  });
 
   node.getChildren().forEach((child: Konva.Node) => {
     rebindGroupedChildConstraintsDeep(child);
