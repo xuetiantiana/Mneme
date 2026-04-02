@@ -283,11 +283,6 @@ const isWmGroupNode = (node) => {
   return selectedType === "group" && selectedName === "wm-group";
 };
 
-const AI_RIGHT_LABELS_BY_TOOL = {
-  Reflect: ["反思细节", "反思转化"],
-  Constellate: ["直接检索", "远距离启发"],
-  Resonance: ["共振追问", "意象扩展"],
-};
 const aiQuickTools = computed(() => {
   if (aiPopupData.value?.toolType === "Resonance") {
     return [];
@@ -621,13 +616,12 @@ const getPerspectivePayloadByLabel = (label) => {
   };
 };
 
-const applyToolRightLabels = (toolType = "Reflect") => {
-  if (!konvaRef.value?.setAiRightLabels) {
+const applyAiRingTheme = (toolType = "Reflect") => {
+  if (!konvaRef.value?.setAiRingThemeMode) {
     return;
   }
 
-  const labels = AI_RIGHT_LABELS_BY_TOOL[toolType] || AI_RIGHT_LABELS_BY_TOOL.Reflect;
-  konvaRef.value.setAiRightLabels(labels);
+  konvaRef.value.setAiRingThemeMode(toolType);
 };
 
 const handleAiAssistClick = async (toolType = "Reflect") => {
@@ -743,16 +737,16 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
 
   if (toolType === "Reflect" || toolType === "Constellate" || toolType === "Resonance") {
     pendingAiTool.value = toolType;
+    applyAiRingTheme(toolType);
     const hintSuccess = await applyHintRingLabels(toolType);
     pendingAiTool.value = "";
     if (!hintSuccess) {
       currentNav.value = "";
       return;
     }
-    applyToolRightLabels(toolType);
   } else if (konvaRef.value?.setAiRingLabels) {
+    applyAiRingTheme("Reflect");
     konvaRef.value.setAiRingLabels();
-    applyToolRightLabels("Reflect");
   }
 
   const result = konvaRef.value.triggerAiAssist();

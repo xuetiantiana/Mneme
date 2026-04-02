@@ -221,27 +221,101 @@ let aiAssistState: {
   isLocked?: boolean; // 是否锁定交互（点击后）
 } | null = null; // 存储 AI 辅助环的几何状态信息
 
-// 环形分区标签配置
-// defaultAiRingLabels: 兜底标签，ReflectHint 接口失败或返回空时回退到这组默认值。
+// AI ring 配置
+// defaultAiRingLabels: 兜底标签，Hint 接口失败或返回空时回退到这组默认值。
 // aiRingLabels: 当前真正用于绘制环形扇区的标签数组，支持在运行时动态替换。
-const defaultAiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
-let aiRingLabels = [...defaultAiRingLabels];
-
-// 供外部（如 WorkingMemory）设置环形标签。
-// 规则：
-// 1) 传空或非数组 -> 恢复默认标签。
-// 2) 传入后会做 trim + 过滤空字符串，避免出现空文案扇区。
-// 3) 过滤后若为空，仍回退到默认标签，保证至少有 1 个扇区。
-const setAiRingLabels = (labels?: string[]) => {
-  if (!Array.isArray(labels) || labels.length === 0) {
-    aiRingLabels = [...defaultAiRingLabels];
-    return;
-  }
-
-  const normalized = labels.map((item) => String(item || "").trim()).filter(Boolean);
-  aiRingLabels = normalized.length > 0 ? normalized : [...defaultAiRingLabels];
+type AiRingThemeMode = "Reflect" | "Constellate" | "Resonance";
+type AiRingThemeConfig = {
+  bandCount: number;
+  fills: string[];
+  activeFills: string[];
+  rightLabels: string[];
 };
 
+const defaultAiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
+const AI_RING_BAND_STROKE = "rgba(255, 255, 255, 0.45)";
+const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
+const AI_GUIDE_START_COLOR = "#3FA7FF";
+const AI_GUIDE_END_COLOR = "#FF4D4F";
+const AI_RIGHT_INNER_DARK = "#6E727A";
+const AI_RIGHT_INNER_LIGHT = "#BFC5CF";
+const AI_RIGHT_OUTER_LIGHT = "#AAB3C1";
+const AI_RIGHT_OUTER_DARK = "#4E5A6B";
+
+const AI_RING_THEME_CONFIG: Record<AiRingThemeMode, AiRingThemeConfig> = {
+  Reflect: {
+    bandCount: 5,
+    // rightLabels: ["反思细节", "反思转化"],
+    rightLabels: ["cue", "transformation"],
+    fills: [
+      "rgb(216 235 255)",
+      "rgb(220 237 255)",
+      "rgb(227 240 255)",
+      "rgb(237 246 255)",
+      "rgb(245 250 255)",
+    ],
+    activeFills: [
+      "rgb(196 223 250)",
+      "rgb(203 228 252)",
+      "rgb(214 235 252)",
+      "rgb(228 241 252)",
+      "rgb(238 247 252)",
+    ],
+  },
+  Constellate: {
+    bandCount: 4,
+    // rightLabels: ["直接检索", "远距离启发"],
+    rightLabels: ["Cue Match", "Remote Leap"],
+    fills: [
+      "rgb(255 233 211)",
+      "rgb(255 239 220)",
+      "rgb(255 243 230)",
+      "rgb(255 249 243)",
+    ],
+    activeFills: [
+      "rgb(250 222 196)",
+      "rgb(252 230 208)",
+      "rgb(252 237 221)",
+      "rgb(252 245 236)",
+    ],
+  },
+  Resonance: {
+    bandCount: 4,
+    // rightLabels: ["共振追问", "意象扩展"],
+    rightLabels: ["Grounded", "Emergent"],
+    fills: [
+      "rgb(255 217 220)",
+      "rgb(255 227 228)",
+      "rgb(255 237 237)",
+      "rgb(255 245 245)",
+    ],
+    activeFills: [
+      "rgb(250 205 209)",
+      "rgb(252 218 220)",
+      "rgb(252 229 230)",
+      "rgb(252 240 240)",
+    ],
+  },
+};
+
+// AI ring 运行时状态
+let aiRingLabels = [...defaultAiRingLabels];
+let currentAiRingThemeMode: AiRingThemeMode = "Reflect";
+
+const getCurrentAiRingTheme = () => {
+  return AI_RING_THEME_CONFIG[currentAiRingThemeMode] || AI_RING_THEME_CONFIG.Reflect;
+};
+
+const getDefaultAiRightLabels = (mode: AiRingThemeMode = currentAiRingThemeMode) => {
+  const theme = AI_RING_THEME_CONFIG[mode] || AI_RING_THEME_CONFIG.Reflect;
+  return Array.isArray(theme?.rightLabels) && theme.rightLabels.length >= 2
+    ? theme.rightLabels.slice(0, 2)
+    : AI_RING_THEME_CONFIG.Reflect.rightLabels.slice(0, 2);
+};
+
+let aiRightLabels = getDefaultAiRightLabels();
+
+// AI ring 纯计算函数
 // 统一计算环形几何参数，避免多处重复计算导致规则不一致。
 // 返回值说明：
 // - sliceCount: 扇区数量（与标签数量一致，最少为 1）
@@ -279,29 +353,25 @@ const getAiRingSliceIndex = (dx: number, dy: number) => {
   return ((rawIndex % sliceCount) + sliceCount) % sliceCount;
 };
 
-// 圆环背景改为灰色毛玻璃风格（三层环）
-const AI_RING_BAND_COUNT = 3;
-const AI_RING_BAND_FILLS = [
-  "rgba(223, 238, 255, 1)",  // 内环：最浅
-  "rgba(236, 245, 255, 1)",  // 中环：中等
-  "rgba(247, 251, 255, 1)",  // 外环：最深
-];
-const AI_RING_BAND_ACTIVE_FILLS = [
-   "rgba(223, 238, 255, 1)",  // 内环：最浅
-  "rgba(236, 245, 255, 1)",  // 中环：中等
-  "rgba(247, 251, 255, 1)",  // 外环：最深
-];
-const AI_RING_BAND_STROKE = "rgba(255, 255, 255, 0.45)";
-const AI_RIGHT_LABELS = ["反思细节", "反思转化"];
-let aiRightLabels = [...AI_RIGHT_LABELS];
-const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
-const AI_GUIDE_START_COLOR = "#3FA7FF";
-const AI_GUIDE_END_COLOR = "#FF4D4F";
-const AI_RIGHT_INNER_DARK = "#6E727A";
-const AI_RIGHT_INNER_LIGHT = "#BFC5CF";
-const AI_RIGHT_OUTER_LIGHT = "#AAB3C1";
-const AI_RIGHT_OUTER_DARK = "#4E5A6B";
+const mixHexColor = (startHex: string, endHex: string, t: number) => {
+  const clampT = Math.max(0, Math.min(1, t));
+  const s = startHex.replace("#", "");
+  const e = endHex.replace("#", "");
+  const sr = parseInt(s.slice(0, 2), 16);
+  const sg = parseInt(s.slice(2, 4), 16);
+  const sb = parseInt(s.slice(4, 6), 16);
+  const er = parseInt(e.slice(0, 2), 16);
+  const eg = parseInt(e.slice(2, 4), 16);
+  const eb = parseInt(e.slice(4, 6), 16);
 
+  const r = Math.round(sr + (er - sr) * clampT);
+  const g = Math.round(sg + (eg - sg) * clampT);
+  const b = Math.round(sb + (eb - sb) * clampT);
+
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+// AI ring 视图同步函数
 const updateAiRightClockLabelsPosition = () => {
   if (!aiAssistState || aiRightClockLabels.length < 2) return;
 
@@ -325,6 +395,24 @@ const updateAiRightClockLabelsPosition = () => {
 
   aiRightClockLabels[0].position({ x: innerX, y: innerY });
   aiRightClockLabels[1].position({ x: outerX, y: outerY });
+};
+
+const resetAiRightClockLabelsDefaultColor = () => {
+  if (aiRightClockLabels.length < 2) return;
+  aiRightClockLabels[0].fill(AI_RIGHT_DEFAULT_COLOR);
+  aiRightClockLabels[1].fill(AI_RIGHT_DEFAULT_COLOR);
+};
+
+const syncAiRightClockLabelText = () => {
+  if (aiRightClockLabels.length < 2) return;
+
+  aiRightClockLabels.forEach((labelNode, index) => {
+    labelNode.text(aiRightLabels[index] || "");
+    labelNode.offset({ x: 0, y: labelNode.height() / 2 });
+  });
+
+  updateAiRightClockLabelsPosition();
+  resetAiRightClockLabelsDefaultColor();
 };
 
 // 仅补偿文字可读性：当画布缩小时放大标签，避免环上文案太小看不清。
@@ -368,42 +456,30 @@ const updateAiRightClockLabelsColorByGuideLength = (distanceFromCenter: number) 
   aiRightClockLabels[1].fill(outerColor);
 };
 
-const resetAiRightClockLabelsDefaultColor = () => {
-  if (aiRightClockLabels.length < 2) return;
-  aiRightClockLabels[0].fill(AI_RIGHT_DEFAULT_COLOR);
-  aiRightClockLabels[1].fill(AI_RIGHT_DEFAULT_COLOR);
-};
-
-const setAiRightLabels = (labels?: string[]) => {
-  if (!Array.isArray(labels) || labels.length < 2) {
-    aiRightLabels = [...AI_RIGHT_LABELS];
+// 供外部（如 WorkingMemory）设置环形标签。
+// 规则：
+// 1) 传空或非数组 -> 恢复默认标签。
+// 2) 传入后会做 trim + 过滤空字符串，避免出现空文案扇区。
+// 3) 过滤后若为空，仍回退到默认标签，保证至少有 1 个扇区。
+const setAiRingLabels = (labels?: string[]) => {
+  if (!Array.isArray(labels) || labels.length === 0) {
+    aiRingLabels = [...defaultAiRingLabels];
     return;
   }
 
-  const normalized = labels
-    .map((item) => String(item || "").trim())
-    .filter(Boolean)
-    .slice(0, 2);
-
-  aiRightLabels = normalized.length === 2 ? normalized : [...AI_RIGHT_LABELS];
+  const normalized = labels.map((item) => String(item || "").trim()).filter(Boolean);
+  aiRingLabels = normalized.length > 0 ? normalized : [...defaultAiRingLabels];
 };
 
-const mixHexColor = (startHex: string, endHex: string, t: number) => {
-  const clampT = Math.max(0, Math.min(1, t));
-  const s = startHex.replace("#", "");
-  const e = endHex.replace("#", "");
-  const sr = parseInt(s.slice(0, 2), 16);
-  const sg = parseInt(s.slice(2, 4), 16);
-  const sb = parseInt(s.slice(4, 6), 16);
-  const er = parseInt(e.slice(0, 2), 16);
-  const eg = parseInt(e.slice(2, 4), 16);
-  const eb = parseInt(e.slice(4, 6), 16);
+const setAiRingThemeMode = (mode?: string) => {
+  if (mode === "Constellate" || mode === "Resonance" || mode === "Reflect") {
+    currentAiRingThemeMode = mode;
+  } else {
+    currentAiRingThemeMode = "Reflect";
+  }
 
-  const r = Math.round(sr + (er - sr) * clampT);
-  const g = Math.round(sg + (eg - sg) * clampT);
-  const b = Math.round(sb + (eb - sb) * clampT);
-
-  return `rgb(${r}, ${g}, ${b})`;
+  aiRightLabels = getDefaultAiRightLabels(currentAiRingThemeMode);
+  syncAiRightClockLabelText();
 };
 
 // 引导线渐变：起点（圆心）蓝色，朝向外环最外侧逐步过渡到红色。
@@ -726,6 +802,7 @@ const clearAiAssist = () => {
 // 当选中元素移动或变换时调用
 const updateAiAssistPosition = () => {
   if (!aiAssistState || !aiAssistState.target) return;
+  const { bandCount } = getCurrentAiRingTheme();
 
   const target = aiAssistState.target;
   const box = target.getClientRect({ skipShadow: true });
@@ -748,7 +825,7 @@ const updateAiAssistPosition = () => {
   const innerRadius = diagonal / 2 / scaleX;
 
   aiAssistState.innerRadius = innerRadius;
-  aiAssistState.outerRadius = innerRadius + 200; // 固定画布坐标宽度，缩放时视觉宽度随之变化
+  aiAssistState.outerRadius = innerRadius + 300; // 固定画布坐标宽度，缩放时视觉宽度随之变化
 
   // 更新所有扇形的位置和半径
   aiRingSlices.forEach((group) => {
@@ -757,9 +834,9 @@ const updateAiAssistPosition = () => {
 
     // 更新三层环的半径
     const ringWidth = aiAssistState!.outerRadius - aiAssistState!.innerRadius;
-    const bandWidth = ringWidth / AI_RING_BAND_COUNT;
+    const bandWidth = ringWidth / bandCount;
     let sliceRotation = 0;
-    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+    for (let band = 0; band < bandCount; band++) {
       const bandArc = group.findOne(`.slice-band-${band}`) as Konva.Arc;
       if (bandArc) {
         bandArc.innerRadius(aiAssistState!.innerRadius + band * bandWidth);
@@ -799,6 +876,7 @@ const updateAiAssistPosition = () => {
 // 参数 pos: 鼠标在舞台坐标系中的位置
 const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
   if (!aiAssistState || aiRingSlices.length === 0 || !layer) return;
+  const { bandCount, fills, activeFills } = getCurrentAiRingTheme();
 
   // 如果状态被锁定（已点击），则不再更新交互
   if (aiAssistState.isLocked) return;
@@ -807,6 +885,8 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
   const dx = pos.x - aiAssistState.centerX;
   const dy = pos.y - aiAssistState.centerY;
   const distance = Math.sqrt(dx * dx + dy * dy);
+  const currentScale = Math.max(stage?.scaleX?.() || 1, 0.001);
+  const ringLabelBaseScale = Math.max(1, Math.min(2.4, 1 / currentScale));
 
   // 判断鼠标是否在圆环范围内
   const inRing =
@@ -815,8 +895,16 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
 
   // 计算鼠标所在的象限（扇区索引）
   let activeIndex = -1;
+  let activeBandIndex = -1;
   if (inRing) {
     activeIndex = getAiRingSliceIndex(dx, dy);
+    const ringWidth = aiAssistState.outerRadius - aiAssistState.innerRadius;
+    const bandWidth = ringWidth / bandCount;
+    const distanceInRing = Math.max(0, distance - aiAssistState.innerRadius);
+    activeBandIndex = Math.min(
+      bandCount - 1,
+      Math.floor(distanceInRing / bandWidth)
+    );
     updateAiRightClockLabelsColorByGuideLength(distance);
   } else {
     // 没有引导线时，两侧标签保持相同默认色
@@ -825,15 +913,22 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
 
   // 更新所有扇区的样式
   aiRingSlices.forEach((group, index) => {
-    const isActive = index === activeIndex;
+    const isActiveSlice = index === activeIndex;
 
     // 更新三层环扇形背景
-    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+    for (let band = 0; band < bandCount; band++) {
       const bandArc = group.findOne(`.slice-band-${band}`) as Konva.Arc;
       if (bandArc) {
-        bandArc.fill(
-          isActive ? AI_RING_BAND_ACTIVE_FILLS[band] : AI_RING_BAND_FILLS[band]
-        );
+        const isActiveBand = isActiveSlice && band === activeBandIndex;
+        bandArc.setAttrs({
+          fill: isActiveBand ? activeFills[band] : fills[band],
+          stroke: isActiveBand ? "rgba(255, 255, 255, 0.92)" : AI_RING_BAND_STROKE,
+          strokeWidth: isActiveBand ? 2.4 : 2,
+          shadowColor: isActiveBand ? "rgba(96, 165, 250, 0.26)" : band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
+          shadowBlur: isActiveBand ? 18 : band === 0 ? 8 : 0,
+          shadowOffset: isActiveBand ? { x: 0, y: 2 } : band === 0 ? { x: 0, y: 1 } : undefined,
+          shadowOpacity: isActiveBand ? 1 : band === 0 ? 1 : 0,
+        });
       }
     }
 
@@ -844,7 +939,7 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       const text = labelGroup.findOne(".labelText") as Konva.Text;
 
       if (bg) {
-        if (isActive) {
+        if (isActiveSlice) {
           // 激活态：浅蓝胶囊背景 + 轻阴影
           bg.setAttrs({
             fill: "#91D5FF",
@@ -857,7 +952,7 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
         } else {
           // 非激活态：透明背景
           bg.setAttrs({
-            fill: "#eee",
+            fill: "rgba(255, 255, 255, 0.9)",
             shadowColor: "transparent",
             shadowBlur: 10,
             shadowOffset: { x: 0, y: 2 },
@@ -872,11 +967,11 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
 
       if (text) {
         // 激活时黑色，非激活时灰色
-        text.fill(isActive ? "#000" : "#999");
+        text.fill(isActiveSlice ? "#000" : "#999");
       }
 
-      // 激活时稍微放大
-      // labelGroup.scale({ x: isActive ? 1.1 : 1, y: isActive ? 1.1 : 1 });
+      const hoverScale = ringLabelBaseScale * (isActiveSlice ? 1.04 : 1);
+      labelGroup.scale({ x: hoverScale, y: hoverScale });
     }
   });
 
@@ -1402,6 +1497,7 @@ const triggerAiAssist = () => {
   if (!layer) {
     return { success: false, message: "画布未初始化" };
   }
+  const { bandCount, fills } = getCurrentAiRingTheme();
 
   if (selectedNodes.length === 0) {
     return { success: false, message: "请先选中一个元素" };
@@ -1478,8 +1574,8 @@ const triggerAiAssist = () => {
 
     // 三层环：将环带等分为 3 段
     const ringWidth = aiAssistState.outerRadius - aiAssistState.innerRadius;
-    const bandWidth = ringWidth / AI_RING_BAND_COUNT;
-    for (let band = 0; band < AI_RING_BAND_COUNT; band++) {
+    const bandWidth = ringWidth / bandCount;
+    for (let band = 0; band < bandCount; band++) {
       const bandInner = aiAssistState.innerRadius + band * bandWidth;
       const bandOuter = bandInner + bandWidth;
       const bandArc = new Konva.Arc({
@@ -1489,7 +1585,7 @@ const triggerAiAssist = () => {
         outerRadius: bandOuter,
         angle: sliceAngle,
         rotation: index * sliceAngle + rotationOffset,
-        fill: AI_RING_BAND_FILLS[band],
+        fill: fills[band],
         stroke: AI_RING_BAND_STROKE,
         strokeWidth: 2,
         shadowColor: band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
@@ -4990,7 +5086,7 @@ defineExpose({
   addSegmentsAroundTarget,
   addBubblesAroundTarget,
   setAiRingLabels,
-  setAiRightLabels,
+  setAiRingThemeMode,
   groupSelectedNodes,
   ungroupSelectedNodes,
   setWhisperHighlight,
