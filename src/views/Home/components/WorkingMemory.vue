@@ -276,6 +276,13 @@ const clearWhisperHighlight = () => {
   }
   whisperHighlightNode.value = null;
 };
+
+const isWmGroupNode = (node) => {
+  const selectedType = String(node?.getAttr?.("customType") || "");
+  const selectedName = String(node?.name?.() || "");
+  return selectedType === "group" && selectedName === "wm-group";
+};
+
 const AI_RIGHT_LABELS_BY_TOOL = {
   Reflect: ["反思细节", "反思转化"],
   Constellate: ["直接检索", "远距离启发"],
@@ -305,8 +312,8 @@ const aiQuickTools = computed(() => {
   return [{ label: "📷 Add Memory", value: "Add Memory" }];
 });
 const NAV_HINTS = {
-  Reflect: "反思单个记忆\n先选中一个主图/子图再点击",
-  Constellate: "关联更多记忆\n先选中一个主图/子图/泡泡节点再点击",
+  Reflect: "反思单个记忆\n先选中一个主图/子图，或 Group 按钮创建的 group 再点击",
+  Constellate: "关联更多记忆\n先选中一个主图/子图/泡泡节点，或 Group 按钮创建的 group 再点击",
   Resonance: "涌现创意想法\n仅支持选中 Group 按钮创建的 group",
   Whisper: "点击之后选中子图",
   Crop: "点击之后选择主图进行裁剪",
@@ -557,10 +564,11 @@ const applyHintRingLabels = async (toolType = "Reflect") => {
         : toolType === "Resonance"
         ? ResonanceHint
         : ReflectHint;
-    const hintPayload =
-      toolType === "Resonance"
-        ? buildResonanceHintPayload(reflectSelectedNodes.value)
-        : buildHintPayload(reflectSelectedNodes.value);
+    const hintPayload = buildAiBasePayload(
+      toolType,
+      reflectSelectedNodes.value,
+      reflectTargetNode.value
+    );
     const hintRes = await hintApi(hintPayload);
     const rawPerspectives =
       hintRes?.data?.perspectives ?? hintRes?.data?.dimensions ?? [];
@@ -685,9 +693,14 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
 
   if (toolType === "Reflect") {
     const selectedType = selectedNodes[0]?.getAttr?.("customType") || "";
-    if (selectedType !== "pcm_unit" && selectedType !== "segment") {
+    if (
+      selectedType !== "pcm_unit" &&
+      selectedType !== "segment" &&
+      !isWmGroupNode(selectedNodes[0])
+    ) {
       ElMessage({
-        message: 'Reflect 仅支持选中 type 为 "pcm_unit" 或 "segment" 的节点',
+        message:
+          'Reflect 仅支持选中 type 为 "pcm_unit"、"segment"，或 Group 按钮创建的 group',
         type: "warning",
       });
       currentNav.value = "";
@@ -700,11 +713,12 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     if (
       selectedType !== "pcm_unit" &&
       selectedType !== "segment" &&
-      selectedType !== "bubble"
+      selectedType !== "bubble" &&
+      !isWmGroupNode(selectedNodes[0])
     ) {
       ElMessage({
         message:
-          'Constellate 仅支持选中 type 为 "pcm_unit"、"segment" 或 "bubble" 的节点',
+          'Constellate 仅支持选中 type 为 "pcm_unit"、"segment"、"bubble"，或 Group 按钮创建的 group',
         type: "warning",
       });
       currentNav.value = "";
@@ -713,9 +727,7 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
   }
 
   if (toolType === "Resonance") {
-    const selectedType = selectedNodes[0]?.getAttr?.("customType") || "";
-    const selectedName = String(selectedNodes[0]?.name?.() || "");
-    if (selectedType !== "group" || selectedName !== "wm-group") {
+    if (!isWmGroupNode(selectedNodes[0])) {
       ElMessage({
         message: "Resonance 仅支持选中 Group 按钮创建的 group",
         type: "warning",
@@ -957,6 +969,27 @@ const captureGroupScreenshotForFuse = (groupNode) => {
   }
 };
 
+const buildGroupAiPayload = (nodeJsonList, groupNode) => {
+  const payload = buildResonanceHintPayload(nodeJsonList);
+  const screenshot = captureGroupScreenshotForFuse(groupNode);
+
+  if (screenshot) {
+    payload.screenshot = screenshot;
+  }
+
+  return payload;
+};
+
+const buildAiBasePayload = (toolType = "Reflect", nodeJsonList, targetNode) => {
+  if (isWmGroupNode(targetNode)) {
+    return buildGroupAiPayload(nodeJsonList, targetNode);
+  }
+
+  return toolType === "Resonance"
+    ? buildResonanceHintPayload(nodeJsonList)
+    : buildHintPayload(nodeJsonList);
+};
+
 const buildResonanceFuseImageEntries = (fuseData, fallbackScreenshot = "") => {
   const images = Array.isArray(fuseData?.images) ? fuseData.images : [];
 
@@ -1125,11 +1158,11 @@ const runResonanceFuse = async () => {
   reflectTargetNode.value = groupNode;
   reflectTargetType.value = selectedType;
 
-  const payload = buildResonanceHintPayload(reflectSelectedNodes.value);
-
-  // 为 Fuse 请求补充当前 group 的截图快照。
-  const screenshot = captureGroupScreenshotForFuse(groupNode);
-  payload.screenshot = screenshot;
+  const payload = buildAiBasePayload(
+    "Resonance",
+    reflectSelectedNodes.value,
+    groupNode
+  );
 
   pendingAiTool.value = "Resonance";
   hintLoading.value = true;
@@ -1859,10 +1892,11 @@ const handleAiRingClick = async (data) => {
   reflectPopupTargetNode.value = reflectTargetNode.value || null;
   aiPopupVisible.value = true;
 
-  const hintBasePayload =
-    currentNav.value === "Resonance"
-      ? buildResonanceHintPayload(reflectSelectedNodes.value)
-      : buildHintPayload(reflectSelectedNodes.value);
+  const hintBasePayload = buildAiBasePayload(
+    currentNav.value,
+    reflectSelectedNodes.value,
+    reflectTargetNode.value
+  );
   const selectedDimensionOrPerspective = getPerspectivePayloadByLabel(data.label);
   const rawRingWidth = Math.max(1, Number(data.ringWidth) || 1);
   const rawLineLength = Math.max(0, Number(data.lineLength) || 0);

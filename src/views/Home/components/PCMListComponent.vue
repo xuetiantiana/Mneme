@@ -347,7 +347,7 @@ const handlePCMDragStart = (event, item) => {
     gap: 10px;
     margin-bottom: 10px;
     color: #7a7a7a;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 500;
   }
 
@@ -359,7 +359,7 @@ const handlePCMDragStart = (event, item) => {
 
   .thematic-synthesis-text {
     margin: 0;
-    font-size: 15px;
+    font-size: 12px;
     line-height: 1.55;
     color: #6d6d6d;
     white-space: pre-wrap;
