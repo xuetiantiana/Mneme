@@ -1227,10 +1227,31 @@ const handleStageClick = (
     }
   }
 
+  const nativeEvent = e.evt as MouseEvent | TouchEvent | undefined;
+  const isMultiSelectToggle = Boolean(
+    nativeEvent && (nativeEvent.shiftKey || nativeEvent.ctrlKey || nativeEvent.metaKey)
+  );
+
+  let delegatedTarget = e.target as Konva.Node | null;
+
+  // 多选时 Transformer 会开启整块命中区，第三次 Ctrl/Shift 点击很容易先打到 Transformer
+  // 自身、它的控制点，或其它系统命中层。这里统一做一次“穿透命中”。
+  if (isMultiSelectToggle && delegatedTarget && isStageSystemNode(delegatedTarget) && stage && transformer) {
+    const pointer = stage.getPointerPosition();
+    if (pointer) {
+      const previousOverdraw = transformer.shouldOverdrawWholeArea();
+      transformer.shouldOverdrawWholeArea(false);
+      layer?.draw();
+      delegatedTarget = stage.getIntersection(pointer);
+      transformer.shouldOverdrawWholeArea(previousOverdraw);
+      layer?.draw();
+    }
+  }
+
   // 未命中 AI 环时，走普通节点选择委托：
   // 根据真正被点击的 target，推导出“业务上应该选中的节点”。
   const targetNode = resolveSelectableNodeFromTarget(
-    e.target as Konva.Node | null
+    delegatedTarget
   );
   if (targetNode) {
     handleNodeClick(e, targetNode);
