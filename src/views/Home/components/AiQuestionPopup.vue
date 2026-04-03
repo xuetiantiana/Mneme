@@ -210,11 +210,29 @@ const selectedConstellateImageIndexes = ref([]);
 const popupWrapRef = ref(null);
 const questionCardRefs = ref([]);
 const toolsPanelTop = ref(0);
-// 记录用户手动拖拽后的偏移量，叠加到父组件传入位置上
+// 弹窗的最终高度会受 loading、标题、列表项数量、右侧工具栏显隐等因素影响，
+// 不能再假设它始终是某个固定值。这里记录每次真实渲染后的高度，
+// 后面的 top 计算会用它来做“围绕连线点垂直居中”。
+const popupHeight = ref(400);
+// 记录用户手动拖拽后的偏移量。父组件传入的是 AI 连线锚点，
+// 用户拖拽后我们只在这个锚点基础上叠加偏移，不改写原始锚点本身。
 const popupOffset = ref({ x: 0, y: 0 });
 const isDragging = ref(false);
 let dragStartMouse = { x: 0, y: 0 };
 let dragStartOffset = { x: 0, y: 0 };
+
+const updatePopupHeight = () => {
+  // 弹窗内容会随 loading / toolType / items 变化，必须在 DOM 完成更新后重新量高度。
+  // 这里量的是 .ai-question-popup 主体高度，而不是外层 wrap，
+  // 这样计算 top 时拿到的是实际视觉盒子的高度。
+  const wrapEl = popupWrapRef.value;
+  if (!wrapEl) return;
+
+  const popupEl = wrapEl.querySelector(".ai-question-popup");
+  if (!popupEl) return;
+
+  popupHeight.value = Math.max(1, Math.round(popupEl.getBoundingClientRect().height));
+};
 
 // ------------------------
 // 观察与重置
@@ -229,6 +247,8 @@ watch(
       selectedConstellateImageIndexes.value = [];
       popupOffset.value = { x: 0, y: 0 };
       nextTick(() => {
+        // 打开后先量一次真实高度，后续 top 才能围绕连线点居中。
+        updatePopupHeight();
         updateToolsPanelTop();
       });
     } else {
@@ -244,6 +264,8 @@ watch(
     if (val && val.length > 0) {
     }
     nextTick(() => {
+      // 列表内容变化会改变弹窗高度与工具栏锚点，两者都需要同步更新。
+      updatePopupHeight();
       updateToolsPanelTop();
     });
   }
@@ -252,6 +274,8 @@ watch(
 // Reflect 选中项变化时，重算右侧工具栏锚点
 watch(selectedIndex, () => {
   nextTick(() => {
+    // 选中态变化可能让右侧工具栏出现/消失，进而影响整体占位与高度。
+    updatePopupHeight();
     updateToolsPanelTop();
   });
 });
@@ -282,23 +306,55 @@ watch(
   { deep: true }
 );
 
+watch(
+  () => [props.loading, props.toolType, props.title],
+  () => {
+    nextTick(() => {
+      // 加载态、视图类型和标题文本都会改变弹窗高度，需要重新量测。
+      updatePopupHeight();
+    });
+  }
+);
+
 // ------------------------
 // 视图计算
 // ------------------------
+const POPUP_WIDTH = 380;
+const TOOLS_PANEL_WIDTH = 136;
+const TOOLS_PANEL_GAP = 12;
+const VIEWPORT_PADDING = 20;
+
 const style = computed(() => {
-  // 位置 = 基础锚点 + 手动拖拽偏移，并做基础边界钳制
+  // 最终位置 = 父组件传入的锚点位置 + 用户手动拖拽偏移。
+  // 这里的 props.position 已经是视口坐标，所以可以直接给 fixed 定位使用。
+  // 但右侧真实占位不止主弹窗本体：Reflect 选中问题后右侧还会展开工具栏，
+  // 如果只按 380px 主面板宽度做右边界钳制，就会出现主弹窗看似没越界、
+  // 实际上工具栏已经被顶出屏幕，或者为了给工具栏留空间却让主体过度偏左。
+  const occupiedWidth =
+    POPUP_WIDTH +
+    (selectedIndex.value !== -1 && !props.loading && !isConstellateView.value && props.quickTools.length > 0
+      ? TOOLS_PANEL_GAP + TOOLS_PANEL_WIDTH
+      : 0);
+  // left 先按锚点靠右摆放，再和“视口可用最右位置”取较小值，避免整体溢出右边界。
   const left = Math.min(
-    props.position.x + popupOffset.value.x,
-    window.innerWidth - 580
+    props.position.x + popupOffset.value.x + 5,
+    window.innerWidth - occupiedWidth - VIEWPORT_PADDING
   );
+  // desiredTop 表示“如果完全按连线点垂直居中”时的理想 top。
+  // 这里不再使用固定经验值，而是用 popupHeight 的真实高度来算，
+  // 这样 loading 态、Reflect 列表态、Constellate 图片态切换时都还能保持视觉中心稳定。
+  const desiredTop = props.position.y - popupHeight.value / 2 + popupOffset.value.y;
+  // 如果理想位置会让弹窗底部超出视口，则向上钳制；
+  // 上边界的钳制在 return 里统一处理，保证顶部至少留出一圈安全边距。
   const top = Math.min(
-    props.position.y + popupOffset.value.y,
-    window.innerHeight - 400
+    desiredTop,
+    window.innerHeight - popupHeight.value - VIEWPORT_PADDING
   );
 
   return {
+    // 左侧、顶部都保留安全边距，避免贴边影响可读性与拖拽体验。
     left: `${Math.max(20, left)}px`,
-    top: `${Math.max(20, top)}px`,
+    top: `${Math.max(VIEWPORT_PADDING, top)}px`,
   };
 });
 
@@ -480,7 +536,7 @@ onBeforeUnmount(() => {
 
 .ai-question-popup {
   position: relative;
-  width: 300px;
+  width: 380px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -520,7 +576,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -717,7 +773,7 @@ onBeforeUnmount(() => {
 
 .popup-tools-panel {
   position: absolute;
-  left: calc(100% + 12px);
+  left: calc(100% + 0px);
   width: 136px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid #e6edf7;
@@ -774,7 +830,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 120px 40px;
   color: #666;
   gap: 10px;
 }

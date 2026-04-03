@@ -1946,8 +1946,10 @@ const handleWhisperSubmit = async (payload) => {
 
 // 处理 AI 环点击事件
 const handleAiRingClick = async (data) => {
-  // data.position 是屏幕坐标 (screenPos)
-  // 我们需要计算出它在 Stage 坐标系中的位置，以便后续缩放时重新计算屏幕坐标
+  // data.position 来自 konvaComponent 发出的 screenPos，含义是“AI 连线终点在视口中的位置”。
+  // AiQuestionPopup 自身是 fixed 定位，因此传给弹窗的 position 必须继续保持为视口坐标；
+  // 如果这里提前转成容器内坐标，子组件再按 fixed 去摆放时就会出现整体偏下/偏上的错位。
+  // 同时我们还要额外记录一份 stage 坐标，用于后续 stage 缩放、平移后重新推回最新的视口坐标。
 
   // 假设 konvaComponent 暴露了 konvaData.stage
   const stage = konvaRef.value?.konvaData?.stage;
@@ -1955,19 +1957,15 @@ const handleAiRingClick = async (data) => {
   let relativeY = 0;
 
   if (stage) {
+    const stageRect = stage.container().getBoundingClientRect();
     const transform = stage.getAbsoluteTransform().copy();
     transform.invert();
-    // 这里的 data.position 是相对于 container 的坐标
-    // 但是 konvaComponent 传出来的是 clientRect 修正过的坐标
-    // 我们需要把 data.position 转换回 stage 坐标
-    // 实际上 data.position = stagePos * scale + stageOffset + containerOffset
-    // 简化处理：我们直接记录点击时的 stage transform，后续根据 diff 更新
-
-    // 更准确的做法：
-    // 获取点击点的 stage 坐标
+    // transform.point 需要吃的是“stage 容器本地坐标”，不是整个页面的 client 坐标。
+    // 所以这里先减掉 stage 容器左上角在视口中的偏移，再通过逆变换把点反算回 stage 坐标。
+    // 这样保存下来的 relativePos 才会和当前 stage 的缩放、平移状态解耦。
     const stagePos = transform.point({
-      x: data.position.x,
-      y: data.position.y - wmContainer.value.getBoundingClientRect().top,
+      x: data.position.x - stageRect.left,
+      y: data.position.y - stageRect.top,
     });
     relativeX = stagePos.x;
     relativeY = stagePos.y;
@@ -1978,12 +1976,16 @@ const handleAiRingClick = async (data) => {
     toolType: `${currentNav.value || "Reflect"}`, // 动态设置标题
     lineLength: data.lineLength,
     position: {
+      // 直接保留视口坐标，供 fixed 弹窗立即定位。
       x: data.position.x,
-      y: data.position.y - wmContainer.value.getBoundingClientRect().top,
+      y: data.position.y,
     },
     items: [],
     title: "",
     loading: true, // 开始加载
+    // 保存同一个锚点在 stage 坐标系中的位置。
+    // handleStageTransform 会用这份数据在画布变换后重新计算屏幕位置，
+    // 避免弹窗停留在旧屏幕坐标上，看起来像“没有跟着线头走”。
     relativePos: { x: relativeX, y: relativeY },
     reflectTargetType: reflectTargetType.value || "",
     reflectTargetId: reflectTargetNode.value?.id?.() || "",
@@ -2365,26 +2367,34 @@ const closeAiPopup = ({ preserveReflectContext = false } = {}) => {
   aiPopupData.value.title = "";
 };
 
-// 复用：将 stage 坐标转换为 WorkingMemory 容器内的弹窗坐标
+// 复用：把 stage 坐标重新映射成当前视口坐标，供 fixed 定位弹窗直接使用。
+// 这个函数和 handleAiRingClick 里的反算逻辑互为逆过程：
+// 1. 点击时把视口坐标反算成 stage 坐标保存下来；
+// 2. stage 发生缩放/平移时，再把保存的 stage 坐标推回新的视口坐标。
 const getPopupPositionFromStagePos = (stagePos) => {
   const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage || !wmContainer.value || !stagePos) {
+  if (!stage || !stagePos) {
     return null;
   }
 
   const stageRect = stage.container().getBoundingClientRect();
-  const wmRect = wmContainer.value.getBoundingClientRect();
   const transform = stage.getAbsoluteTransform();
   const localPos = transform.point(stagePos);
 
   return {
-    x: stageRect.left - wmRect.left + localPos.x,
-    y: stageRect.top - wmRect.top + localPos.y,
+    // transform.point 的结果仍然是 stage 容器内部坐标，
+    // 这里再叠加 stage 容器本身在视口中的偏移，最终得到浏览器视口坐标。
+    // AiQuestionPopup 是 fixed 定位，因此必须返回这一套坐标。
+    x: stageRect.left + localPos.x,
+    y: stageRect.top + localPos.y,
   };
 };
 
 const handleStageTransform = () => {
   if (aiPopupVisible.value) {
+    // AI 弹窗打开后如果画布继续缩放/平移，
+    // 需要用之前缓存的 stage 锚点重新计算一次屏幕位置，
+    // 这样弹窗才能持续贴着 AI 连线的终点。
     const aiPos = getPopupPositionFromStagePos(aiPopupData.value.relativePos);
     if (aiPos) {
       aiPopupData.value.position = aiPos;
