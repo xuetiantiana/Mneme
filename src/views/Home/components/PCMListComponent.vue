@@ -304,7 +304,7 @@ const handlePCMDragStart = (event, item) => {
   .kind-tab {
     border: none;
     background: transparent;
-    border-radius: 18px;
+    border-radius: 8px;
     padding: 12px 6px 10px;
     display: flex;
     flex-direction: column;
@@ -334,7 +334,7 @@ const handlePCMDragStart = (event, item) => {
 
   .thematic-synthesis-card {
     flex-shrink: 0;
-    border-radius: 28px;
+    border-radius: 12px;
     border: 1px solid #ddd;
     background: rgba(255, 255, 255, 0.96);
     padding: 8px 20px 20px;
@@ -440,7 +440,7 @@ const handlePCMDragStart = (event, item) => {
     .card-item {
       position: relative;
       border: 1px solid rgba(15, 23, 42, 0.06);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -512,7 +512,6 @@ const handlePCMDragStart = (event, item) => {
         position: relative;
         height: 120px;
         margin-bottom: 10px;
-        border-radius: 10px;
         overflow: hidden;
 
         .card-image {
@@ -520,7 +519,7 @@ const handlePCMDragStart = (event, item) => {
           width: 100%;
           height: 120px;
           object-fit: cover;
-          border-radius: 10px;
+          border-radius: 8px;
           box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
         }
 

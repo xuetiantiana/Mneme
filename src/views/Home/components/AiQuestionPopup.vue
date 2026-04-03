@@ -591,13 +591,13 @@ onBeforeUnmount(() => {
   background: #f7fbff;
   border: 1px solid #e6edf7;
   border-radius: 8px;
-  padding: 10px;
+  padding: 5px 10px;
   white-space: pre-wrap;
 }
 
 .constellate-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
