@@ -144,6 +144,7 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Konva from "konva";
 import { Edit, Pointer } from "@element-plus/icons-vue";
 import {
+  createResonanceAiPopupNodes,
   getAiGuidePlacementRectFromLinePoints,
 } from "@/utils/aiPopupCanvasRenderer";
 import {
@@ -1299,6 +1300,8 @@ const renderAiPopupSelectionToLayer = (
     flattenToNodes = true,
     autoSelectOnFlatten = false,
     rowGap = 16,
+    contentWidth = 0,
+    contentHeight = 0,
     preserveAiAssist = false,
   }: {
     toolType?: "Reflect" | "Constellate" | "Resonance";
@@ -1308,6 +1311,8 @@ const renderAiPopupSelectionToLayer = (
     flattenToNodes?: boolean;
     autoSelectOnFlatten?: boolean;
     rowGap?: number;
+    contentWidth?: number;
+    contentHeight?: number;
     preserveAiAssist?: boolean;
   } = {}
 ) => {
@@ -1320,148 +1325,71 @@ const renderAiPopupSelectionToLayer = (
     };
   }
 
-  if (toolType === "Resonance" || layoutMode === "resonance-stack") {
-    if (!layer || !transformer || !aiAssistState || !aiGuideLine) {
-      return {
-        success: false,
-        message: "Resonance 内容绘制失败，画布未准备好",
-        nodes: [],
-      };
-    }
-
-    const createdGroups = validNodes;
-    createdGroups.forEach((group) => {
-      if (group.getLayer() !== layer) {
-        layer.add(group);
-      }
-    });
-
-    const groupMetrics = createdGroups.map((group) => {
-      const bgNode = group.findOne(".resonance-card-bg") as Konva.Rect | null;
-      const rect = group.getClientRect({
-        skipShadow: true,
-        skipStroke: false,
-      });
-
-      return {
-        group,
-        // Resonance 多卡片堆叠时优先使用卡片背景本身的尺寸作为排布基准，
-        // 避免 group 外接 rect 在文本换行/阴影场景下出现高度估算偏小，导致 y 方向重叠。
-        width: Math.max(
-          0,
-          Number(bgNode?.width?.() || 0),
-          Number(rect?.width) || 0
-        ),
-        height: Math.max(
-          0,
-          Number(bgNode?.height?.() || 0),
-          Number(rect?.height) || 0
-        ),
-      };
-    });
-
-    const blockWidth = groupMetrics.reduce((maxWidth, metric) => Math.max(maxWidth, metric.width), 0);
-    const blockHeight = groupMetrics.reduce((totalHeight, metric, index) => {
-      return totalHeight + metric.height + (index > 0 ? rowGap : 0);
-    }, 0);
-
-    const layout = getAiGuidePlacementRect(blockWidth, blockHeight);
-    if (!layout) {
-      createdGroups.forEach((group) => group.destroy());
-      layer.batchDraw();
-      return {
-        success: false,
-        message: "Resonance 内容绘制失败，未生成可用节点",
-        nodes: [],
-      };
-    }
-
-    let currentY = layout.topLeftY;
-    groupMetrics.forEach((metric) => {
-      metric.group.position({
-        x: layout.topLeftX,
-        y: currentY,
-      });
-      currentY += metric.height + rowGap;
-    });
-
-    selectCanvasNodes(createdGroups as Konva.Node[]);
-    if (!preserveAiAssist) {
-      clearAiAssist();
-    }
-
+  if (!layer || !aiAssistState || !aiGuideLine) {
     return {
-      success: Array.isArray(createdGroups) && createdGroups.length > 0,
-      message: "Resonance 内容绘制失败，未生成可用节点",
-      nodes: createdGroups,
+      success: false,
+      message: `${toolType} 内容绘制失败，画布未准备好`,
+      nodes: [],
     };
   }
 
-  if (toolType === "Constellate") {
-    if (!aiAssistState || !aiGuideLine || !layer) {
-      return {
-        success: false,
-        message: "Constellate 内容绘制失败，画布未准备好",
-        nodes: [],
-      };
-    }
+  const createdNodes = validNodes;
+  const blockWidth = Math.max(1, Number(contentWidth) || 220);
+  const blockHeight = Math.max(1, Number(contentHeight) || 120);
+  const layout = getAiGuidePlacementRect(blockWidth, blockHeight);
 
-    const group = validNodes[0] as Konva.Group | undefined;
-    if (!group) {
-      return {
-        success: false,
-        message: "Constellate 内容绘制失败，未生成可用节点",
-        nodes: [],
-      };
-    }
-
-    if (group.getLayer() !== layer) {
-      layer.add(group);
-    }
-
-    const applyConstellateLayout = () => {
-      const bgNode = group.findOne(".ai-content-body-bg") as Konva.Rect | null;
-      if (!bgNode) {
-        return;
-      }
-
-      const layout = getAiGuidePlacementRect(bgNode.width(), bgNode.height());
-      if (!layout) {
-        return;
-      }
-
-      group.position({
-        x: layout.centerX,
-        y: layout.centerY,
-      });
-      group.offset({
-        x: layout.offsetX,
-        y: layout.offsetY,
-      });
-      layer?.batchDraw();
+  if (!layout) {
+    return {
+      success: false,
+      message: `${toolType} 内容绘制失败，未生成可用节点`,
+      nodes: [],
     };
+  }
 
-    applyConstellateLayout();
+  const applyAiPopupNodesLayout = () => {
+    createdNodes.forEach((node) => {
+      if (node.getLayer() !== layer) {
+        layer.add(node);
+      }
 
-    const flattenConstellateGroupToNodes = () => {
-      const baseX = group.x() - group.offsetX();
-      const baseY = group.y() - group.offsetY();
-      const children: any[] = group.getChildren() as any;
+      const localX = Number(node.getAttr("aiPopupLocalX")) || 0;
+      const localY = Number(node.getAttr("aiPopupLocalY")) || 0;
+      node.position({
+        x: layout.topLeftX + localX,
+        y: layout.topLeftY + localY,
+      });
+      node.draggable(true);
+    });
 
-      const flattenedNodes: Konva.Node[] = children
+    updateDraggableState();
+    layer.batchDraw();
+  };
+
+  const flattenAiPopupGroupsToNodes = () => {
+    const flattenedNodes: Konva.Node[] = [];
+
+    createdNodes.forEach((node) => {
+      if (!(node instanceof Konva.Group)) {
+        flattenedNodes.push(node);
+        return;
+      }
+
+      const baseX = node.x();
+      const baseY = node.y();
+      const children: any[] = node.getChildren() as any;
+
+      children
         .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
-        .map((child: any) => {
+        .forEach((child: any) => {
           const childNode = child as any;
           childNode.remove();
-
           childNode.position({
             x: baseX + childNode.x(),
             y: baseY + childNode.y(),
           });
-
           childNode.draggable(true);
-          layer!.add(childNode);
-          return childNode;
+          layer.add(childNode);
+          flattenedNodes.push(childNode);
         });
 
       children
@@ -1470,149 +1398,37 @@ const renderAiPopupSelectionToLayer = (
           child.destroy();
         });
 
-      updateDraggableState();
-      group.destroy();
-      return flattenedNodes;
-    };
-
-    Promise.all(Array.isArray(imageLoadTasks) ? imageLoadTasks : []).then(() => {
-      applyConstellateLayout();
-
-      if (flattenToNodes) {
-        const flattenedNodes = flattenConstellateGroupToNodes();
-        if (autoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
-          selectedNodes.forEach((n) => removeNodeSelectStyle(n));
-          selectedNodes = flattenedNodes;
-          syncTransformerSelectionState();
-          selectedNodes.forEach((n) => {
-            addNodeSelectStyle(n);
-            n.moveToTop();
-          });
-          transformer?.moveToTop();
-        }
-      }
-
-      layer!.batchDraw();
-      setTimeout(() => updateScrollbars(), 200);
+      node.destroy();
     });
 
-    if (!preserveAiAssist) {
-      clearAiAssist();
+    updateDraggableState();
+    return flattenedNodes;
+  };
+
+  Promise.all(Array.isArray(imageLoadTasks) ? imageLoadTasks : []).then(() => {
+    applyAiPopupNodesLayout();
+
+    const mountedNodes = flattenToNodes ? flattenAiPopupGroupsToNodes() : createdNodes;
+
+    if (toolType === "Constellate" || toolType === "Resonance" || autoSelectOnFlatten) {
+      selectCanvasNodes(mountedNodes);
     }
+
     layer.batchDraw();
+    setTimeout(() => updateScrollbars(), 200);
+  });
 
-    return {
-      success: true,
-      message: "Constellate 内容绘制失败，未生成可用节点",
-      nodes: [group],
-    };
+  if (!preserveAiAssist) {
+    clearAiAssist();
+  } else if (toolType === "Constellate") {
+    clearAiGuideLine();
   }
-
-  if (toolType === "Reflect") {
-    if (!aiAssistState || !aiGuideLine || !layer) {
-      return {
-        success: false,
-        message: "Reflect 内容绘制失败，画布未准备好",
-        nodes: [],
-      };
-    }
-
-    const group = validNodes[0] as Konva.Group | undefined;
-    if (!group) {
-      return {
-        success: false,
-        message: "Reflect 内容绘制失败，未生成可用节点",
-        nodes: [],
-      };
-    }
-
-    if (group.getLayer() !== layer) {
-      layer.add(group);
-    }
-
-    const applyReflectLayout = () => {
-      const bgNode = group.findOne(".ai-content-body-bg") as Konva.Rect | null;
-      if (!bgNode) {
-        return;
-      }
-
-      const layout = getAiGuidePlacementRect(bgNode.width(), bgNode.height());
-      if (!layout) {
-        return;
-      }
-
-      group.position({
-        x: layout.centerX,
-        y: layout.centerY,
-      });
-      group.offset({
-        x: layout.offsetX,
-        y: layout.offsetY,
-      });
-      layer?.batchDraw();
-    };
-
-    applyReflectLayout();
-
-    const flattenReflectGroupToNodes = () => {
-      const baseX = group.x() - group.offsetX();
-      const baseY = group.y() - group.offsetY();
-      const children: any[] = group.getChildren() as any;
-
-      const flattenedNodes: Konva.Node[] = children
-        .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
-        .map((child: any) => {
-          const childNode = child as any;
-          childNode.remove();
-
-          childNode.position({
-            x: baseX + childNode.x(),
-            y: baseY + childNode.y(),
-          });
-
-          childNode.draggable(true);
-          layer!.add(childNode);
-          return childNode;
-        });
-
-      children
-        .filter((child: any) => !(child instanceof Konva.Image || child instanceof Konva.Text))
-        .forEach((child: any) => {
-          child.destroy();
-        });
-
-      updateDraggableState();
-      group.destroy();
-      return flattenedNodes;
-    };
-
-    Promise.all(Array.isArray(imageLoadTasks) ? imageLoadTasks : []).then(() => {
-      applyReflectLayout();
-
-      if (flattenToNodes) {
-        flattenReflectGroupToNodes();
-      }
-
-      layer!.batchDraw();
-      setTimeout(() => updateScrollbars(), 200);
-    });
-
-    if (!preserveAiAssist) {
-      clearAiAssist();
-    }
-    layer.batchDraw();
-
-    return {
-      success: true,
-      message: "Reflect 内容绘制失败，未生成可用节点",
-      nodes: [group],
-    };
-  }
+  layer.batchDraw();
 
   return {
-    success: false,
-    message: "AI 内容绘制失败，未知的工具类型",
-    nodes: [],
+    success: true,
+    message: `${toolType} 内容绘制失败，未生成可用节点`,
+    nodes: createdNodes,
   };
 };
 
@@ -4499,42 +4315,6 @@ const addTextAtPosition = (
   updateScrollbars();
 };
 
-const mountResonanceCardGroup = (
-  resonanceItem: any,
-  position: { x: number; y: number },
-  options?: { autoSelect?: boolean }
-) => {
-  if (!layer || !transformer || !position) return null;
-
-  const shouldAutoSelect = options?.autoSelect !== false;
-  // 仅在自动选中时清理旧选中，便于外部批量创建后统一选中。
-  if (shouldAutoSelect) {
-    selectedNodes.forEach((n) => removeNodeSelectStyle(n));
-  }
-
-  const group = createAiPopupResonanceGroup({
-    resonanceItem,
-    position,
-    fontFamily: DEFAULT_FONT_FAMILY,
-  });
-  if (!group) return null;
-
-  layer.add(group);
-
-  if (shouldAutoSelect) {
-    selectedNodes = [group];
-    transformer.nodes(selectedNodes);
-    addNodeSelectStyle(group);
-    group.moveToTop();
-    transformer.moveToTop();
-  }
-
-  layer.batchDraw();
-  updateScrollbars();
-
-  return group;
-};
-
 // 选中已存在于当前图层中的节点（不会重复 add 到 layer）。
 const selectCanvasNodes = (nodesInput: Konva.Node[] | Konva.Node) => {
   if (!layer || !transformer) return 0;
@@ -5508,7 +5288,6 @@ defineExpose({
   unlockAiAssistInteraction,
   resetNodesData,
   addTextAtPosition,
-  addResonanceGroupAtPosition: mountResonanceCardGroup,
   selectCanvasNodes,
   addPCMAtPosition,
   addMemoryAtPosition,

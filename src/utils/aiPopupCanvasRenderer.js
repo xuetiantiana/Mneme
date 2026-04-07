@@ -46,7 +46,7 @@ const AI_POPUP_THEME = {
     kind: "resonance",
     groupName: "resonance-result-group",
     bg: "#ffffff",
-    stroke: "#dbe7fb",
+    stroke: "#cbdcf8",
     kindColor: "#475569",
     keywordColor: "#1d4ed8",
     textColor: "#334155",
@@ -58,6 +58,12 @@ const AI_POPUP_THEME = {
 
 const normalizeSelectedItems = (selectedItems) => {
   return Array.isArray(selectedItems) ? selectedItems.filter(Boolean) : [];
+};
+
+const setAiPopupLocalPosition = (node, x, y) => {
+  node.setAttr("aiPopupLocalX", x);
+  node.setAttr("aiPopupLocalY", y);
+  node.position({ x, y });
 };
 
 // 根据 AI 引导线的起终点，计算“内容卡片应该贴在线端外侧”的矩形位置。
@@ -100,20 +106,24 @@ export const getAiGuidePlacementRectFromLinePoints = (linePoints, boxWidth, boxH
   };
 };
 
-// 创建 Reflect 内容卡片。
-// 输入保持为 Reflect 接口返回的原始 selectedItems；
-// 这里会从首条问题项中读取 text 和 memory 来组织卡片内容。
-export const createReflectAiPopupContentGroup = ({
+// 创建 Reflect 节点。
+// isReturnGroup 为 true 时，返回只包含一个 group 的数组；
+// 否则直接返回文本、图片节点数组。
+export const createReflectAiPopupNodes = ({
   title = "",
   selectedItems = [],
+  isReturnGroup = false,
   fontFamily,
 } = {}) => {
   const theme = AI_POPUP_THEME.Reflect;
-  const group = new Konva.Group({
-    draggable: true,
-    name: theme.groupName,
-    customType: "reflect_result_group",
-  });
+  const group = isReturnGroup
+    ? new Konva.Group({
+        draggable: true,
+        name: theme.groupName,
+        customType: "reflect_result_group",
+      })
+    : null;
+  const nodesList = [];
 
   let currentY = 0;
   const maxWidth = 220;
@@ -122,63 +132,71 @@ export const createReflectAiPopupContentGroup = ({
   const titleText = String(title || getFirstValidItem(selectedItems)?.text || "").trim();
 
   if (titleText) {
-    const labelBg = new Konva.Rect({
-      x: 0,
-      y: currentY,
-      width: maxWidth,
-      height: 0,
-      name: "ai-content-title-bg",
-      fill: theme.labelBg,
-      cornerRadius: [10, 10, 0, 0],
-      listening: false,
-    });
-
-    const labelText = new Konva.Text({
+    const titleNode = new Konva.Text({
       x: 0,
       y: currentY,
       text: titleText,
       fontSize: 15,
       fontFamily,
       fill: theme.labelColor,
-      padding: bodyPadding,
+      padding: isReturnGroup ? bodyPadding : 0,
       width: maxWidth,
       align: "left",
       fontStyle: "600",
-      // Reflect 卡片确认后会把 Text/Image 扁平化到画布顶层，
-      // 这里必须保留监听，后续这个标题文本才能被单独点击选中。
       listening: true,
+      draggable: !isReturnGroup,
+      customType: "reflect_result_text",
     });
 
-    labelBg.height(labelText.height());
-    group.add(labelBg);
-    group.add(labelText);
-    currentY += labelText.height();
+    if (group) {
+      const labelBg = new Konva.Rect({
+        x: 0,
+        y: currentY,
+        width: maxWidth,
+        height: titleNode.height(),
+        name: "ai-content-title-bg",
+        fill: theme.labelBg,
+        cornerRadius: [10, 10, 0, 0],
+        listening: false,
+      });
+      group.add(labelBg);
+      group.add(titleNode);
+    } else {
+      setAiPopupLocalPosition(titleNode, 0, currentY);
+      nodesList.push(titleNode);
+    }
+
+    currentY += titleNode.height();
   }
 
-  const bgNode = new Konva.Rect({
-    x: 0,
-    y: 0,
-    name: "ai-content-body-bg",
-    width: maxWidth,
-    height: currentY > 0 ? currentY : 50,
-    fill: theme.bodyBg,
-    stroke: theme.borderColor,
-    strokeWidth: 1,
-    cornerRadius: 10,
-    shadowColor: "rgba(15, 23, 42, 0.10)",
-    shadowBlur: 10,
-    shadowOffset: { x: 0, y: 4 },
-  });
+  const bgNode = group
+    ? new Konva.Rect({
+        x: 0,
+        y: 0,
+        name: "ai-content-body-bg",
+        width: maxWidth,
+        height: currentY > 0 ? currentY : 50,
+        fill: theme.bodyBg,
+        stroke: theme.borderColor,
+        strokeWidth: 1,
+        cornerRadius: 10,
+        shadowColor: "rgba(15, 23, 42, 0.10)",
+        shadowBlur: 10,
+        shadowOffset: { x: 0, y: 4 },
+      })
+    : null;
 
-  group.add(bgNode);
-  bgNode.moveToBottom();
+  if (group && bgNode) {
+    group.add(bgNode);
+    bgNode.moveToBottom();
+  }
 
   const imageLoadTasks = [];
   const reflectItem = getFirstValidItem(selectedItems);
   const imageItems = Array.isArray(reflectItem?.memory) ? reflectItem.memory : [];
+  let contentHeight = Math.max(currentY, 50);
 
   if (imageItems.length > 0) {
-    // Reflect 改成更小的记忆缩略图网格：每行最多 4 张。
     const gridColumnCount = 4;
     const gridGap = 4;
     const imageToReasonGap = 3;
@@ -246,11 +264,36 @@ export const createReflectAiPopupContentGroup = ({
       const cellY = rowTops[rowIndex];
 
       if (entry.reasonText) {
-        entry.reasonText.position({
-          x: cellX,
-          y: cellY + imageCellHeight + imageToReasonGap,
-        });
-        group.add(entry.reasonText);
+        entry.reasonText.draggable(!isReturnGroup);
+        entry.reasonText.setAttr("customType", "reflect_result_reason");
+        setAiPopupLocalPosition(
+          entry.reasonText,
+          cellX,
+          cellY + imageCellHeight + imageToReasonGap
+        );
+        if (group) {
+          group.add(entry.reasonText);
+        } else {
+          nodesList.push(entry.reasonText);
+        }
+      }
+
+      const imageNode = new Konva.Image({
+        x: cellX,
+        y: cellY,
+        width: imageCellWidth,
+        height: imageCellHeight,
+        cornerRadius: 6,
+        draggable: !isReturnGroup,
+        id: typeof entry.item === "string" ? undefined : entry.item?.image_id || undefined,
+        customType:
+          typeof entry.item === "string" ? "reflect_result_image" : entry.item?.customType || "reflect_result_image",
+      });
+      setAiPopupLocalPosition(imageNode, cellX, cellY);
+      if (group) {
+        group.add(imageNode);
+      } else {
+        nodesList.push(imageNode);
       }
 
       const imageTask = new Promise((resolve) => {
@@ -263,18 +306,16 @@ export const createReflectAiPopupContentGroup = ({
           const imgWidth = imageObj.width * scale;
           const imgHeight = imageObj.height * scale;
 
-          const konvaImage = new Konva.Image({
-            x: cellX + (imageCellWidth - imgWidth) / 2,
-            y: cellY + (imageCellHeight - imgHeight) / 2,
-            image: imageObj,
+          imageNode.image(imageObj);
+          imageNode.size({
             width: imgWidth,
             height: imgHeight,
-            cornerRadius: 6,
-            id: typeof entry.item === "string" ? undefined : entry.item?.image_id || undefined,
-            customType:
-              typeof entry.item === "string" ? undefined : entry.item?.customType || undefined,
           });
-          group.add(konvaImage);
+          setAiPopupLocalPosition(
+            imageNode,
+            cellX + (imageCellWidth - imgWidth) / 2,
+            cellY + (imageCellHeight - imgHeight) / 2
+          );
           resolve();
         };
         imageObj.onerror = () => resolve();
@@ -286,32 +327,38 @@ export const createReflectAiPopupContentGroup = ({
 
     if (rowHeights.length > 0) {
       const gridBottom = rowTops[rowHeights.length - 1] + rowHeights[rowHeights.length - 1];
-      bgNode.height(Math.max(bgNode.height(), gridBottom + bodyPadding));
+      contentHeight = Math.max(contentHeight, gridBottom + bodyPadding);
+      if (bgNode) {
+        bgNode.height(Math.max(bgNode.height(), contentHeight));
+      }
     }
   }
 
-  return {
-    group,
-    bgNode,
-    imageLoadTasks,
-  };
+  const resultNodes = group ? [group] : nodesList;
+  resultNodes.imageLoadTasks = imageLoadTasks;
+  resultNodes.contentWidth = maxWidth;
+  resultNodes.contentHeight = contentHeight;
+  return resultNodes;
 };
 
-// 创建 Constellate 内容卡片。
-// 输入保持为 Constellate 接口返回的原始 selectedItems；
-// 标题仍作为独立上下文保留，但卡片主体直接消费选中的原始图片项。
-export const createConstellateAiPopupContentGroup = ({
+// 创建 Constellate 的独立文本/图片节点。
+// 不再额外包一层卡片 group，也不再依赖边框背景，
+// 只返回最终会直接落到画布上的 Text / Image 节点。
+export const createConstellateAiPopupNodes = ({
   title = "",
   selectedItems = [],
+  isReturnGroup = false,
   fontFamily,
 } = {}) => {
   const theme = AI_POPUP_THEME.Constellate;
-  const group = new Konva.Group({
-    draggable: true,
-    name: theme.groupName,
-    customType: "constellate_result_group",
-  });
-
+  const group = isReturnGroup
+    ? new Konva.Group({
+        draggable: true,
+        name: theme.groupName,
+        customType: "constellate_result_group",
+      })
+    : null;
+  const nodesList = [];
   let currentY = 0;
   const maxWidth = 220;
   const bodyPadding = 10;
@@ -319,62 +366,35 @@ export const createConstellateAiPopupContentGroup = ({
   const titleText = String(title || "").trim();
 
   if (titleText) {
-    const labelBg = new Konva.Rect({
-      x: 0,
-      y: currentY,
-      width: maxWidth,
-      height: 0,
-      name: "ai-content-title-bg",
-      fill: theme.labelBg,
-      cornerRadius: [10, 10, 0, 0],
-      listening: false,
-    });
-
-    const labelText = new Konva.Text({
+    const titleNode = new Konva.Text({
       x: 0,
       y: currentY,
       text: titleText,
       fontSize: 15,
       fontFamily,
       fill: theme.labelColor,
-      padding: bodyPadding,
       width: maxWidth,
       align: "left",
       fontStyle: "normal",
-      // Constellate 标题在落画布后会变成独立文本节点，
-      // 保留监听才能参与 stage 委托选中。
       listening: true,
+      draggable: !isReturnGroup,
+      customType: "constellate_result_text",
     });
 
-    labelBg.height(labelText.height());
-    group.add(labelBg);
-    group.add(labelText);
-    currentY += labelText.height();
+    setAiPopupLocalPosition(titleNode, 0, currentY);
+    if (group) {
+      titleNode.draggable(false);
+      group.add(titleNode);
+    } else {
+      nodesList.push(titleNode);
+    }
+    currentY += titleNode.height() + 12;
   }
 
-  const bgNode = new Konva.Rect({
-    x: 0,
-    y: 0,
-    name: "ai-content-body-bg",
-    width: maxWidth,
-    height: currentY > 0 ? currentY : 50,
-    fill: theme.bodyBg,
-    stroke: theme.borderColor,
-    strokeWidth: 1,
-    cornerRadius: 10,
-    shadowColor: "rgba(15, 23, 42, 0.10)",
-    shadowBlur: 10,
-    shadowOffset: { x: 0, y: 4 },
-  });
-
-  group.add(bgNode);
-  bgNode.moveToBottom();
-
   const imageLoadTasks = [];
+  let contentHeight = currentY;
 
   if (Array.isArray(selectedItems) && selectedItems.length > 0) {
-    // Constellate 改为更紧凑的缩略图网格：每行最多 3 张，
-    // 这样同一轮检索结果能在一个卡片里更集中地展示。
     const gridColumnCount = 3;
     const gridGap = 6;
     const imageToReasonGap = 4;
@@ -442,11 +462,36 @@ export const createConstellateAiPopupContentGroup = ({
       const cellY = rowTops[rowIndex];
 
       if (entry.reasonText) {
-        entry.reasonText.position({
-          x: cellX,
-          y: cellY + imageCellHeight + imageToReasonGap,
-        });
-        group.add(entry.reasonText);
+        entry.reasonText.draggable(!isReturnGroup);
+        entry.reasonText.setAttr("customType", "constellate_result_reason");
+        setAiPopupLocalPosition(
+          entry.reasonText,
+          cellX,
+          cellY + imageCellHeight + imageToReasonGap
+        );
+        if (group) {
+          group.add(entry.reasonText);
+        } else {
+          nodesList.push(entry.reasonText);
+        }
+      }
+
+      const imageNode = new Konva.Image({
+        x: cellX,
+        y: cellY,
+        width: imageCellWidth,
+        height: imageCellHeight,
+        cornerRadius: 6,
+        draggable: !isReturnGroup,
+        id: typeof entry.item === "string" ? undefined : entry.item?.image_id || undefined,
+        customType:
+          typeof entry.item === "string" ? "constellate_result_image" : entry.item?.customType || "constellate_result_image",
+      });
+      setAiPopupLocalPosition(imageNode, cellX, cellY);
+      if (group) {
+        group.add(imageNode);
+      } else {
+        nodesList.push(imageNode);
       }
 
       const imageTask = new Promise((resolve) => {
@@ -458,19 +503,15 @@ export const createConstellateAiPopupContentGroup = ({
           );
           const imgWidth = imageObj.width * scale;
           const imgHeight = imageObj.height * scale;
+          const imageX = cellX + (imageCellWidth - imgWidth) / 2;
+          const imageY = cellY + (imageCellHeight - imgHeight) / 2;
 
-          const konvaImage = new Konva.Image({
-            x: cellX + (imageCellWidth - imgWidth) / 2,
-            y: cellY + (imageCellHeight - imgHeight) / 2,
-            image: imageObj,
+          imageNode.image(imageObj);
+          imageNode.size({
             width: imgWidth,
             height: imgHeight,
-            cornerRadius: 6,
-            id: typeof entry.item === "string" ? undefined : entry.item?.image_id || undefined,
-            customType:
-              typeof entry.item === "string" ? undefined : entry.item?.customType || undefined,
           });
-          group.add(konvaImage);
+          setAiPopupLocalPosition(imageNode, imageX, imageY);
           resolve();
         };
         imageObj.onerror = () => resolve();
@@ -482,20 +523,19 @@ export const createConstellateAiPopupContentGroup = ({
 
     if (rowHeights.length > 0) {
       const gridBottom = rowTops[rowHeights.length - 1] + rowHeights[rowHeights.length - 1];
-      bgNode.height(Math.max(bgNode.height(), gridBottom + bodyPadding));
+      contentHeight = Math.max(contentHeight, gridBottom + bodyPadding);
     }
   }
 
-  return {
-    group,
-    bgNode,
-    imageLoadTasks,
-  };
+  const resultNodes = group ? [group] : nodesList;
+  resultNodes.imageLoadTasks = imageLoadTasks;
+  resultNodes.contentWidth = maxWidth;
+  resultNodes.contentHeight = contentHeight;
+  return resultNodes;
 };
 
-// 创建 Resonance 分析卡片。
-// Resonance 的视觉结构和 Reflect / Constellate 不同，
-// 因此单独维护一个构建函数，组件层只负责把若干张卡片按 AI 引导线方向堆叠摆放。
+// 创建单个 Resonance 分析卡片 group。
+// 每个 analysis 结果都对应一个独立 group，方便选中和拖拽。
 export const createAiPopupResonanceGroup = ({
   resonanceItem,
   position,
@@ -519,6 +559,7 @@ export const createAiPopupResonanceGroup = ({
     name: theme.groupName,
     customType: "resonance_result_group",
   });
+  group.setAttr("selectAsTextWrapperGroup", true);
 
   const cardBg = new Konva.Rect({
     x: 0,
@@ -528,13 +569,15 @@ export const createAiPopupResonanceGroup = ({
     height: 80,
     fill: theme.bg,
     stroke: theme.stroke,
-    strokeWidth: 1,
-    cornerRadius: 10,
-    shadowColor: "rgba(15, 23, 42, 0.08)",
-    shadowBlur: 8,
-    shadowOffset: { x: 0, y: 2 },
+    strokeWidth: 1.5,
+    cornerRadius: 12,
+    shadowColor: "rgba(148, 163, 184, 0.18)",
+    shadowBlur: 12,
+    shadowOffset: { x: 0, y: 4 },
+    listening: true,
+    draggable: false,
+    customType: "resonance_result_bg",
   });
-  group.add(cardBg);
 
   let currentY = cardPadding;
 
@@ -546,13 +589,14 @@ export const createAiPopupResonanceGroup = ({
     fontFamily,
     fill: theme.kindColor,
     draggable: false,
-    listening: false,
+    listening: true,
+    customType: "resonance_result_kind",
   });
-  group.add(kindText);
   currentY += kindText.height() + 8;
 
+  let keywordText = null;
   if (keyword) {
-    const keywordText = new Konva.Text({
+    keywordText = new Konva.Text({
       x: cardPadding,
       y: currentY,
       text: keyword,
@@ -562,9 +606,9 @@ export const createAiPopupResonanceGroup = ({
       width: bodyWidth,
       wrap: "word",
       draggable: false,
-      listening: false,
+      listening: true,
+      customType: "resonance_result_keyword",
     });
-    group.add(keywordText);
     currentY += keywordText.height() + 8;
   }
 
@@ -579,13 +623,59 @@ export const createAiPopupResonanceGroup = ({
     lineHeight: 1.6,
     wrap: "word",
     draggable: false,
-    listening: false,
+    listening: true,
+    customType: "resonance_result_text",
   });
-  group.add(mainTextNode);
   currentY += mainTextNode.height();
 
-  cardBg.height(currentY + cardPadding);
+  const cardHeight = currentY + cardPadding;
+  cardBg.height(cardHeight);
+
+  group.add(cardBg);
+  cardBg.moveToBottom();
+  group.add(kindText);
+  if (keywordText) {
+    group.add(keywordText);
+  }
+  group.add(mainTextNode);
+  group.setAttr("contentWidth", cardWidth);
+  group.setAttr("contentHeight", cardHeight);
   return group;
+};
+
+// 创建 Resonance 节点。
+// 每个选中项都会返回一个独立 group，createResonanceAiPopupNodes 只负责批量堆叠这些 group。
+export const createResonanceAiPopupNodes = ({
+  title = "",
+  selectedItems = [],
+  isReturnGroup = true,
+  fontFamily,
+} = {}) => {
+  const rowGap = 16;
+  const resultNodes = [];
+  let stackTop = 0;
+
+  normalizeSelectedItems(selectedItems).forEach((resonanceItem) => {
+    const group = createAiPopupResonanceGroup({
+      resonanceItem,
+      position: { x: 0, y: stackTop },
+      fontFamily,
+    });
+
+    if (!group) {
+      return;
+    }
+
+    setAiPopupLocalPosition(group, 0, stackTop);
+    resultNodes.push(group);
+    stackTop += (Number(group.getAttr("contentHeight")) || 0) + rowGap;
+  });
+
+  resultNodes.imageLoadTasks = [];
+  resultNodes.contentWidth = 280;
+  resultNodes.contentHeight = Math.max(0, stackTop - (resultNodes.length > 0 ? rowGap : 0));
+  resultNodes.title = title;
+  return resultNodes;
 };
 
 /**
@@ -613,6 +703,13 @@ export const drawAiPopupSelectionToCanvas = (
   { toolType = "Reflect", title = "", selectedItems = [], preserveAiAssist = false } = {},
   konvaApi
 ) => {
+    console.log("drawAiPopupSelectionToCanvas called with:", {
+      toolType,
+      title,
+      selectedItems,
+      preserveAiAssist,
+    });
+
   if (!konvaApi || typeof konvaApi.renderAiPopupSelectionToLayer !== "function") {
     return {
       success: false,
@@ -633,56 +730,59 @@ export const drawAiPopupSelectionToCanvas = (
   }
 
   if (toolType === "Resonance") {
-    const nodes = items
-      .map((item) =>
-        createAiPopupResonanceGroup({
-          resonanceItem: item,
-          position: { x: 0, y: 0 },
-          fontFamily: "Georgia, serif",
-        })
-      )
-      .filter(Boolean);
+    const nodes = createResonanceAiPopupNodes({
+      title: String(title || "").trim(),
+      selectedItems: items,
+      isReturnGroup: true,
+      fontFamily: "Georgia, serif",
+    });
 
     return konvaApi.renderAiPopupSelectionToLayer({
       toolType: "Resonance",
-      title: String(title || "").trim(),
       layoutMode: "resonance-stack",
       nodes,
-      rowGap: 16,
+      imageLoadTasks: nodes.imageLoadTasks,
+      contentWidth: nodes.contentWidth,
+      contentHeight: nodes.contentHeight,
+      flattenToNodes: false,
       preserveAiAssist,
     });
   }
 
   if (toolType === "Constellate") {
-    const { group, imageLoadTasks } = createConstellateAiPopupContentGroup({
+    const nodes = createConstellateAiPopupNodes({
       title,
       selectedItems: items,
+      isReturnGroup: false,
       fontFamily: "Georgia, serif",
     });
 
     return konvaApi.renderAiPopupSelectionToLayer({
       toolType: "Constellate",
-      layoutMode: "content",
-      nodes: group ? [group] : [],
-      imageLoadTasks,
-      flattenToNodes: true,
-      autoSelectOnFlatten: true,
+      layoutMode: "constellate-direct",
+      nodes,
+      imageLoadTasks: nodes.imageLoadTasks,
+      contentWidth: nodes.contentWidth,
+      contentHeight: nodes.contentHeight,
       preserveAiAssist,
     });
   }
 
   if (toolType === "Reflect") {
-    const { group, imageLoadTasks } = createReflectAiPopupContentGroup({
+    const nodes = createReflectAiPopupNodes({
       title,
       selectedItems: items,
+      isReturnGroup: true,
       fontFamily: "Georgia, serif",
     });
 
     return konvaApi.renderAiPopupSelectionToLayer({
       toolType: "Reflect",
       layoutMode: "content",
-      nodes: group ? [group] : [],
-      imageLoadTasks,
+      nodes,
+      imageLoadTasks: nodes.imageLoadTasks,
+      contentWidth: nodes.contentWidth,
+      contentHeight: nodes.contentHeight,
       flattenToNodes: true,
       autoSelectOnFlatten: false,
       preserveAiAssist,
