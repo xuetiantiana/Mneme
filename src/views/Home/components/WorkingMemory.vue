@@ -216,6 +216,7 @@ const reflectPopupTargetNode = ref(null); // 弹窗生命周期内用于 QuickTo
 const currentHintPerspectives = ref([]); // 当前 hint 返回的 perspective 列表
 const hintLoading = ref(false); // ReflectHint/ConstellateHint 请求中
 const pendingAiTool = ref(""); // 当前正在请求提示词的工具
+const fuseLoading = ref(false); // Fuse 图片生成请求中
 const whisperPopupVisible = ref(false);
 const whisperPopupData = ref({
   position: { x: 0, y: 0 },
@@ -387,7 +388,7 @@ const canUseResonance = computed(() => {
 });
 // Fuse 与 Resonance 的节点约束一致，同时在接口请求进行中保持禁用，避免重复提交。
 const canUseFuse = computed(() => {
-  if (hintLoading.value || fuseButtonLoading.value || selectedCanvasNodes.value.length !== 1) {
+  if (hintLoading.value || fuseLoading.value || selectedCanvasNodes.value.length !== 1) {
     return false;
   }
 
@@ -403,10 +404,6 @@ const navTooltipContentStyle = {
   whiteSpace: "pre-line",
   lineHeight: "1.45",
 };
-// Fuse 复用 Resonance 的后端通道，请求期间沿用同一 loading 状态。
-const fuseButtonLoading = computed(() =>
-  hintLoading.value && pendingAiTool.value === "Resonance"
-);
 // 顶部导航统一收口到配置数组里，避免同一套 tooltip/trigger/button 模板重复维护。
 const primaryTopNavItems = computed(() => [
   {
@@ -414,7 +411,7 @@ const primaryTopNavItems = computed(() => [
     label: "Reflect",
     hintKey: "Reflect",
     active: currentNav.value === "Reflect",
-    disabled: !canUseReflect.value,
+    disabled: currentNav.value !== "Reflect" && !canUseReflect.value,
     loading: hintLoading.value && pendingAiTool.value === "Reflect",
     onClick: () => handleNavClick("Reflect"),
   },
@@ -423,7 +420,7 @@ const primaryTopNavItems = computed(() => [
     label: "Connect",
     hintKey: "Constellate",
     active: currentNav.value === "Constellate",
-    disabled: !canUseConstellate.value,
+    disabled: currentNav.value !== "Constellate" && !canUseConstellate.value,
     loading: hintLoading.value && pendingAiTool.value === "Constellate",
     onClick: () => handleNavClick("Constellate"),
   },
@@ -432,7 +429,7 @@ const primaryTopNavItems = computed(() => [
     label: "Compass",
     hintKey: "Resonance",
     active: currentNav.value === "Resonance",
-    disabled: !canUseResonance.value,
+    disabled: currentNav.value !== "Resonance" && !canUseResonance.value,
     loading: hintLoading.value && pendingAiTool.value === "Resonance",
     onClick: () => handleNavClick("Resonance"),
   },
@@ -442,7 +439,7 @@ const primaryTopNavItems = computed(() => [
     hintKey: "Fuse",
     active: false,
     disabled: !canUseFuse.value,
-    loading: fuseButtonLoading.value,
+    loading: fuseLoading.value,
     onClick: () => runResonanceFuse(),
   },
 ]);
@@ -1319,6 +1316,14 @@ const createResonanceFuseNode = async ({
 };
 
 const runResonanceFuse = async () => {
+  if (fuseLoading.value) {
+    ElMessage({
+      message: "Fuse 仍在生成中，请稍候",
+      type: "info",
+    });
+    return;
+  }
+
   const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
   if (selectedNodes.length !== 1) {
     ElMessage({
@@ -1343,14 +1348,19 @@ const runResonanceFuse = async () => {
   reflectTargetNode.value = groupNode;
   reflectTargetType.value = selectedType;
 
+  if (konvaRef.value?.cancelAiAssist) {
+    konvaRef.value.cancelAiAssist();
+  }
+  closeAiPopup();
+  currentNav.value = "";
+
   const payload = buildAiBasePayload(
     "Resonance",
     reflectSelectedNodes.value,
     groupNode
   );
 
-  pendingAiTool.value = "Resonance";
-  hintLoading.value = true;
+  fuseLoading.value = true;
   try {
     const res = await ResonanceFuseNew(payload);
     const fuseData = res?.data || {};
@@ -1413,8 +1423,7 @@ const runResonanceFuse = async () => {
       type: "error",
     });
   } finally {
-    pendingAiTool.value = "";
-    hintLoading.value = false;
+    fuseLoading.value = false;
   }
 };
 
