@@ -16,6 +16,7 @@
         ref="konvaRef"
         @ai-ring-click="handleAiRingClick"
         @ai-mode-change="handleAiModeChange"
+        @selection-change="handleCanvasSelectionChange"
         @stage-transform="handleStageTransform"
       />
       <AiQuestionPopup
@@ -58,92 +59,55 @@
     <!-- 顶部导航栏 -->
     <div class="top-nav-bar">
       <!-- <div v-if="hintLoading" class="nav-loading-tip">提示词加载中，请稍候...</div> -->
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Reflect', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Reflect' }"
-        :data-tip="getNavHint('Reflect')"
-        @click="handleNavClick('Reflect')"
+      <el-tooltip
+        v-for="item in primaryTopNavItems"
+        :key="item.key"
+        placement="bottom"
+        effect="dark"
+        popper-class="wm-nav-tooltip"
+        :popper-style="navTooltipPopperStyle"
       >
-        Reflect
-        <el-icon v-if="hintLoading && pendingAiTool === 'Reflect'" class="nav-loading-inline is-loading">
-          <Loading />
-        </el-icon>
-      </div>
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Constellate', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Constellate' }"
-        :data-tip="getNavHint('Constellate')"
-        @click="handleNavClick('Constellate')"
-      >
-        Connect
-        <el-icon v-if="hintLoading && pendingAiTool === 'Constellate'" class="nav-loading-inline is-loading">
-          <Loading />
-        </el-icon>
-      </div>
-      <div
-        class="nav-item resonance-nav"
-        :class="[{ open: resonanceMenuVisible }, { active: currentNav === 'Resonance', disabled: hintLoading, loading: hintLoading && pendingAiTool === 'Resonance' }]"
-        :data-tip="getNavHint('Resonance')"
-        @mouseenter="handleResonanceMenuEnter"
-        @mouseleave="handleResonanceMenuLeave"
-      >
-        Compose
-        <el-icon v-if="hintLoading && pendingAiTool === 'Resonance'" class="nav-loading-inline is-loading">
-          <Loading />
-        </el-icon>
-        <div class="resonance-submenu" @mouseenter="handleResonanceMenuEnter" @mouseleave="handleResonanceMenuLeave" @click.stop>
-          <button
-            type="button"
-            class="resonance-submenu-btn"
-            :disabled="hintLoading"
-            @click="handleResonanceSubAction('Analysis')"
+        <template #content>
+          <div class="nav-tooltip-content" :style="navTooltipContentStyle">{{ getNavHint(item.hintKey) }}</div>
+        </template>
+        <div class="nav-tooltip-trigger">
+          <div
+            class="nav-item"
+            :class="{ active: item.active, disabled: item.disabled, loading: item.loading }"
+            @click="item.onClick()"
           >
-            Analysis
-          </button>
-          <button
-            type="button"
-            class="resonance-submenu-btn"
-            :disabled="hintLoading"
-            @click="handleResonanceSubAction('Fuse')"
-          >
-            Fuse
-          </button>
+            {{ item.label }}
+            <el-icon v-if="item.loading" class="nav-loading-inline is-loading">
+              <Loading />
+            </el-icon>
+          </div>
         </div>
-      </div>
+      </el-tooltip>
       <div class="nav-separator">|</div>
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Whisper', disabled: hintLoading }"
-        :data-tip="getNavHint('Whisper')"
-        @click="handleNavClick('Whisper')"
+      <el-tooltip
+        v-for="item in secondaryTopNavItems"
+        :key="item.key"
+        placement="bottom"
+        effect="dark"
+        popper-class="wm-nav-tooltip"
+        :popper-style="navTooltipPopperStyle"
       >
-        💭  Whisper
-      </div>
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Crop', disabled: hintLoading }"
-        :data-tip="getNavHint('Crop')"
-        @click="handleNavClick('Crop')"
-      >
-        ✂️Crop
-      </div>
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Add Memory', disabled: hintLoading }"
-        :data-tip="getNavHint('Add Memory')"
-        @click="handleNavClick('Add Memory')"
-      >
-        📷Add Memory
-      </div>
-      
-      <div
-        class="nav-item"
-        :class="{ active: currentNav === 'Group', disabled: hintLoading }"
-        :data-tip="getNavHint('Group')"
-        @click="handleNavClick('Group')"
-      >
-        🔗Group
-      </div>
+        <template #content>
+          <div class="nav-tooltip-content" :style="navTooltipContentStyle">{{ getNavHint(item.hintKey) }}</div>
+        </template>
+        <div class="nav-tooltip-trigger">
+          <div
+            class="nav-item"
+            :class="{ active: item.active, disabled: item.disabled, loading: item.loading }"
+            @click="item.onClick()"
+          >
+            {{ item.label }}
+            <el-icon v-if="item.loading" class="nav-loading-inline is-loading">
+              <Loading />
+            </el-icon>
+          </div>
+        </div>
+      </el-tooltip>
       <!-- <div
         class="nav-item"
         :class="{ active: currentNav === 'Ungroup', disabled: hintLoading }"
@@ -252,8 +216,6 @@ const reflectPopupTargetNode = ref(null); // 弹窗生命周期内用于 QuickTo
 const currentHintPerspectives = ref([]); // 当前 hint 返回的 perspective 列表
 const hintLoading = ref(false); // ReflectHint/ConstellateHint 请求中
 const pendingAiTool = ref(""); // 当前正在请求提示词的工具
-const resonanceMenuVisible = ref(false);
-let resonanceMenuCloseTimer = null;
 const whisperPopupVisible = ref(false);
 const whisperPopupData = ref({
   position: { x: 0, y: 0 },
@@ -288,6 +250,24 @@ const isWmGroupNode = (node) => {
   return selectedType === "group" && selectedName === "wm-group";
 };
 
+// 只要祖先链上已经进入某个 wm-group，就不允许再次参与顶部 Group，
+// 避免形成嵌套 group，导致交互和导出结构都变复杂。
+const isNodeInsideWmGroup = (node) => {
+  if (!node || typeof node.getParent !== "function") {
+    return false;
+  }
+
+  let current = node;
+  while (current && typeof current.getParent === "function") {
+    if (isWmGroupNode(current)) {
+      return true;
+    }
+    current = current.getParent();
+  }
+
+  return false;
+};
+
 const aiQuickTools = computed(() => {
   if (aiPopupData.value?.toolType === "Resonance") {
     return [];
@@ -312,17 +292,198 @@ const aiQuickTools = computed(() => {
   return [{ label: "📷 Add Memory", value: "Add Memory" }];
 });
 const NAV_HINTS = {
-  Reflect: "反思单个记忆\n先选中一个主图/子图，或 Group 按钮创建的 group 再点击",
-  Constellate: "关联更多记忆\n先选中一个主图/子图/泡泡节点，或 Group 按钮创建的 group 再点击",
+  Reflect: "反思单个记忆\n先选中一个主图/子图，\n或 Group 按钮创建的 group 再点击",
+  Constellate: "关联更多记忆\n先选中一个主图/子图/泡泡节点，\n或 Group 按钮创建的 group 再点击",
   Resonance: "涌现创意想法\n仅支持选中 Group 按钮创建的 group",
-  Whisper: "点击之后选中子图",
-  Crop: "点击之后选择主图进行裁剪",
+  Fuse: "生成图片\n仅支持选中 Group 按钮创建的 group",
+  Whisper: "先选中一个子图 segment，\n再点击按钮输入文本重新分析",
+  Crop: "先选中一个主图 pcm_unit，\n再点击按钮进行裁剪",
   "Add Memory": "点击画布位置后上传图文",
-  Group: "选中多个节点后使用",
+  Group: "先选中至少两个未分组节点，\n再点击按钮创建 group",
   Ungroup: "选中一个 group 后使用",
 };
 
 const getNavHint = (navItem) => NAV_HINTS[navItem] || "";
+// 把 Konva 当前选中节点标准化成单选判定需要的数据，
+// 顶部 Reflect / Connect / Compass / Fuse 都基于这一组计算结果控制禁用态。
+const selectedCanvasNodes = computed(() =>
+  Array.isArray(selectedNodesData.value) ? selectedNodesData.value.filter(Boolean) : []
+);
+const selectedCanvasNode = computed(() =>
+  selectedCanvasNodes.value.length === 1 ? selectedCanvasNodes.value[0] : null
+);
+const selectedCanvasNodeType = computed(() =>
+  String(selectedCanvasNode.value?.getAttr?.("customType") || "")
+);
+const selectedCanvasNodeIsGroup = computed(() => isWmGroupNode(selectedCanvasNode.value));
+const selectedCanvasNodeHasImage = computed(() => {
+  const imageSrc = String(selectedCanvasNode.value?.image?.()?.src || "").trim();
+  return imageSrc.length > 0;
+});
+// Whisper: 仅允许单选 segment，且提交过程中不再允许重复打开弹窗。
+const canUseWhisper = computed(() => {
+  if (hintLoading.value || whisperSubmitting.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return selectedCanvasNodeType.value === "segment";
+});
+// Crop: 仅允许单选 pcm_unit，且目标节点必须真的带有图片资源。
+const canUseCrop = computed(() => {
+  if (hintLoading.value || cropSubmitting.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return selectedCanvasNodeType.value === "pcm_unit" && selectedCanvasNodeHasImage.value;
+});
+// 只要多选里混入了已在 group 内的节点，就整体禁用 Group 按钮，
+// 让按钮态和 konva 侧的实际分组约束保持一致。
+const selectedCanvasNodesContainGroupedNode = computed(() =>
+  selectedCanvasNodes.value.some((node) => isNodeInsideWmGroup(node))
+);
+// Group: 至少两个未分组节点才能执行分组，避免嵌套 group。
+const canUseGroup = computed(() => {
+  if (hintLoading.value) {
+    return false;
+  }
+
+  return (
+    selectedCanvasNodes.value.length >= 2 &&
+    !selectedCanvasNodesContainGroupedNode.value
+  );
+});
+// Reflect: 仅允许单选 pcm_unit / segment / wm-group。
+const canUseReflect = computed(() => {
+  if (hintLoading.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return (
+    selectedCanvasNodeType.value === "pcm_unit" ||
+    selectedCanvasNodeType.value === "segment" ||
+    selectedCanvasNodeIsGroup.value
+  );
+});
+// Constellate: 比 Reflect 多支持 bubble。
+const canUseConstellate = computed(() => {
+  if (hintLoading.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return (
+    selectedCanvasNodeType.value === "pcm_unit" ||
+    selectedCanvasNodeType.value === "segment" ||
+    selectedCanvasNodeType.value === "bubble" ||
+    selectedCanvasNodeIsGroup.value
+  );
+});
+// Resonance/Compass: 仅允许单选由 Group 按钮创建出的 wm-group。
+const canUseResonance = computed(() => {
+  if (hintLoading.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return selectedCanvasNodeIsGroup.value;
+});
+// Fuse 与 Resonance 的节点约束一致，同时在接口请求进行中保持禁用，避免重复提交。
+const canUseFuse = computed(() => {
+  if (hintLoading.value || fuseButtonLoading.value || selectedCanvasNodes.value.length !== 1) {
+    return false;
+  }
+
+  return selectedCanvasNodeIsGroup.value;
+});
+const navTooltipPopperStyle = {
+  maxWidth: "260px",
+  whiteSpace: "pre-line",
+  lineHeight: "1.45",
+  padding: "8px 10px",
+};
+const navTooltipContentStyle = {
+  whiteSpace: "pre-line",
+  lineHeight: "1.45",
+};
+// Fuse 复用 Resonance 的后端通道，请求期间沿用同一 loading 状态。
+const fuseButtonLoading = computed(() =>
+  hintLoading.value && pendingAiTool.value === "Resonance"
+);
+// 顶部导航统一收口到配置数组里，避免同一套 tooltip/trigger/button 模板重复维护。
+const primaryTopNavItems = computed(() => [
+  {
+    key: "Reflect",
+    label: "Reflect",
+    hintKey: "Reflect",
+    active: currentNav.value === "Reflect",
+    disabled: !canUseReflect.value,
+    loading: hintLoading.value && pendingAiTool.value === "Reflect",
+    onClick: () => handleNavClick("Reflect"),
+  },
+  {
+    key: "Constellate",
+    label: "Connect",
+    hintKey: "Constellate",
+    active: currentNav.value === "Constellate",
+    disabled: !canUseConstellate.value,
+    loading: hintLoading.value && pendingAiTool.value === "Constellate",
+    onClick: () => handleNavClick("Constellate"),
+  },
+  {
+    key: "Resonance",
+    label: "Compass",
+    hintKey: "Resonance",
+    active: currentNav.value === "Resonance",
+    disabled: !canUseResonance.value,
+    loading: hintLoading.value && pendingAiTool.value === "Resonance",
+    onClick: () => handleNavClick("Resonance"),
+  },
+  {
+    key: "Fuse",
+    label: "Fuse",
+    hintKey: "Fuse",
+    active: false,
+    disabled: !canUseFuse.value,
+    loading: fuseButtonLoading.value,
+    onClick: () => runResonanceFuse(),
+  },
+]);
+const secondaryTopNavItems = computed(() => [
+  {
+    key: "Whisper",
+    label: "💭  Whisper",
+    hintKey: "Whisper",
+    active: currentNav.value === "Whisper" && whisperPopupVisible.value,
+    disabled: !canUseWhisper.value,
+    loading: false,
+    onClick: () => handleNavClick("Whisper"),
+  },
+  {
+    key: "Crop",
+    label: "✂️Crop",
+    hintKey: "Crop",
+    active: currentNav.value === "Crop" && cropPopupVisible.value,
+    disabled: !canUseCrop.value,
+    loading: false,
+    onClick: () => handleNavClick("Crop"),
+  },
+  {
+    key: "Add Memory",
+    label: "📷Add Memory",
+    hintKey: "Add Memory",
+    active: currentNav.value === "Add Memory",
+    disabled: hintLoading.value,
+    loading: false,
+    onClick: () => handleNavClick("Add Memory"),
+  },
+  {
+    key: "Group",
+    label: "🔗Group",
+    hintKey: "Group",
+    active: false,
+    disabled: !canUseGroup.value,
+    loading: false,
+    onClick: () => handleNavClick("Group"),
+  },
+]);
 const cropPopupVisible = ref(false);
 const cropPopupData = ref({
   imageSrc: "",
@@ -384,6 +545,12 @@ const handleGlobalKeydown = (event) => {
   handleNavClick("Group");
 };
 
+// Konva 会在每次选择集变化时抛出 selection-change，这里同步到父组件本地状态，
+// 供顶部按钮实时切换禁用态，而不是等点击后再做校验。
+const handleCanvasSelectionChange = (nodes) => {
+  selectedNodesData.value = Array.isArray(nodes) ? [...nodes] : [];
+};
+
 onMounted(() => {
   // 使用 mousedown 可以在点击开始时就触发，体验可能更好，或者 click
   // 这里使用 click 配合 capture 或者注意冒泡
@@ -404,10 +571,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside);
   window.removeEventListener("keydown", handleGlobalKeydown);
-  if (resonanceMenuCloseTimer) {
-    clearTimeout(resonanceMenuCloseTimer);
-    resonanceMenuCloseTimer = null;
-  }
   if (whisperCanvasEl) {
     whisperCanvasEl.removeEventListener("click", handleCanvasClick);
     whisperCanvasEl.removeEventListener("mousemove", handleCanvasMouseMove);
@@ -807,6 +970,10 @@ const handleNavClick = async (navItem) => {
     }
 
     if (navItem === "Group") {
+      if (!canUseGroup.value) {
+        return;
+      }
+
       if (konvaRef.value?.groupSelectedNodes) {
         const result = konvaRef.value.groupSelectedNodes();
         if (!result?.success) {
@@ -830,7 +997,38 @@ const handleNavClick = async (navItem) => {
       return;
     }
 
-    if (navItem === "Whisper" || navItem === "Add Memory") {
+    if (navItem === "Whisper") {
+      if (currentNav.value === navItem && whisperPopupVisible.value) {
+        currentNav.value = "";
+        closeWhisperPopup();
+        return;
+      }
+
+      if (!canUseWhisper.value) {
+        return;
+      }
+
+      const targetNode = selectedCanvasNode.value;
+      currentNav.value = navItem;
+      if (cropPopupVisible.value) {
+        handleCropCancel();
+      }
+      closeWhisperPopup();
+      const opened = openWhisperPopupForNode(targetNode);
+      if (!opened) {
+        currentNav.value = "";
+        return;
+      }
+
+      const stage = konvaRef.value?.konvaData?.stage;
+      if (stage) {
+        stage.container().style.cursor = "default";
+        stage.container().removeAttribute("title");
+      }
+      return;
+    }
+
+    if (navItem === "Add Memory") {
       if (currentNav.value === navItem) {
         currentNav.value = "";
         closeWhisperPopup();
@@ -842,10 +1040,34 @@ const handleNavClick = async (navItem) => {
       }
 
       currentNav.value = navItem;
+      if (cropPopupVisible.value) {
+        handleCropCancel();
+      }
       closeWhisperPopup();
 
+      return;
+    }
+
+    if (navItem === "Crop") {
+      if (currentNav.value === navItem && cropPopupVisible.value) {
+        handleCropCancel();
+        return;
+      }
+
+      if (!canUseCrop.value) {
+        return;
+      }
+
+      currentNav.value = navItem;
+      closeWhisperPopup();
+      const opened = openCropPopupForNode(selectedCanvasNode.value);
+      if (!opened) {
+        currentNav.value = "";
+        return;
+      }
+
       const stage = konvaRef.value?.konvaData?.stage;
-      if (stage && navItem === "Whisper") {
+      if (stage) {
         stage.container().style.cursor = "default";
         stage.container().removeAttribute("title");
       }
@@ -872,47 +1094,6 @@ const handleNavClick = async (navItem) => {
       stage.container().removeAttribute("title");
     }
   }
-};
-
-const handleResonanceSubAction = (action) => {
-  if (hintLoading.value) {
-    return;
-  }
-
-  resonanceMenuVisible.value = false;
-  if (resonanceMenuCloseTimer) {
-    clearTimeout(resonanceMenuCloseTimer);
-    resonanceMenuCloseTimer = null;
-  }
-
-  if (action === "Analysis") {
-    handleNavClick("Resonance");
-    return;
-  }
-
-  if (action === "Fuse") {
-    runResonanceFuse();
-  }
-};
-
-const handleResonanceMenuEnter = () => {
-  if (resonanceMenuCloseTimer) {
-    clearTimeout(resonanceMenuCloseTimer);
-    resonanceMenuCloseTimer = null;
-  }
-  resonanceMenuVisible.value = true;
-};
-
-const handleResonanceMenuLeave = () => {
-  if (resonanceMenuCloseTimer) {
-    clearTimeout(resonanceMenuCloseTimer);
-  }
-
-  // 给鼠标从主按钮移动到下方菜单留一个短暂缓冲，避免闪退。
-  resonanceMenuCloseTimer = setTimeout(() => {
-    resonanceMenuVisible.value = false;
-    resonanceMenuCloseTimer = null;
-  }, 120);
 };
 
 const captureGroupScreenshotForFuse = (groupNode) => {
@@ -1236,7 +1417,7 @@ const runResonanceFuse = async () => {
 };
 
 const handleWhisperCanvasClick = (event) => {
-  if (currentNav.value !== "Whisper" && currentNav.value !== "Add Memory") {
+  if (currentNav.value !== "Add Memory") {
     return;
   }
 
@@ -1255,92 +1436,17 @@ const handleWhisperCanvasClick = (event) => {
     y: (localY - stage.y()) / stage.scaleY(),
   };
 
-  if (currentNav.value === "Whisper") {
-    const targetNode = getSegmentTargetAtPointer(event);
-    if (!targetNode) {
-      return;
-    }
-
-    const popupAnchor = getPopupPositionRightOfNode(targetNode);
-    if (!popupAnchor) {
-      return;
-    }
-
-    whisperPopupData.value = {
-      position: popupAnchor.position,
-      stagePos: popupAnchor.stagePos,
-      toolType: currentNav.value,
-      targetNode,
-    };
-    applyWhisperHighlight(targetNode);
-  } else {
-    whisperPopupData.value = {
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
-      stagePos,
-      toolType: currentNav.value,
-      targetNode: null,
-    };
-  }
+  whisperPopupData.value = {
+    position: {
+      x: event.clientX,
+      y: event.clientY,
+    },
+    stagePos,
+    toolType: currentNav.value,
+    targetNode: null,
+  };
 
   whisperPopupVisible.value = true;
-};
-
-const getImageTargetAtPointer = (event) => {
-  const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage) {
-    return null;
-  }
-
-  const rect = stage.container().getBoundingClientRect();
-  const pointer = {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
-  };
-
-  const target = stage.getIntersection(pointer);
-  if (!target || target.className !== "Image") {
-    return null;
-  }
-
-  if (target.getAttr("customType") !== "pcm_unit") {
-    return null;
-  }
-
-  const img = target.image?.();
-  const imageSrc = img?.src || "";
-  if (!imageSrc) {
-    return null;
-  }
-
-  return target;
-};
-
-const getSegmentTargetAtPointer = (event) => {
-  // Whisper 仅允许命中 segment 节点，避免误触主图或泡泡。
-  const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage) {
-    return null;
-  }
-
-  const rect = stage.container().getBoundingClientRect();
-  const pointer = {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
-  };
-
-  const target = stage.getIntersection(pointer);
-  if (!target) {
-    return null;
-  }
-
-  if (target.getAttr("customType") !== "segment") {
-    return null;
-  }
-
-  return target;
 };
 
 const getPopupPositionRightOfNode = (targetNode) => {
@@ -1482,10 +1588,10 @@ const exitReflectMode = () => {
 const openCropPopupForNode = (targetNode) => {
   if (!targetNode || targetNode.getAttr?.("customType") !== "pcm_unit") {
     ElMessage({
-      message: "当前 Reflect 节点不支持 Crop",
+      message: "当前选中节点不支持 Crop",
       type: "warning",
     });
-    return;
+    return false;
   }
 
   const img = targetNode.image?.();
@@ -1495,7 +1601,7 @@ const openCropPopupForNode = (targetNode) => {
       message: "当前节点缺少可裁剪图片",
       type: "warning",
     });
-    return;
+    return false;
   }
 
   const frame = getNodeFrameInWorkingMemory(targetNode);
@@ -1504,7 +1610,7 @@ const openCropPopupForNode = (targetNode) => {
       message: "Crop 覆盖层定位失败",
       type: "warning",
     });
-    return;
+    return false;
   }
 
   // Crop 改为直接贴在画布原图上操作，因此打开时要同时带上目标图位置。
@@ -1514,15 +1620,16 @@ const openCropPopupForNode = (targetNode) => {
     frame: { ...frame },
   };
   cropPopupVisible.value = true;
+  return true;
 };
 
 const openWhisperPopupForNode = (targetNode) => {
   if (!targetNode || targetNode.getAttr?.("customType") !== "segment") {
     ElMessage({
-      message: "当前 Reflect 节点不支持 Whisper",
+      message: "当前选中节点不支持 Whisper",
       type: "warning",
     });
-    return;
+    return false;
   }
 
   const popupAnchor = getPopupPositionRightOfNode(targetNode);
@@ -1531,7 +1638,7 @@ const openWhisperPopupForNode = (targetNode) => {
       message: "Whisper 弹窗定位失败",
       type: "warning",
     });
-    return;
+    return false;
   }
 
   whisperPopupData.value = {
@@ -1542,72 +1649,16 @@ const openWhisperPopupForNode = (targetNode) => {
   };
   applyWhisperHighlight(targetNode);
   whisperPopupVisible.value = true;
-};
-
-const handleWhisperCanvasHover = (event) => {
-  const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage) {
-    return;
-  }
-
-  if (currentNav.value !== "Whisper") {
-    return;
-  }
-
-  // 仅 segment 显示“可点击并分析”的提示语。
-  const target = getSegmentTargetAtPointer(event);
-  stage.container().style.cursor = target ? "pointer" : "default";
-  if (target) {
-    stage.container().setAttribute("title", "点击后输入文本，重新分析该 segment");
-  } else {
-    stage.container().removeAttribute("title");
-  }
-};
-
-const handleCropCanvasHover = (event) => {
-  const stage = konvaRef.value?.konvaData?.stage;
-  if (!stage) {
-    return;
-  }
-
-  if (currentNav.value !== "Crop") {
-    stage.container().style.cursor = "default";
-    stage.container().removeAttribute("title");
-    return;
-  }
-
-  const target = getImageTargetAtPointer(event);
-  stage.container().style.cursor = target ? "pointer" : "default";
-  if (target) {
-    stage.container().setAttribute("title", "点击裁剪并分析主图");
-  } else {
-    stage.container().removeAttribute("title");
-  }
+  return true;
 };
 
 const handleCropCanvasClick = (event) => {
-  if (currentNav.value !== "Crop") {
+  if (currentNav.value !== "Crop" || !cropPopupVisible.value) {
     return;
   }
-
-  const target = getImageTargetAtPointer(event);
-  if (!target) return;
-
-  openCropPopupForNode(target);
 };
 
 const handleCanvasMouseMove = (event) => {
-  // 按当前工具分流 hover 逻辑，避免 Whisper 与 Crop 的提示互相覆盖。
-  if (currentNav.value === "Whisper") {
-    handleWhisperCanvasHover(event);
-    return;
-  }
-
-  if (currentNav.value === "Crop") {
-    handleCropCanvasHover(event);
-    return;
-  }
-
   const stage = konvaRef.value?.konvaData?.stage;
   if (stage) {
     stage.container().style.cursor = "default";
@@ -1620,10 +1671,8 @@ const handleCanvasMouseLeave = () => {
   if (!stage) {
     return;
   }
-  if (currentNav.value === "Crop" || currentNav.value === "Whisper") {
-    stage.container().style.cursor = "default";
-    stage.container().removeAttribute("title");
-  }
+  stage.container().style.cursor = "default";
+  stage.container().removeAttribute("title");
 };
 
 const handleCanvasClick = (event) => {
@@ -2516,7 +2565,6 @@ defineExpose({
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   padding: 8px 20px;
-  padding-left: 40px;
   border-radius: 24px;
   display: flex;
   align-items: center;
@@ -2555,29 +2603,6 @@ defineExpose({
       pointer-events: none;
     }
 
-    &::after {
-      content: attr(data-tip);
-      position: absolute;
-      left: 50%;
-      top: calc(100% + 8px);
-      transform: translateX(-50%);
-      padding: 4px 8px;
-      font-size: 12px;
-      line-height: 1.3;
-      color: #fff;
-      background: rgba(30, 30, 30, 0.92);
-      border-radius: 6px;
-      white-space: pre;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.18s ease;
-      z-index: 2;
-    }
-
-    &:hover::after {
-      opacity: 1;
-    }
-
     .nav-loading-inline {
       position: absolute;
       right: -1px;
@@ -2589,57 +2614,10 @@ defineExpose({
       align-items: center;
       pointer-events: none;
     }
+  }
 
-    &.resonance-nav.open .resonance-submenu {
-      opacity: 1;
-      transform: translateY(-50%) translateX(0);
-      pointer-events: auto;
-    }
-
-    .resonance-submenu {
-      position: absolute;
-      left: calc(100% + 1px);
-      top: 50%;
-      transform: translateY(-50%) translateX(4px);
-      width: 120px;
-      border-radius: 16px;
-      background: #f6f6f6;
-      border: 2px solid #1f2937;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.18s ease;
-      z-index: 12;
-    }
-
-    .resonance-submenu-btn {
-      border: none;
-      background: transparent;
-      padding: 8px 16px;
-      font-size: 14px;
-      line-height: 1.2;
-      font-weight: 500;
-      color: #222;
-      cursor: pointer;
-      text-align: center;
-      transition: background-color 0.15s ease, color 0.15s ease;
-
-      &:hover:not(:disabled) {
-        background: rgba(0, 0, 0, 0.05);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      &:first-child {
-        border-bottom: 1px solid #d5d5d5;
-      }
-    }
+  .nav-tooltip-trigger {
+    display: inline-flex;
   }
 
   .nav-loading-tip {
@@ -2672,6 +2650,27 @@ defineExpose({
     line-height: 1;
     user-select: none;
   }
+
+}
+
+:deep(.wm-nav-tooltip) {
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+:deep(.wm-nav-tooltip .nav-tooltip-content) {
+  white-space: pre-line;
+  line-height: 1.45;
+  color: #f8fafc;
+}
+
+:deep(.wm-nav-tooltip .el-popper__arrow::before) {
+  background: rgba(17, 24, 39, 0.96);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 .top-right-actions {

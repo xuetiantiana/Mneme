@@ -165,6 +165,8 @@ const emit = defineEmits([
   "ai-ring-click",
   "ai-mode-change",
   "stage-transform",
+  // 把当前选中节点列表同步给外层容器，供业务侧实时控制按钮禁用态。
+  "selection-change",
 ]);
 
 const props = withDefaults(
@@ -1477,7 +1479,7 @@ const renderAiPopupSelectionToLayer = (
         if (autoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
           selectedNodes.forEach((n) => removeNodeSelectStyle(n));
           selectedNodes = flattenedNodes;
-          transformer?.nodes(selectedNodes);
+          syncTransformerSelectionState();
           selectedNodes.forEach((n) => {
             addNodeSelectStyle(n);
             n.moveToTop();
@@ -2769,7 +2771,7 @@ const pasteCopiedNodes = () => {
 
   selectedNodes = pastedNodes;
   selectedNodes.forEach((node) => addNodeSelectStyle(node));
-  transformer.nodes(selectedNodes);
+  syncTransformerSelectionState();
   selectedNodes.forEach((node) => node.moveToTop());
   transformer.moveToTop();
 
@@ -3199,6 +3201,10 @@ const syncTransformerSelectionState = () => {
   } else {
     transformer.enabledAnchors(["top-left", "top-right", "bottom-left", "bottom-right"]);
   }
+
+  // 统一在 transformer 选中态同步完成后再广播，
+  // 这样父组件拿到的永远是当前稳定的选择集快照。
+  emit("selection-change", [...selectedNodes]);
 };
 
 // 处理节点点击事件
@@ -3833,7 +3839,7 @@ const deleteSelectedNodes = () => {
   });
 
   selectedNodes = [];
-  transformer!.nodes([]);
+  syncTransformerSelectionState();
 };
 
 // 重置视图到初始状态
@@ -5107,6 +5113,30 @@ const rebindGroupedChildConstraintsDeep = (node: Konva.Node) => {
   });
 };
 
+// 底层也要判断节点是否已处在某个 wm-group 内，
+// 避免用户通过快捷键或其他入口绕过顶部按钮的禁用态，继续做嵌套分组。
+const isNodeInsideGroup = (node?: Konva.Node | null) => {
+  if (!node) {
+    return false;
+  }
+
+  let current: Konva.Node | null = node;
+  while (current) {
+    if (
+      current instanceof Konva.Group &&
+      current.getAttr("customType") === "group" &&
+      current.name?.() === "wm-group"
+    ) {
+      return true;
+    }
+
+    const parent = current.getParent();
+    current = parent instanceof Konva.Node ? parent : null;
+  }
+
+  return false;
+};
+
 const groupSelectedNodes = () => {
   if (!layer || !transformer) {
     return { success: false, message: "画布未准备好" };
@@ -5125,6 +5155,11 @@ const groupSelectedNodes = () => {
 
   if (nodesToGroup.length < 2) {
     return { success: false, message: "当前选中节点不支持分组" };
+  }
+
+  // 任何已在 group 内的节点都不允许再次参与分组，保持 group 结构单层化。
+  if (nodesToGroup.some((node) => isNodeInsideGroup(node))) {
+    return { success: false, message: "已在 group 内的节点不支持再次分组" };
   }
 
   clearAiAssist();
@@ -5311,7 +5346,7 @@ const groupSelectedNodes = () => {
   });
 
   selectedNodes = [group];
-  transformer.nodes(selectedNodes);
+  syncTransformerSelectionState();
   addNodeSelectStyle(group);
   group.moveToTop();
   transformer.moveToTop();
@@ -5426,7 +5461,7 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
   groupNode.destroy();
 
   selectedNodes = restoredNodes;
-  transformer.nodes(selectedNodes);
+  syncTransformerSelectionState();
   selectedNodes.forEach((n) => {
     addNodeSelectStyle(n);
     n.moveToTop();
