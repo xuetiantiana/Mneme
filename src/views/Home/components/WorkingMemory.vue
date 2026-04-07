@@ -804,7 +804,10 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     return;
   }
 
-  // 如果当前点击的工具已经是激活状态，再次点击则取消
+  const selectedNodes = konvaRef.value?.getSelectedNodes?.() || [];
+
+  // 顶部 AI 工具按钮再次点击时，统一视为“关闭当前环”，
+  // 不继续请求 hint，也不因为当前已切到别的节点而重建新环。
   if (currentNav.value === toolType) {
     if (konvaRef.value && konvaRef.value.cancelAiAssist) {
       konvaRef.value.cancelAiAssist();
@@ -835,7 +838,6 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
   }
 
   // 获取选中的节点并存储
-  const selectedNodes = konvaRef.value.getSelectedNodes() || [];
   if (toolType === "Reflect" || toolType === "Constellate" || toolType === "Resonance") {
     if (selectedNodes.length === 0) {
       ElMessage({
@@ -2246,6 +2248,7 @@ const commitAiPopupSelection = async (
       toolType,
       title: String(data?.title || "").trim(),
       selectedItems,
+      preserveAiAssist: !cancelAiAssist,
     },
     konvaRef.value
   );
@@ -2261,6 +2264,13 @@ const commitAiPopupSelection = async (
   if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {
     konvaRef.value.cancelAiAssist();
   }
+
+  // 确认后若保留 AI 环，需要把“点击后锁定”的交互态解开；
+  // 否则环虽然还在，但 hover 不会继续更新引导线。
+  if (!cancelAiAssist && konvaRef.value?.unlockAiAssistInteraction) {
+    konvaRef.value.unlockAiAssistInteraction();
+  }
+
   closeAiPopup({ preserveReflectContext });
   if (clearCurrentNav) {
     currentNav.value = "";
@@ -2269,7 +2279,13 @@ const commitAiPopupSelection = async (
 };
 
 const handleAiPopupConfirm = async (data) => {
-  await commitAiPopupSelection(data);
+  // 普通确认后只关闭弹窗，保留当前 AI 环与工具态，
+  // 这样用户可以继续沿用同一组 ring/selection 继续操作。
+  await commitAiPopupSelection(data, {
+    preserveReflectContext: true,
+    clearCurrentNav: false,
+    cancelAiAssist: false,
+  });
 };
 
 const handleAiPopupToolClick = async ({ tool, item }) => {

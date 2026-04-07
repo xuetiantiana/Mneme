@@ -2,9 +2,15 @@ import Konva from "konva";
 
 /**
  * @typedef {Object} AiPopupSelectionPayload
- * @property {"Reflect"|"Constellate"|"Resonance"} [toolType]
- * @property {string} [title]
- * @property {Array<any>} [selectedItems]
+ * @property {"Reflect"|"Constellate"|"Resonance"} [toolType="Reflect"]
+ *   AI 工具类型。Reflect 会消费首条有效项，Constellate / Resonance 会消费全部有效项。
+ * @property {string} [title=""]
+ *   弹窗确认时传入的标题文本。Reflect 可回退到首条问题项的 text，其余工具按原值透传。
+ * @property {Array<any>} [selectedItems=[]]
+ *   弹窗中被确认选中的结果列表。函数内部会先过滤掉空项，再按不同 toolType 转成画布节点。
+ * @property {boolean} [preserveAiAssist=false]
+ *   是否在内容落到画布后保留当前 AI 环状态。为 true 时，只新增节点，不主动清理 ring / tool 状态；
+ *   为 false 时，交由画布侧按默认流程结束本次 AI assist。
  */
 
 // Reflect 只会确认一条问题卡片，这里取第一条有效项即可；
@@ -582,12 +588,29 @@ export const createAiPopupResonanceGroup = ({
   return group;
 };
 
-// 对外统一的“弹窗确认后落画布”入口。
-// 这里不再依赖画布组件内部的具体挂载 helper 命名，
-// 而是把三种工具的数据都先归一化，再交给画布组件暴露的统一渲染 API。
+/**
+ * 对外统一的“弹窗确认后落画布”入口。
+ * 这里不再依赖画布组件内部的具体挂载 helper 命名，
+ * 而是把三种工具的数据都先归一化，再交给画布组件暴露的统一渲染 API。
+ *
+ * @param {AiPopupSelectionPayload} payload
+ *   弹窗确认后的标准化入参。
+ * @param {"Reflect"|"Constellate"|"Resonance"} [payload.toolType="Reflect"]
+ *   当前确认来源的 AI 工具。
+ * @param {string} [payload.title=""]
+ *   卡片标题；不同工具会按各自展示规则决定是否使用。
+ * @param {Array<any>} [payload.selectedItems=[]]
+ *   需要被渲染到画布上的原始结果项。
+ * @param {boolean} [payload.preserveAiAssist=false]
+ *   是否保留当前 AI assist 的 ring 与工具状态。
+ *   常见场景是“确认后只新增节点，但不销毁环”，这时传 true。
+ * @param {{ renderAiPopupSelectionToLayer?: Function }} konvaApi
+ *   画布组件暴露出来的渲染 API 集合；当前至少需要 renderAiPopupSelectionToLayer。
+ * @returns {{ success: boolean, message?: string }}
+ *   统一返回成功标记；失败时会附带可直接给 UI 使用的提示文案。
+ */
 export const drawAiPopupSelectionToCanvas = (
-  /** @type {AiPopupSelectionPayload} */
-  { toolType = "Reflect", title = "", selectedItems = [] } = {},
+  { toolType = "Reflect", title = "", selectedItems = [], preserveAiAssist = false } = {},
   konvaApi
 ) => {
   if (!konvaApi || typeof konvaApi.renderAiPopupSelectionToLayer !== "function") {
@@ -626,6 +649,7 @@ export const drawAiPopupSelectionToCanvas = (
       layoutMode: "resonance-stack",
       nodes,
       rowGap: 16,
+      preserveAiAssist,
     });
   }
 
@@ -643,6 +667,7 @@ export const drawAiPopupSelectionToCanvas = (
       imageLoadTasks,
       flattenToNodes: true,
       autoSelectOnFlatten: true,
+      preserveAiAssist,
     });
   }
 
@@ -660,6 +685,7 @@ export const drawAiPopupSelectionToCanvas = (
       imageLoadTasks,
       flattenToNodes: true,
       autoSelectOnFlatten: false,
+      preserveAiAssist,
     });
   }
 

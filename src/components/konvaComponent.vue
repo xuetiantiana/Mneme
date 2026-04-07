@@ -1299,6 +1299,7 @@ const renderAiPopupSelectionToLayer = (
     flattenToNodes = true,
     autoSelectOnFlatten = false,
     rowGap = 16,
+    preserveAiAssist = false,
   }: {
     toolType?: "Reflect" | "Constellate" | "Resonance";
     nodes?: Konva.Node[];
@@ -1307,6 +1308,7 @@ const renderAiPopupSelectionToLayer = (
     flattenToNodes?: boolean;
     autoSelectOnFlatten?: boolean;
     rowGap?: number;
+    preserveAiAssist?: boolean;
   } = {}
 ) => {
   const validNodes = Array.isArray(nodes) ? nodes.filter(Boolean) : [];
@@ -1384,7 +1386,9 @@ const renderAiPopupSelectionToLayer = (
     });
 
     selectCanvasNodes(createdGroups as Konva.Node[]);
-    clearAiAssist();
+    if (!preserveAiAssist) {
+      clearAiAssist();
+    }
 
     return {
       success: Array.isArray(createdGroups) && createdGroups.length > 0,
@@ -1492,7 +1496,9 @@ const renderAiPopupSelectionToLayer = (
       setTimeout(() => updateScrollbars(), 200);
     });
 
-    clearAiAssist();
+    if (!preserveAiAssist) {
+      clearAiAssist();
+    }
     layer.batchDraw();
 
     return {
@@ -1591,7 +1597,9 @@ const renderAiPopupSelectionToLayer = (
       setTimeout(() => updateScrollbars(), 200);
     });
 
-    clearAiAssist();
+    if (!preserveAiAssist) {
+      clearAiAssist();
+    }
     layer.batchDraw();
 
     return {
@@ -1622,6 +1630,16 @@ const clearAiGuideLine = () => {
     aiAssistState.isLocked = false;
   }
   layer?.batchDraw();
+};
+
+// 仅解除 AI 环的点击锁定，让后续 hover 可以继续更新引导线；
+// 不销毁圆环、不清 selection，也不改当前工具态。
+const unlockAiAssistInteraction = () => {
+  if (!aiAssistState) {
+    return;
+  }
+
+  aiAssistState.isLocked = false;
 };
 
 // 启动 Hint 后，若 AI 环过大或偏移，自动缩小并居中，确保整环可见。
@@ -3215,7 +3233,8 @@ const handleNodeClick = (
   e: Konva.KonvaEventObject<MouseEvent | TouchEvent>,
   node: Konva.Node
 ) => {
-  clearAiAssist();
+  // 仅切换选中节点时保留当前 AI 环；
+  // 真正替换旧环的时机由 Reflect/Connect/Compass 点击显式触发。
   // 如果当前是平移模式，不处理节点点击事件
   if (currentTool.value === "pan") {
     return;
@@ -5486,6 +5505,7 @@ defineExpose({
   triggerAiAssist,
   clearSelection,
   clearAiGuideLine,
+  unlockAiAssistInteraction,
   resetNodesData,
   addTextAtPosition,
   addResonanceGroupAtPosition: mountResonanceCardGroup,
