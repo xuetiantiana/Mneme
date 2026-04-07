@@ -144,6 +144,9 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Konva from "konva";
 import { Edit, Pointer } from "@element-plus/icons-vue";
 import {
+  getAiGuidePlacementRectFromLinePoints,
+} from "@/utils/aiPopupCanvasRenderer";
+import {
   createImageAndTextNodes,
   createTextNode,
   createInterpretationTextNodes,
@@ -187,7 +190,16 @@ let resizeObserver: ResizeObserver | null = null; // 容器大小变化监听器
 // 状态变量
 let selectedNodes: Konva.Node[] = []; // 当前选中的节点列表
 let clipboardNodes: Konva.Node[] = []; // 复制缓存的节点快照
+let clipboardSelectionTopLeft = { x: 0, y: 0 }; // 复制时记录整组选区左上角，供粘贴偏移基准使用
 let lastPasteOffset = { x: 24, y: 24 }; // 无鼠标位置时的递增偏移
+// Ctrl+C 时不直接保存“绝对几何”，而是保存相对当前 layer 的局部几何。
+// 这样 Ctrl+V 时不会把整张画布(stage)的缩放再次算进节点自身大小里。
+const CLIPBOARD_LAYER_POS_ATTR = "__clipboardLayerPosition";
+const CLIPBOARD_LAYER_SCALE_ATTR = "__clipboardLayerScale";
+const CLIPBOARD_LAYER_ROTATION_ATTR = "__clipboardLayerRotation";
+// 对 detached clipboard clone 来说，getClientRect 无法稳定反推原始选区左上角，
+// 所以复制时把它额外缓存下来，粘贴时直接复用这份基准坐标。
+const CLIPBOARD_TOP_LEFT_ATTR = "__clipboardTopLeft";
 let isCurrentCanvasLastClicked = false; // 防误删：仅当最后一次点击在当前 canvas 内才允许删除
 // Alt+拖拽时，记录当前由“副本”接管拖拽的临时状态，避免一次拖拽重复触发复制。
 let altDragDuplicateState: {
@@ -1184,7 +1196,7 @@ const handleStageClick = (
 
       if (aiGuideLine) {
         // 点击时把引导线终点固定到当前命中位置，
-        // 这样后续 createAiContentNode 会以用户最终点击位置作为布局基准。
+        // 这样后续挂到画布上的 AI 内容卡片会以用户最终点击位置作为布局基准。
         aiGuideLine.points([
           aiAssistState.centerX,
           aiAssistState.centerY,
@@ -1258,265 +1270,12 @@ const handleStageClick = (
   }
 };
 
-// 创建 AI 生成的内容节点（在确认后调用）
-const createAiContentNode = (
-  images?: Array<string | { image_url?: string; imageUrl?: string; url?: string; image_id?: string; imageID?: string; imageId?: string; id?: string; type?: string; customType?: string; reason?: string }>,
-  label?: string,
-  options?: {
-    flattenToNodes?: boolean;
-    // 扁平化后立即选中新生成节点（用于 Constellate 确认后的连续操作）。
-    autoSelectOnFlatten?: boolean;
-  }
-) => {
-  if (!aiAssistState || !aiGuideLine || !layer) return;
-
-  // 获取引导线的起点和终点
-  const points = aiGuideLine.points();
-  const startX = points[0];
-  const startY = points[1];
-  const endX = points[2];
-  const endY = points[3];
-
-  // 计算引导线向量
-  const dx = endX - startX;
-  const dy = endY - startY;
-  const currentLength = Math.sqrt(dx * dx + dy * dy);
-
-  // 1. 创建节点内容
-  const group = new Konva.Group({
-    draggable: true,
-    name: "ai-content-node",
-  });
-
-  let currentY = 0;
-  let maxWidth = 200;
-
-  // 如果有 label，先添加 label
-  if (label) {
-    const labelText = new Konva.Text({
-      x: 0,
-      y: currentY,
-      text: label,
-      fontSize: 16,
-      fontFamily: DEFAULT_FONT_FAMILY,
-      // fill: "#1890ff",
-      // fontStyle: "bold",
-      padding: 10,
-      width: maxWidth,
-      align: "left",
-    });
-    group.add(labelText);
-    currentY += labelText.height();
+const getAiGuidePlacementRect = (boxWidth: number, boxHeight: number) => {
+  if (!aiAssistState || !aiGuideLine) {
+    return null;
   }
 
-  // 创建背景矩形，初始高度包含文本
-  const bgNode = new Konva.Rect({
-    x: 0,
-    y: 0,
-    width: maxWidth,
-    height: currentY > 0 ? currentY : 50, // 初始高度
-    fill: "#fff",
-    stroke: "#8cc5ff",
-    strokeWidth: 1,
-    cornerRadius: 8,
-    shadowColor: "rgba(0, 0, 0, 0.1)",
-    shadowBlur: 10,
-    shadowOffset: { x: 0, y: 4 },
-  });
-
-  // 将背景移到最底层
-  group.add(bgNode);
-  bgNode.moveToBottom();
-
-  // 封装布局更新函数
-  const updateLayout = () => {
-    // 重新获取背景尺寸（因为可能已更新）
-    const w = bgNode.width() / 2;
-    const h = bgNode.height() / 2;
-
-    // 计算单位向量
-    let unitX = 0;
-    let unitY = 0;
-    if (currentLength > 0) {
-      unitX = dx / currentLength;
-      unitY = dy / currentLength;
-    }
-
-    // 计算射线与矩形四边交点的距离 d (从中心向外)
-    const d1 = unitX !== 0 ? Math.abs(w / unitX) : Infinity;
-    const d2 = unitY !== 0 ? Math.abs(h / unitY) : Infinity;
-    const distanceToEdge = Math.min(d1, d2);
-
-    // 计算 group 的中心坐标
-    const groupCenterX = endX + unitX * distanceToEdge;
-    const groupCenterY = endY + unitY * distanceToEdge;
-
-    group.position({
-      x: groupCenterX,
-      y: groupCenterY,
-    });
-
-    // 设置偏移量，使 groupCenterX/Y 对应节点的中心位置
-    group.offset({
-      x: w,
-      y: h,
-    });
-
-    // 强制重绘
-    layer?.batchDraw();
-  };
-
-  // 初始布局
-  updateLayout();
-
-  // 如果有图片，添加图片
-  const imageLoadTasks: Promise<void>[] = [];
-  if (images && images.length > 0) {
-    const imageToReasonGap = 4;
-    const reasonToNextImageGap = 16;
-    const imageToNextImageGap = 14;
-    let imageY = currentY + 5;
-    images.forEach((item) => {
-      const src = typeof item === "string"
-        ? item
-        : String(item?.image_url || item?.imageUrl || item?.url || "");
-      const imageId = typeof item === "string"
-        ? ""
-        : String(item?.image_id || item?.imageID || item?.imageId || item?.id || "");
-      const imageCustomType = typeof item === "string"
-        ? ""
-        : String(item?.customType || item?.type || "");
-      const imageReason = typeof item === "string"
-        ? ""
-        : String(item?.reason || "").trim();
-
-      if (!src || !src.trim()) {
-        return;
-      }
-
-      const imageTask = new Promise<void>((resolve) => {
-        const imageObj = new Image();
-        imageObj.onload = () => {
-          // 计算图片尺寸，保持宽度适配
-          const imgWidth = maxWidth - 20; // 留白
-          const scale = imgWidth / imageObj.width;
-          const imgHeight = imageObj.height * scale;
-
-          const konvaImage = new Konva.Image({
-            x: 10,
-            y: imageY,
-            image: imageObj,
-            width: imgWidth,
-            height: imgHeight,
-            cornerRadius: 4,
-            id: imageId || undefined,
-            customType: imageCustomType || undefined,
-          });
-          group.add(konvaImage);
-
-          // 更新背景高度
-          imageY += imgHeight;
-
-          if (imageReason) {
-            imageY += imageToReasonGap;
-            const reasonText = new Konva.Text({
-              x: 10,
-              y: imageY,
-              text: imageReason,
-              fontSize: 12,
-              fontFamily: DEFAULT_FONT_FAMILY,
-              fill: "#475569",
-              width: imgWidth,
-              lineHeight: 1.4,
-              wrap: "word",
-            });
-            group.add(reasonText);
-            imageY += reasonText.height() + reasonToNextImageGap;
-          } else {
-            imageY += imageToNextImageGap;
-          }
-
-          bgNode.height(Math.max(bgNode.height(), imageY));
-
-          // 每次图片加载完都要重新计算位置，因为高度变了，中心点变了
-          updateLayout();
-          resolve();
-        };
-        imageObj.onerror = () => {
-          resolve();
-        };
-        imageObj.src = src;
-      });
-
-      imageLoadTasks.push(imageTask);
-    });
-  }
-
-  layer.add(group);
-
-  const flattenGroupToNodes = () => {
-    const baseX = group.x() - group.offsetX();
-    const baseY = group.y() - group.offsetY();
-    const children: any[] = group.getChildren() as any;
-
-    const flattenedNodes: Konva.Node[] = children
-      .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
-      .map((child: any) => {
-      const childNode = child as any;
-      childNode.remove();
-
-      childNode.position({
-        x: baseX + childNode.x(),
-        y: baseY + childNode.y(),
-      });
-
-      childNode.draggable(true);
-
-      layer!.add(childNode);
-      return childNode;
-      });
-
-    children
-      .filter((child: any) => !(child instanceof Konva.Image || child instanceof Konva.Text))
-      .forEach((child: any) => {
-        child.destroy();
-      });
-
-    updateDraggableState();
-    group.destroy();
-    return flattenedNodes;
-  };
-
-  Promise.all(imageLoadTasks).then(() => {
-    const shouldFlatten = !!options?.flattenToNodes;
-    const shouldAutoSelectOnFlatten = !!options?.autoSelectOnFlatten;
-
-    if (shouldFlatten) {
-      const flattenedNodes = flattenGroupToNodes();
-      // Constellate 期望“落画布即选中”，这里切换选中集到新扁平节点。
-      if (shouldAutoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
-        selectedNodes.forEach((n) => removeNodeSelectStyle(n));
-        selectedNodes = flattenedNodes;
-        transformer?.nodes(selectedNodes);
-        selectedNodes.forEach((n) => {
-          addNodeSelectStyle(n);
-          n.moveToTop();
-        });
-        transformer?.moveToTop();
-      }
-    }
-
-    layer!.batchDraw();
-    setTimeout(() => updateScrollbars(), 200);
-  });
-
-  // 清除 AI 辅助环
-  clearAiAssist();
-
-  // 重新绘制
-  layer.batchDraw();
-
-  return group;
+  return getAiGuidePlacementRectFromLinePoints(aiGuideLine.points(), boxWidth, boxHeight);
 };
 
 // 取消 AI 辅助锁定状态，恢复交互
@@ -1524,6 +1283,327 @@ const cancelAiAssist = () => {
   console.log("cancelAiAssist called - destroying AI ring");
   // 直接销毁 AI 辅助环
   clearAiAssist();
+};
+
+// 统一的 AI 弹窗落画布入口。
+// util 层先创建好 Konva 节点，这里只负责把现成节点挂到当前画布，
+// 再处理 AI guide 定位、批量堆叠、扁平化与选中态同步。
+const renderAiPopupSelectionToLayer = (
+  {
+    toolType = "Reflect",
+    nodes = [],
+    imageLoadTasks = [],
+    layoutMode = "content",
+    flattenToNodes = true,
+    autoSelectOnFlatten = false,
+    rowGap = 16,
+  }: {
+    toolType?: "Reflect" | "Constellate" | "Resonance";
+    nodes?: Konva.Node[];
+    imageLoadTasks?: Promise<any>[];
+    layoutMode?: string;
+    flattenToNodes?: boolean;
+    autoSelectOnFlatten?: boolean;
+    rowGap?: number;
+  } = {}
+) => {
+  const validNodes = Array.isArray(nodes) ? nodes.filter(Boolean) : [];
+  if (validNodes.length === 0) {
+    return {
+      success: false,
+      message: "AI 内容绘制失败，未生成可用节点",
+      nodes: [],
+    };
+  }
+
+  if (toolType === "Resonance" || layoutMode === "resonance-stack") {
+    if (!layer || !transformer || !aiAssistState || !aiGuideLine) {
+      return {
+        success: false,
+        message: "Resonance 内容绘制失败，画布未准备好",
+        nodes: [],
+      };
+    }
+
+    const createdGroups = validNodes;
+    createdGroups.forEach((group) => {
+      if (group.getLayer() !== layer) {
+        layer.add(group);
+      }
+    });
+
+    const groupMetrics = createdGroups.map((group) => {
+      const bgNode = group.findOne(".resonance-card-bg") as Konva.Rect | null;
+      const rect = group.getClientRect({
+        skipShadow: true,
+        skipStroke: false,
+      });
+
+      return {
+        group,
+        // Resonance 多卡片堆叠时优先使用卡片背景本身的尺寸作为排布基准，
+        // 避免 group 外接 rect 在文本换行/阴影场景下出现高度估算偏小，导致 y 方向重叠。
+        width: Math.max(
+          0,
+          Number(bgNode?.width?.() || 0),
+          Number(rect?.width) || 0
+        ),
+        height: Math.max(
+          0,
+          Number(bgNode?.height?.() || 0),
+          Number(rect?.height) || 0
+        ),
+      };
+    });
+
+    const blockWidth = groupMetrics.reduce((maxWidth, metric) => Math.max(maxWidth, metric.width), 0);
+    const blockHeight = groupMetrics.reduce((totalHeight, metric, index) => {
+      return totalHeight + metric.height + (index > 0 ? rowGap : 0);
+    }, 0);
+
+    const layout = getAiGuidePlacementRect(blockWidth, blockHeight);
+    if (!layout) {
+      createdGroups.forEach((group) => group.destroy());
+      layer.batchDraw();
+      return {
+        success: false,
+        message: "Resonance 内容绘制失败，未生成可用节点",
+        nodes: [],
+      };
+    }
+
+    let currentY = layout.topLeftY;
+    groupMetrics.forEach((metric) => {
+      metric.group.position({
+        x: layout.topLeftX,
+        y: currentY,
+      });
+      currentY += metric.height + rowGap;
+    });
+
+    selectCanvasNodes(createdGroups as Konva.Node[]);
+    clearAiAssist();
+
+    return {
+      success: Array.isArray(createdGroups) && createdGroups.length > 0,
+      message: "Resonance 内容绘制失败，未生成可用节点",
+      nodes: createdGroups,
+    };
+  }
+
+  if (toolType === "Constellate") {
+    if (!aiAssistState || !aiGuideLine || !layer) {
+      return {
+        success: false,
+        message: "Constellate 内容绘制失败，画布未准备好",
+        nodes: [],
+      };
+    }
+
+    const group = validNodes[0] as Konva.Group | undefined;
+    if (!group) {
+      return {
+        success: false,
+        message: "Constellate 内容绘制失败，未生成可用节点",
+        nodes: [],
+      };
+    }
+
+    if (group.getLayer() !== layer) {
+      layer.add(group);
+    }
+
+    const applyConstellateLayout = () => {
+      const bgNode = group.findOne(".ai-content-body-bg") as Konva.Rect | null;
+      if (!bgNode) {
+        return;
+      }
+
+      const layout = getAiGuidePlacementRect(bgNode.width(), bgNode.height());
+      if (!layout) {
+        return;
+      }
+
+      group.position({
+        x: layout.centerX,
+        y: layout.centerY,
+      });
+      group.offset({
+        x: layout.offsetX,
+        y: layout.offsetY,
+      });
+      layer?.batchDraw();
+    };
+
+    applyConstellateLayout();
+
+    const flattenConstellateGroupToNodes = () => {
+      const baseX = group.x() - group.offsetX();
+      const baseY = group.y() - group.offsetY();
+      const children: any[] = group.getChildren() as any;
+
+      const flattenedNodes: Konva.Node[] = children
+        .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
+        .map((child: any) => {
+          const childNode = child as any;
+          childNode.remove();
+
+          childNode.position({
+            x: baseX + childNode.x(),
+            y: baseY + childNode.y(),
+          });
+
+          childNode.draggable(true);
+          layer!.add(childNode);
+          return childNode;
+        });
+
+      children
+        .filter((child: any) => !(child instanceof Konva.Image || child instanceof Konva.Text))
+        .forEach((child: any) => {
+          child.destroy();
+        });
+
+      updateDraggableState();
+      group.destroy();
+      return flattenedNodes;
+    };
+
+    Promise.all(Array.isArray(imageLoadTasks) ? imageLoadTasks : []).then(() => {
+      applyConstellateLayout();
+
+      if (flattenToNodes) {
+        const flattenedNodes = flattenConstellateGroupToNodes();
+        if (autoSelectOnFlatten && Array.isArray(flattenedNodes) && flattenedNodes.length > 0) {
+          selectedNodes.forEach((n) => removeNodeSelectStyle(n));
+          selectedNodes = flattenedNodes;
+          transformer?.nodes(selectedNodes);
+          selectedNodes.forEach((n) => {
+            addNodeSelectStyle(n);
+            n.moveToTop();
+          });
+          transformer?.moveToTop();
+        }
+      }
+
+      layer!.batchDraw();
+      setTimeout(() => updateScrollbars(), 200);
+    });
+
+    clearAiAssist();
+    layer.batchDraw();
+
+    return {
+      success: true,
+      message: "Constellate 内容绘制失败，未生成可用节点",
+      nodes: [group],
+    };
+  }
+
+  if (toolType === "Reflect") {
+    if (!aiAssistState || !aiGuideLine || !layer) {
+      return {
+        success: false,
+        message: "Reflect 内容绘制失败，画布未准备好",
+        nodes: [],
+      };
+    }
+
+    const group = validNodes[0] as Konva.Group | undefined;
+    if (!group) {
+      return {
+        success: false,
+        message: "Reflect 内容绘制失败，未生成可用节点",
+        nodes: [],
+      };
+    }
+
+    if (group.getLayer() !== layer) {
+      layer.add(group);
+    }
+
+    const applyReflectLayout = () => {
+      const bgNode = group.findOne(".ai-content-body-bg") as Konva.Rect | null;
+      if (!bgNode) {
+        return;
+      }
+
+      const layout = getAiGuidePlacementRect(bgNode.width(), bgNode.height());
+      if (!layout) {
+        return;
+      }
+
+      group.position({
+        x: layout.centerX,
+        y: layout.centerY,
+      });
+      group.offset({
+        x: layout.offsetX,
+        y: layout.offsetY,
+      });
+      layer?.batchDraw();
+    };
+
+    applyReflectLayout();
+
+    const flattenReflectGroupToNodes = () => {
+      const baseX = group.x() - group.offsetX();
+      const baseY = group.y() - group.offsetY();
+      const children: any[] = group.getChildren() as any;
+
+      const flattenedNodes: Konva.Node[] = children
+        .filter((child: any) => child instanceof Konva.Image || child instanceof Konva.Text)
+        .map((child: any) => {
+          const childNode = child as any;
+          childNode.remove();
+
+          childNode.position({
+            x: baseX + childNode.x(),
+            y: baseY + childNode.y(),
+          });
+
+          childNode.draggable(true);
+          layer!.add(childNode);
+          return childNode;
+        });
+
+      children
+        .filter((child: any) => !(child instanceof Konva.Image || child instanceof Konva.Text))
+        .forEach((child: any) => {
+          child.destroy();
+        });
+
+      updateDraggableState();
+      group.destroy();
+      return flattenedNodes;
+    };
+
+    Promise.all(Array.isArray(imageLoadTasks) ? imageLoadTasks : []).then(() => {
+      applyReflectLayout();
+
+      if (flattenToNodes) {
+        flattenReflectGroupToNodes();
+      }
+
+      layer!.batchDraw();
+      setTimeout(() => updateScrollbars(), 200);
+    });
+
+    clearAiAssist();
+    layer.batchDraw();
+
+    return {
+      success: true,
+      message: "Reflect 内容绘制失败，未生成可用节点",
+      nodes: [group],
+    };
+  }
+
+  return {
+    success: false,
+    message: "AI 内容绘制失败，未知的工具类型",
+    nodes: [],
+  };
 };
 
 const clearAiGuideLine = () => {
@@ -1980,7 +2060,15 @@ const getNodesTopLeft = (nodes: Konva.Node[]) => {
   let minY = Infinity;
 
   nodes.forEach((node) => {
-    const rect = node.getClientRect({ skipShadow: true });
+    // clipboard 里的节点已经脱离 stage/layer 树，
+    // 这时优先读取复制当下缓存的 top-left，避免 detached 节点的 rect 失真。
+    const storedTopLeft = node.getAttr(CLIPBOARD_TOP_LEFT_ATTR) as
+      | { x?: number; y?: number }
+      | undefined;
+    const rect =
+      !node.getStage() && storedTopLeft
+        ? { x: Number(storedTopLeft.x) || 0, y: Number(storedTopLeft.y) || 0 }
+        : node.getClientRect({ skipShadow: true });
     minX = Math.min(minX, rect.x);
     minY = Math.min(minY, rect.y);
   });
@@ -2040,25 +2128,54 @@ const syncClonedNodeToLayerSpace = (
 ) => {
   if (!layer) return;
 
-  const absPos = sourceNode.getAbsolutePosition();
-  const absScale = sourceNode.getAbsoluteScale();
-  const absRotation = sourceNode.getAbsoluteRotation();
-  const layerAbsScale = layer.getAbsoluteScale();
-  const layerAbsRotation = layer.getAbsoluteRotation();
+  // Ctrl+C 缓存出来的 clipboard node 不在当前舞台树里，
+  // 这类节点不能再依赖 getAbsolutePosition/getAbsoluteScale 重新推导，
+  // 而要优先使用复制时保存下来的 layer 局部几何。
+  const storedLayerPos = sourceNode.getAttr(CLIPBOARD_LAYER_POS_ATTR) as
+    | { x?: number; y?: number }
+    | undefined;
+  const storedLayerScale = sourceNode.getAttr(CLIPBOARD_LAYER_SCALE_ATTR) as
+    | { x?: number; y?: number }
+    | undefined;
+  const storedLayerRotation = sourceNode.getAttr(CLIPBOARD_LAYER_ROTATION_ATTR);
+  const useStoredGeometry = !sourceNode.getStage() && !!storedLayerPos;
 
-  const localScaleX =
-    Math.abs(layerAbsScale.x) > Number.EPSILON
-      ? absScale.x / layerAbsScale.x
-      : absScale.x;
-  const localScaleY =
-    Math.abs(layerAbsScale.y) > Number.EPSILON
-      ? absScale.y / layerAbsScale.y
-      : absScale.y;
-  const localRotation = absRotation - layerAbsRotation;
+  // 普通 live node 走“绝对坐标 -> layer 局部坐标”的换算；
+  // clipboard node 则直接复用已缓存的 layer 坐标，避免把 stage 缩放混进来。
+  const layerPos = useStoredGeometry
+    ? {
+        x: Number(storedLayerPos?.x) || 0,
+        y: Number(storedLayerPos?.y) || 0,
+      }
+    : layer.getAbsoluteTransform().copy().invert().point(sourceNode.getAbsolutePosition());
+  const layerScale = useStoredGeometry
+    ? {
+        x: Number(storedLayerScale?.x) || 1,
+        y: Number(storedLayerScale?.y) || 1,
+      }
+    : (() => {
+        const absScale = sourceNode.getAbsoluteScale();
+        const layerAbsScale = layer.getAbsoluteScale();
+        return {
+          x:
+            Math.abs(layerAbsScale.x) > Number.EPSILON
+              ? absScale.x / layerAbsScale.x
+              : absScale.x,
+          y:
+            Math.abs(layerAbsScale.y) > Number.EPSILON
+              ? absScale.y / layerAbsScale.y
+              : absScale.y,
+        };
+      })();
+  const layerRotation = useStoredGeometry
+    ? Number(storedLayerRotation) || 0
+    : sourceNode.getAbsoluteRotation() - layer.getAbsoluteRotation();
 
-  clonedNode.absolutePosition(absPos);
-  clonedNode.rotation(localRotation);
-  clonedNode.scale({ x: localScaleX, y: localScaleY });
+  // 这里全部写回 layer 局部几何，而不是 absolute 几何，
+  // 目的是保证粘贴节点的“自身大小”只由节点本身决定，不受当前画布缩放影响。
+  clonedNode.position(layerPos);
+  clonedNode.rotation(layerRotation);
+  clonedNode.scale(layerScale);
 };
 const isAiAssistNode = (node?: Konva.Node | null) => {
   if (!node) return false;
@@ -2557,10 +2674,63 @@ const copySelectedNodes = () => {
   // 复制前临时移除选中态，避免把蓝色选中阴影一并克隆到剪贴板。
   const snapshotNodes = [...selectedNodes];
   snapshotNodes.forEach((node) => removeNodeSelectStyle(node));
+  // 统一记录当前整组选区在 layer 坐标系下的左上角。
+  // Ctrl+V 时会用 hover 点减去这个基准，得到整组节点要平移的 dx/dy。
+  let minX = Infinity;
+  let minY = Infinity;
+  snapshotNodes.forEach((node) => {
+    const rect = node.getClientRect({
+      relativeTo: layer || undefined,
+      skipShadow: true,
+    });
+    minX = Math.min(minX, Number(rect?.x) || 0);
+    minY = Math.min(minY, Number(rect?.y) || 0);
+  });
+  clipboardSelectionTopLeft = {
+    x: Number.isFinite(minX) ? minX : 0,
+    y: Number.isFinite(minY) ? minY : 0,
+  };
 
-  clipboardNodes = snapshotNodes.map((node) =>
-    node.clone({ listening: true })
-  );
+  clipboardNodes = snapshotNodes.map((node) => {
+    const clonedNode = node.clone({ listening: true });
+    // 把节点的绝对位置转换成相对当前 layer 的局部位置，
+    // 这样后续无论 stage 怎么缩放，粘贴出来的节点都能保持原始尺寸。
+    const layerPoint = layer!
+      .getAbsoluteTransform()
+      .copy()
+      .invert()
+      .point(node.getAbsolutePosition());
+    const absScale = node.getAbsoluteScale();
+    const layerAbsScale = layer!.getAbsoluteScale();
+    clonedNode.setAttr(CLIPBOARD_LAYER_POS_ATTR, layerPoint);
+    // 节点真实缩放 = 绝对缩放 / layer 缩放。
+    // 这里显式剥离整张画布的缩放，避免 Ctrl+V 时节点大小跟着 stage 一起放大/缩小。
+    clonedNode.setAttr(CLIPBOARD_LAYER_SCALE_ATTR, {
+      x:
+        Math.abs(layerAbsScale.x) > Number.EPSILON
+          ? absScale.x / layerAbsScale.x
+          : absScale.x,
+      y:
+        Math.abs(layerAbsScale.y) > Number.EPSILON
+          ? absScale.y / layerAbsScale.y
+          : absScale.y,
+    });
+    clonedNode.setAttr(
+      CLIPBOARD_LAYER_ROTATION_ATTR,
+      node.getAbsoluteRotation() - layer!.getAbsoluteRotation()
+    );
+
+    // 单个节点也缓存一份 top-left，供 detached clipboard node 在后续几何计算中直接复用。
+    const rect = node.getClientRect({
+      relativeTo: layer || undefined,
+      skipShadow: true,
+    });
+    clonedNode.setAttr(CLIPBOARD_TOP_LEFT_ATTR, {
+      x: Number(rect?.x) || 0,
+      y: Number(rect?.y) || 0,
+    });
+    return clonedNode;
+  });
 
   // 恢复画布上当前选中节点的视觉状态。
   snapshotNodes.forEach((node) => addNodeSelectStyle(node));
@@ -2572,14 +2742,17 @@ const pasteCopiedNodes = () => {
   if (!layer || !transformer || clipboardNodes.length === 0) return;
   const currentLayer = layer;
 
-  const pointerPos = getStagePointerPos();
-  const sourceTopLeft = getNodesTopLeft(clipboardNodes);
+  // 保持原有交互：Ctrl+V 以鼠标当前 hover 到的画布坐标为锚点。
+  const pasteAnchor = getStagePointerPos();
+  const sourceTopLeft = clipboardSelectionTopLeft;
 
-  const dx = pointerPos
-    ? pointerPos.x - sourceTopLeft.x
+  // dx/dy 统一在 layer 坐标系里计算，
+  // 与 clipboardSelectionTopLeft、clonedNode.position() 保持同一坐标系，避免位置漂移。
+  const dx = pasteAnchor
+    ? pasteAnchor.x - sourceTopLeft.x
     : lastPasteOffset.x;
-  const dy = pointerPos
-    ? pointerPos.y - sourceTopLeft.y
+  const dy = pasteAnchor
+    ? pasteAnchor.y - sourceTopLeft.y
     : lastPasteOffset.y;
 
   clearAiAssist();
@@ -2587,12 +2760,10 @@ const pasteCopiedNodes = () => {
 
   const pastedNodes: Konva.Node[] = cloneNodesIntoLayer(clipboardNodes);
 
-  pastedNodes.forEach((pastedNode, index) => {
-    const sourceNode = clipboardNodes[index];
-    if (!sourceNode) return;
+  pastedNodes.forEach((pastedNode) => {
     pastedNode.position({
-      x: sourceNode.x() + dx,
-      y: sourceNode.y() + dy,
+      x: pastedNode.x() + dx,
+      y: pastedNode.y() + dy,
     });
   });
 
@@ -2605,7 +2776,7 @@ const pasteCopiedNodes = () => {
   currentLayer.batchDraw();
   updateScrollbars();
 
-  if (!pointerPos) {
+  if (!pasteAnchor) {
     lastPasteOffset = {
       x: lastPasteOffset.x + 24,
       y: lastPasteOffset.y + 24,
@@ -4303,27 +4474,12 @@ const addTextAtPosition = (
   updateScrollbars();
 };
 
-const addResonanceGroupAtPosition = (
+const mountResonanceCardGroup = (
   resonanceItem: any,
   position: { x: number; y: number },
   options?: { autoSelect?: boolean }
 ) => {
   if (!layer || !transformer || !position) return null;
-
-  const mainText = String(
-    resonanceItem?.text || resonanceItem?.keyword || ""
-  ).trim();
-  if (!mainText) return null;
-
-  const kind = String(resonanceItem?.kind || "analysis").trim();
-  const keyword = String(resonanceItem?.keyword || "").trim();
-  const actions = Array.isArray(resonanceItem?.actions)
-    ? resonanceItem.actions
-    : [];
-
-  const cardWidth = 280;
-  const cardPadding = 12;
-  const bodyWidth = cardWidth - cardPadding * 2;
 
   const shouldAutoSelect = options?.autoSelect !== false;
   // 仅在自动选中时清理旧选中，便于外部批量创建后统一选中。
@@ -4331,121 +4487,12 @@ const addResonanceGroupAtPosition = (
     selectedNodes.forEach((n) => removeNodeSelectStyle(n));
   }
 
-  const group = new Konva.Group({
-    x: position.x,
-    y: position.y,
-    draggable: true,
-    name: "resonance-result-group",
-    customType: "resonance_result_group",
-  });
-
-  const cardBg = new Konva.Rect({
-    x: 0,
-    y: 0,
-    width: cardWidth,
-    height: 80,
-    fill: "#ffffff",
-    stroke: "#dbe7fb",
-    strokeWidth: 1,
-    cornerRadius: 10,
-    shadowColor: "rgba(15, 23, 42, 0.08)",
-    shadowBlur: 8,
-    shadowOffset: { x: 0, y: 2 },
-  });
-  group.add(cardBg);
-
-  let currentY = cardPadding;
-
-  const kindText = new Konva.Text({
-    x: cardPadding,
-    y: currentY,
-    text: kind,
-    fontSize: 12,
+  const group = createAiPopupResonanceGroup({
+    resonanceItem,
+    position,
     fontFamily: DEFAULT_FONT_FAMILY,
-    fill: "#475569",
-    draggable: false,
-    listening: false,
   });
-
-  group.add(kindText);
-  currentY += kindText.height() + 8;
-
-  if (keyword) {
-    const keywordText = new Konva.Text({
-      x: cardPadding,
-      y: currentY,
-      text: keyword,
-      fontSize: 13,
-      fontFamily: DEFAULT_FONT_FAMILY,
-      fill: "#1d4ed8",
-      width: bodyWidth,
-      wrap: "word",
-      draggable: false,
-      listening: false,
-    });
-    group.add(keywordText);
-    currentY += keywordText.height() + 8;
-  }
-
-  const mainTextNode = new Konva.Text({
-    x: cardPadding,
-    y: currentY,
-    text: mainText,
-    fontSize: 13,
-    fontFamily: DEFAULT_FONT_FAMILY,
-    fill: "#334155",
-    width: bodyWidth,
-    lineHeight: 1.6,
-    wrap: "word",
-    draggable: false,
-    listening: false,
-  });
-  group.add(mainTextNode);
-  currentY += mainTextNode.height();
-
-  if (actions.length > 0) {
-    currentY += 8;
-
-    actions.forEach((action: any) => {
-      const actionTextValue = String(
-        action?.description || action?.kind || ""
-      ).trim();
-      if (!actionTextValue) return;
-
-      const actionText = new Konva.Text({
-        x: cardPadding + 8,
-        y: currentY + 6,
-        text: actionTextValue,
-        fontSize: 12,
-        fontFamily: DEFAULT_FONT_FAMILY,
-        fill: "#475569",
-        width: bodyWidth - 16,
-        lineHeight: 1.4,
-        wrap: "word",
-        draggable: false,
-        listening: false,
-      });
-
-      const actionBg = new Konva.Rect({
-        x: cardPadding,
-        y: currentY,
-        width: bodyWidth,
-        height: actionText.height() + 12,
-        fill: "#f8fafc",
-        stroke: "#e2e8f0",
-        strokeWidth: 1,
-        cornerRadius: 8,
-        draggable: false,
-        listening: false,
-      });
-
-      group.add(actionBg);
-      group.add(actionText);
-      currentY += actionBg.height() + 6;
-    });
-  }
-
-  cardBg.height(currentY + cardPadding);
+  if (!group) return null;
 
   layer.add(group);
 
@@ -5393,7 +5440,7 @@ const ungroupSelectedNodes = (groupCandidate?: Konva.Node | null) => {
 };
 
 defineExpose({
-  createAiContentNode,
+  renderAiPopupSelectionToLayer,
   cancelAiAssist,
   getSelectedNodes,
   renderNodes,
@@ -5406,7 +5453,7 @@ defineExpose({
   clearAiGuideLine,
   resetNodesData,
   addTextAtPosition,
-  addResonanceGroupAtPosition,
+  addResonanceGroupAtPosition: mountResonanceCardGroup,
   selectCanvasNodes,
   addPCMAtPosition,
   addMemoryAtPosition,

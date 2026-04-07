@@ -213,6 +213,7 @@ import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
 import CropImagePopup from "./CropImagePopup.vue";
 import { createImageAndTextNodes, createTextNode } from "@/utils/canvasPositionUtils";
+import { drawAiPopupSelectionToCanvas } from "@/utils/aiPopupCanvasRenderer";
 import {
   CreateOnePCM,
   ConstellateSuggest,
@@ -2172,99 +2173,40 @@ const commitAiPopupSelection = async (
   const selectedItems = Array.isArray(data?.selectedItems) ? data.selectedItems.filter(Boolean) : [];
   const toolType = data?.toolType || aiPopupData.value?.toolType;
 
-  if (toolType === "Resonance") {
-    await submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
-
-    // Resonance 确认后：把选中的分析结果（主文本 + actions）依次绘制到 group 右侧。
-    const targetGroupNode = reflectTargetNode.value;
-    const anchor = getPopupPositionRightOfNode(targetGroupNode);
-    const resonanceItems = selectedItems;
-
-    if (resonanceItems.length === 0) {
-      ElMessage({
-        message: "请至少选择一条分析结果后再确认",
-        type: "warning",
-      });
-      return false;
-    }
-
-    if (!anchor?.stagePos || !konvaRef.value?.addResonanceGroupAtPosition) {
-      ElMessage({
-        message: "Resonance 文本绘制失败，画布未准备好",
-        type: "warning",
-      });
-      return false;
-    }
-
-    const rowGap = 16;
-    let currentY = anchor.stagePos.y;
-    const createdGroups = [];
-    resonanceItems.forEach((item) => {
-      const createdGroup = konvaRef.value.addResonanceGroupAtPosition(item, {
-        x: anchor.stagePos.x,
-        y: currentY,
-      }, { autoSelect: false });
-
-      if (createdGroup) {
-        createdGroups.push(createdGroup);
-      }
-
-      if (createdGroup?.getClientRect) {
-        const rect = createdGroup.getClientRect({
-          skipShadow: true,
-          skipStroke: false,
-        });
-        const height = Number(rect?.height) || 0;
-        currentY += Math.max(height, 0) + rowGap;
-      } else {
-        currentY += rowGap;
-      }
+  if (selectedItems.length === 0) {
+    ElMessage({
+      message:
+        toolType === "Resonance"
+          ? "请至少选择一条分析结果后再确认"
+          : "请先选择至少一项内容后再确认",
+      type: "warning",
     });
-
-    if (createdGroups.length > 0 && konvaRef.value?.selectCanvasNodes) {
-      konvaRef.value.selectCanvasNodes(createdGroups);
-    }
-
-    if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {
-      konvaRef.value.cancelAiAssist();
-    }
-    closeAiPopup({ preserveReflectContext });
-    if (clearCurrentNav) {
-      currentNav.value = "";
-    }
-    return true;
+    return false;
   }
 
-  if (toolType === "Constellate") {
-    // Constellate：先确认选中的图片，再把图片和标题一起绘制到画布。
+  if (toolType === "Resonance") {
+    await submitFeedbackConfirm(resolveResonanceConfirmedIds(data));
+  } else if (toolType === "Constellate") {
     await submitFeedbackConfirm(resolveConstellateConfirmedIds(data));
-
-    if (konvaRef.value?.createAiContentNode) {
-      konvaRef.value.createAiContentNode(
-        selectedItems,
-        String(data?.title || "").trim(),
-        {
-          flattenToNodes: true,
-          autoSelectOnFlatten: true,
-        }
-      );
-    }
   } else if (toolType === "Reflect") {
-    // Reflect：先确认当前问题卡片，再把卡片文本和 memory 中的图片绘制到画布。
     await submitFeedbackConfirm(resolveReflectConfirmedIds(data));
+  }
 
-    if (konvaRef.value?.createAiContentNode) {
-      konvaRef.value.createAiContentNode(
-        Array.isArray(selectedItems[0]?.memory)
-          ? selectedItems[0].memory.filter(Boolean)
-          : [],
-        String(selectedItems[0]?.text || "").trim(),
-        {
-          flattenToNodes: true,
-          autoSelectOnFlatten: false,
-        }
-      );
-    }
+  const drawResult = drawAiPopupSelectionToCanvas(
+    {
+      toolType,
+      title: String(data?.title || "").trim(),
+      selectedItems,
+    },
+    konvaRef.value
+  );
+
+  if (!drawResult?.success) {
+    ElMessage({
+      message: drawResult?.message || "AI 内容绘制失败",
+      type: "warning",
+    });
+    return false;
   }
 
   if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {

@@ -30,6 +30,8 @@ export const getImageProxyUrl = (url) => {
     return url;
 };
 
+// 根据 segment_group 内部真实内容，重算外框 frame 的包围盒。
+// 这个函数既用于首次创建，也用于复制/恢复后的运行时刷新。
 export const refreshSegmentGroupFrame = (groupNode, padding = 12) => {
     // segment_group 的外框不存固定尺寸，而是始终根据内部真实内容重新包裹。
     if (!(groupNode instanceof Konva.Group)) return;
@@ -82,6 +84,8 @@ export const refreshSegmentGroupFrame = (groupNode, padding = 12) => {
     frameRect.moveToBottom();
 };
 
+// 把 frame 刷新逻辑挂到当前 segment_group 实例上。
+// clone/历史恢复后，原先的运行时监听已经失效，必须重新绑定到新实例。
 export const bindSegmentGroupFrameSync = (groupNode, options = {}) => {
     // 复制、粘贴、历史恢复后，运行时事件不会跟着 clone 保留下来；
     // 这里统一把 frame 跟随逻辑重新挂回到当前 group 实例上。
@@ -109,11 +113,13 @@ export const bindSegmentGroupFrameSync = (groupNode, options = {}) => {
     groupNode.on(`dragmove${eventSuffix} transform${eventSuffix}`, refreshFrame);
 
     groupNode.getChildren().forEach((child) => {
+        // frame 自身不参与刷新触发，避免无意义的重复绑定。
         if (child === frameRect) return;
         child.off(eventSuffix);
         child.on(`dragmove${eventSuffix} transform${eventSuffix}`, refreshFrame);
     });
 
+    // 绑定完成后先主动刷新一次，保证初始 frame 与内容范围同步。
     refreshFrame();
 };
 

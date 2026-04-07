@@ -507,7 +507,6 @@ const handleConfirm = () => {
 
   emit("confirm", {
     toolType: props.toolType,
-    label: props.label,
     title: props.toolType === "Constellate" ? props.title || "" : "",
     selectedItems,
   });
