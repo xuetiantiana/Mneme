@@ -14,7 +14,7 @@
       <!-- 通用加载态 -->
       <div v-if="loading" class="loading-container">
         <el-icon class="is-loading"><Loading /></el-icon>
-        <span>正在生成建议...</span>
+        <span>loading...</span>
       </div>
 
       <!-- Constellate 专区：文本 + 可多选图片 -->
@@ -43,7 +43,7 @@
             </div>
           </button>
         </div>
-        <div v-else class="empty-state">暂无图片</div>
+        <div v-else class="empty-state">No Result</div>
       </div>
 
       <!-- Resonance 专区：analysis 列表 -->
@@ -75,7 +75,7 @@
             </div>
           </div>
         </template>
-        <div v-else class="empty-state">暂无分析结果</div>
+        <div v-else class="empty-state">No Result</div>
       </div>
 
       <!-- Reflect 专区：问题卡片列表 -->
@@ -112,7 +112,7 @@
       </div>
 
       <!-- 通用空态 -->
-      <div v-else class="popup-content empty-state">暂无建议</div>
+      <div v-else class="popup-content empty-state">No Result</div>
 
       <!-- 通用确认区 -->
       <div
@@ -127,7 +127,7 @@
           @click="handleConfirm"
           :disabled="confirmDisabled"
         >
-          确认
+          Confirm
         </el-button>
       </div>
     </div>

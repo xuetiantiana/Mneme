@@ -53,7 +53,7 @@
       <div class="panel-header" style="justify-content: center">
         <span>
           Working memory
-          <button class="fullscreen-btn" @click="toggleFullscreen" title="全屏">
+          <button class="fullscreen-btn" @click="toggleFullscreen" title="Full screen">
             <svg
               v-if="!isFullscreen"
               viewBox="0 0 24 24"

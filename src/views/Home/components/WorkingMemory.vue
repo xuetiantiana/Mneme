@@ -159,7 +159,7 @@
             class="send-menu-item"
             @click="handleRenderNodes(index)"
           >
-            发送到主题容器{{ index + 1 }}
+            {{ t("popupTexts.topicContainer.sendToTopic", { index: index + 1 }) }}
           </li>
         </ul>
       </el-popover>
@@ -173,6 +173,7 @@ import { ref, computed, defineProps, onMounted, onUnmounted, nextTick } from "vu
 import { Edit, Promotion, Search, Loading } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import Konva from "konva";
+import { useI18n } from "vue-i18n";
 import konvaComponent from "@/components/konvaComponent.vue";
 import AiQuestionPopup from "./AiQuestionPopup.vue";
 import WhisperInputPopup from "./WhisperInputPopup.vue";
@@ -204,6 +205,7 @@ const props = defineProps({
 
 const emit = defineEmits(["renderNodesToTopic"]);
 const pcmStore = usePCMStore();
+const { t } = useI18n();
 
 const memoryItems = ref([]);
 const konvaRef = ref(null);

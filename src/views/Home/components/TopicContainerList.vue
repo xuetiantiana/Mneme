@@ -1,7 +1,7 @@
 <template>
   <div class="topic-container-list">
     <el-button class="add-topic-btn" style="width: 10em" @click="addNewTopic"
-      >新建主题容器</el-button
+      >{{ t("popupTexts.topicContainer.addTopic") }}</el-button
     >
     <div class="topic-list-scroll">
       <div
@@ -16,15 +16,15 @@
           class="topic-checkbox"
         />
         <div class="topic-container-header">
-          <div class="topic-index">主题 {{ index + 1 }}</div>
+          <div class="topic-index">{{ t("popupTexts.topicContainer.topicIndex", { index: index + 1 }) }}</div>
           <div class="title-input-wrapper">
-            <span class="title-label">一句话主题：</span>
+            <span class="title-label">{{ t("popupTexts.topicContainer.titleLabel") }}</span>
             <div class="title-input-container">
               <el-input
                 width="100%"
                 type="text"
                 v-model="topic.title"
-                placeholder="请输入一句话主题"
+                :placeholder="t('popupTexts.topicContainer.titlePlaceholder')"
                 class="title-input"
               />
             </div>
@@ -32,11 +32,11 @@
         </div>
         <div class="topic-container-content">
           <div class="detail-item">
-            <span class="detail-label">细节描述：</span>
+            <span class="detail-label">{{ t("popupTexts.topicContainer.detailLabel") }}</span>
             <el-input
               type="textarea"
               v-model="topic.desc"
-              placeholder="请输入细节描述"
+              :placeholder="t('popupTexts.topicContainer.detailPlaceholder')"
               class="detail-textarea"
               :autosize="{ minRows: 2, maxRows: 4 }"
             />
@@ -56,7 +56,7 @@
     <div class="bottom-action">
       <el-tooltip
         :disabled="selectedCount > 0"
-        content="请先选择主题容器"
+        :content="t('popupTexts.topicContainer.selectTopicFirst')"
         placement="top"
       >
         <el-button
@@ -65,7 +65,7 @@
           :disabled="selectedCount === 0"
           :loading="loading"
           @click="handleGenerate"
-          >Generate</el-button
+          >{{ t("popupTexts.topicContainer.generate") }}</el-button
         >
       </el-tooltip>
     </div>
@@ -74,6 +74,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import konvaComponent from "@/components/konvaComponent.vue";
 import { CreateStory } from "@/service/api";
 import { useStoryStore } from "@/stores/storyStore";
@@ -81,12 +82,15 @@ import { ElMessage } from "element-plus";
 
 const storyStore = useStoryStore();
 const loading = ref(false);
+const { t } = useI18n();
+
+const createDefaultTopicDescription = () => t("popupTexts.topicContainer.defaultDescription");
 
 const topicContainers = ref([
   {
     title: "",
     selected: true,
-    desc: "人物：\n场景：\n 情节：",
+    desc: createDefaultTopicDescription(),
   },
 ]);
 
@@ -98,7 +102,7 @@ const addNewTopic = () => {
   const newTopic = {
     title: ``,
     selected: false,
-    desc: "人物：\n场景：\n 情节：",
+    desc: createDefaultTopicDescription(),
     image: null,
   };
   topicContainers.value.push(newTopic);
@@ -155,13 +159,17 @@ const handleGenerate = async () => {
       const description = topicContainers.value[i].desc;
 
       if (!title || !title.trim()) {
-        ElMessage.error(`第 ${containerIndex} 个主题容器的标题不能为空`);
+        ElMessage.error(
+          t("popupTexts.topicContainer.titleRequired", { index: containerIndex })
+        );
         loading.value = false;
         return;
       }
 
       if (!description || !description.trim()) {
-        ElMessage.error(`第 ${containerIndex} 个主题容器的描述不能为空`);
+        ElMessage.error(
+          t("popupTexts.topicContainer.descriptionRequired", { index: containerIndex })
+        );
         loading.value = false;
         return;
       }
@@ -173,7 +181,7 @@ const handleGenerate = async () => {
 
           if (!imageData) {
             ElMessage.error(
-              `第 ${containerIndex} 个主题容器的图片不能为空，请先在画布中添加内容`
+              t("popupTexts.topicContainer.imageRequired", { index: containerIndex })
             );
             loading.value = false;
             return;
@@ -186,7 +194,7 @@ const handleGenerate = async () => {
             (Array.isArray(canvasData) && canvasData.length === 0)
           ) {
             ElMessage.error(
-              `第 ${containerIndex} 个主题容器的画布内容不能为空`
+              t("popupTexts.topicContainer.canvasRequired", { index: containerIndex })
             );
             loading.value = false;
             return;
@@ -197,7 +205,9 @@ const handleGenerate = async () => {
             .filter((item) => item && typeof item === "object");
 
           if (parsedCanvasData.length === 0) {
-            ElMessage.error(`第 ${containerIndex} 个主题容器的画布数据格式无效`);
+            ElMessage.error(
+              t("popupTexts.topicContainer.canvasDataInvalid", { index: containerIndex })
+            );
             loading.value = false;
             return;
           }
@@ -211,7 +221,9 @@ const handleGenerate = async () => {
           });
         } catch (error) {
           console.error(`导出 Canvas ${i} 图片失败:`, error);
-          ElMessage.error(`第 ${containerIndex} 个主题容器的画布导出失败`);
+          ElMessage.error(
+            t("popupTexts.topicContainer.canvasExportFailed", { index: containerIndex })
+          );
           loading.value = false;
           return;
         }
@@ -223,7 +235,7 @@ const handleGenerate = async () => {
 
   // 检查是否有选中的主题容器
   if (result.length === 0) {
-    ElMessage.error("请至少选择一个主题容器");
+    ElMessage.error(t("popupTexts.topicContainer.selectAtLeastOne"));
     loading.value = false;
     return;
   }
@@ -247,13 +259,21 @@ const handleGenerate = async () => {
 
       // 触发创建成功事件
       emit("createSuccess", 0);
-      ElMessage.success("创建成功");
+      ElMessage.success(t("popupTexts.topicContainer.createSuccess"));
     } else {
-      ElMessage.error("创建失败:" + (res?.message || "未知错误"));
+      ElMessage.error(
+        t("popupTexts.topicContainer.createFailed", {
+          message: res?.message || t("popupTexts.topicContainer.unknownError"),
+        })
+      );
     }
   } catch (error) {
     console.error("CreateStory failed:", error);
-    ElMessage.error("创建失败:" + (error?.message || "未知错误"));
+    ElMessage.error(
+      t("popupTexts.topicContainer.createFailed", {
+        message: error?.message || t("popupTexts.topicContainer.unknownError"),
+      })
+    );
   } finally {
     loading.value = false;
   }
