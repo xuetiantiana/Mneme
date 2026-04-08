@@ -116,6 +116,9 @@ export const createReflectAiPopupNodes = ({
   fontFamily,
 } = {}) => {
   const theme = AI_POPUP_THEME.Reflect;
+  const maxWidth = 320;
+  const bodyPadding = 2;
+  const imageContentWidth = maxWidth - bodyPadding * 2;
   const group = isReturnGroup
     ? new Konva.Group({
         draggable: true,
@@ -126,9 +129,6 @@ export const createReflectAiPopupNodes = ({
   const nodesList = [];
 
   let currentY = 0;
-  const maxWidth = 220;
-  const bodyPadding = 10;
-  const imageContentWidth = maxWidth - bodyPadding * 2;
   const titleText = String(title || getFirstValidItem(selectedItems)?.text || "").trim();
 
   if (titleText) {
@@ -197,13 +197,15 @@ export const createReflectAiPopupNodes = ({
   let contentHeight = Math.max(currentY, 50);
 
   if (imageItems.length > 0) {
-    const gridColumnCount = 4;
-    const gridGap = 4;
+    // Reflect 确认后是主结果卡片，图片需要比弹窗内缩略图更大，
+    // 这里改成 3 列并提高卡片宽度，避免落到画布后过小。
+    const gridColumnCount = 3;
+    const gridGap = 2;
     const imageToReasonGap = 3;
-    const rowGap = 10;
+    const rowGap = 6;
     const imageCellWidth =
       (imageContentWidth - gridGap * (gridColumnCount - 1)) / gridColumnCount;
-    const imageCellHeight = 40;
+    const imageCellHeight = 72;
     const gridStartY = currentY + 8;
 
     const imageEntries = imageItems
@@ -351,6 +353,9 @@ export const createConstellateAiPopupNodes = ({
   fontFamily,
 } = {}) => {
   const theme = AI_POPUP_THEME.Constellate;
+  const maxWidth = 320;
+  const bodyPadding = 2;
+  const imageContentWidth = maxWidth - bodyPadding * 2;
   const group = isReturnGroup
     ? new Konva.Group({
         draggable: true,
@@ -360,9 +365,6 @@ export const createConstellateAiPopupNodes = ({
     : null;
   const nodesList = [];
   let currentY = 0;
-  const maxWidth = 220;
-  const bodyPadding = 10;
-  const imageContentWidth = maxWidth - bodyPadding * 2;
   const titleText = String(title || "").trim();
 
   if (titleText) {
