@@ -447,7 +447,7 @@ export const CreateStory = (data: any): any => {
 
 export const ReflectHint = (data: any): any => {
     console.log("ReflectHint data:", data);
-    return request.post("/api/reflect/hint", data);
+    // return request.post("/api/reflect/hint", data);
 
     const response = {
         success: true,
@@ -461,17 +461,22 @@ export const ReflectHint = (data: any): any => {
                 "行动层",
             ],
             perspectives: [
+                
                 {
                     id: "perspective-YYYY***-***",
-                    name: "过去的你",
+                    name: "Quiet Shape",
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "诗人",
+                    name: "Tender Failure",
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "人类学家",
+                    name: "Domestic Mending",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "Why Snap",
                 },
             ],
         },
@@ -484,68 +489,189 @@ export const ReflectHint = (data: any): any => {
     });
 };
 
+let ReflectQuestionsNum = 0;
 export const ReflectQuestions = (data: any): any => {
-    return request.post("/api/reflect/questions", data);
+    console.log("ReflectQuestions data:", data);
+    // return request.post("/api/reflect/questions", data);
+    ReflectQuestionsNum++;
+
+    const data1 =  [
+        {
+            id: "question-20260313050838889-937a186605",
+            text: "Do you remember the moment it snapped?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            // memory: [
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            // ],
+        },
+        {
+            id: "question-20260313050838889-1c49d24668",
+            text: "Why still place the broken orchid in the bottle?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+        {
+            id: "question-20260313050838889-2a85315616",
+            text: "What do you think caused it to break?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+    ];
+    const data2 =  [
+        {
+            id: "question-20260313050838889-937a186605",
+            text: "What made you treat it so gently, even after it broke?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            // memory: [
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            // ],
+        },
+        {
+            id: "question-20260313050838889-1c49d24668",
+            text: "What feels important about this now?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+        {
+            id: "question-20260313050838889-2a85315616",
+            text: "What made it stay in your mind?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+    ];
+
+    const data3 =  [
+        {
+            id: "question-20260313050838889-937a186605",
+            text: "If this moment meant one thing, what would it be?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            // memory: [
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            //     {
+            //         id: "",
+            //         image_url:
+            //             "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
+            //         text: "",
+            //     },
+            // ],
+        },
+        {
+            id: "question-20260313050838889-1c49d24668",
+            text: "If this became a picture-book scene, would it be about loss, care, or living with what cannot be repaired?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+        {
+            id: "question-20260313050838889-2a85315616",
+            text: "What feels bigger than the orchid here?",
+            type: "question",
+            depth: "感受层",
+            perspective: {
+                id: "perspective-20260313050635727-6f33954444",
+                name: "人类学家",
+                type: "perspective",
+                short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
+                created_at: "2026-03-13T05:06:35.727392Z",
+            },
+            memory: [],
+        },
+    ];
+
 
     const response = {
         success: true,
-        data: [
-            {
-                id: "question-20260313050838889-937a186605",
-                text: "这段记忆中，最先浮现在你脑海里的细节是什么？",
-                type: "question",
-                depth: "感受层",
-                perspective: {
-                    id: "perspective-20260313050635727-6f33954444",
-                    name: "人类学家",
-                    type: "perspective",
-                    short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
-                    created_at: "2026-03-13T05:06:35.727392Z",
-                },
-                memory: [
-                    {
-                        id: "",
-                        image_url:
-                            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-                        text: "",
-                    },
-                    {
-                        id: "",
-                        image_url:
-                            "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/data/pcm_units/PCM-20260309135530-54788a/crops/S_overlap_F1.png",
-                        text: "",
-                    },
-                ],
-            },
-            {
-                id: "question-20260313050838889-1c49d24668",
-                text: "如果要用一种颜色来形容此刻的感受，你会选什么？",
-                type: "question",
-                depth: "感受层",
-                perspective: {
-                    id: "perspective-20260313050635727-6f33954444",
-                    name: "人类学家",
-                    type: "perspective",
-                    short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
-                    created_at: "2026-03-13T05:06:35.727392Z",
-                },
-                memory: [],
-            },
-            {
-                id: "question-20260313050838889-2a85315616",
-                text: "这段记忆让你想起了生活中的哪个时刻？",
-                type: "question",
-                depth: "感受层",
-                perspective: {
-                    id: "perspective-20260313050635727-6f33954444",
-                    name: "人类学家",
-                    type: "perspective",
-                    short_prompt: "探寻深圳都市商场日常中的文化符号与仪式感。",
-                    created_at: "2026-03-13T05:06:35.727392Z",
-                },
-                memory: [],
-            },
-        ],
+        data: ReflectQuestionsNum === 1 ? data1 : ReflectQuestionsNum === 2 ? data2 : data3,
     };
 
     return new Promise(function (resolve) {
@@ -557,8 +683,7 @@ export const ReflectQuestions = (data: any): any => {
 
 export const ConstellateHint = (data: any): any => {
     console.log("ConstellateHint data:", data);
-    return request.post("/api/constellate/hint", data);
-
+    // return request.post("/api/constellate/hint", data);
     const response = {
         success: true,
         data: {
@@ -573,15 +698,19 @@ export const ConstellateHint = (data: any): any => {
             perspectives: [
                 {
                     id: "perspective-YYYY***-***",
-                    name: "过去的你11222",
+                    name: "After Repair",
                 },
                 {
-                    id: "perspective-YYYY***-***",
-                    name: "诗人",
+                    id: "Soft Glitch",
+                    name: "Soft Glitch",
                 },
                 {
-                    id: "perspective-YYYY***-***",
-                    name: "人类学家",
+                    id: "Gentle Ruin ",
+                    name: "Gentle Ruin",
+                },
+                {
+                    id: "Quiet Survival ",
+                    name: "Quiet Survival",
                 },
             ],
         },
@@ -594,30 +723,84 @@ export const ConstellateHint = (data: any): any => {
     });
 };
 
+let ConstellateSuggestNum = 0;
 export const ConstellateSuggest = (data: any): any => {
-    return request.post("/api/constellate/suggest", data);
+    // return request.post("/api/constellate/suggest", data);
 
+    ConstellateSuggestNum++;
+    const data1= {
+  "title": "What cannot be restored may still be revered. \nWhat do you still keep, even broken?",
+  "images": [
+    {
+      "image_id": "img-upload-pcm26",
+      "image_url": "/image_for_video/constellate1_1.png",
+      "pcm_ref": "PCM-26",
+      "reason": "A rough saw becomes music, turning damage into a new kind of value."
+    },
+    {       
+        "image_id": "img-upload-pcm24",
+      "image_url": "/image_for_video/constellate1_2.png",
+      "pcm_ref": "PCM-24",
+      "reason": "A children's book kept for its imperfect truth about an adult self."
+    },
+    {
+      "image_id": "img-upload-pcm46",
+      "image_url": "/image_for_video/constellate1_3.png",
+      "pcm_ref": "PCM-46",
+      "reason": "A rustic ceramic piece feels worth keeping even when its use is incomplete."
+    }
+  ]
+}
+    const data2 = {
+  "title": "A missing part can open a larger horizon. \nWhat did loss allow you to see?",
+  "images": [
+    {
+      "image_id": "img-upload-pcm31",
+      "image_url": "/image_for_video/constellate2_1.png",
+      "pcm_ref": "PCM-31",
+      "reason": "The sea view opened a wider future and a new way of seeing life."
+    },
+    {
+      "image_id": "img-upload-pcm48",
+      "image_url": "/image_for_video/constellate2_2.png",
+      "pcm_ref": "PCM-48",
+      "reason": "A sculpture carries quiet force, as if absence makes its presence stronger."
+    },
+    {
+      "image_id": "img-upload-pcm58",
+      "image_url": "/image_for_video/constellate2_3.png",
+      "pcm_ref": "PCM-58",
+      "reason": "Venus de Milo shows how a missing part can deepen awe instead of reduce it."
+    }
+  ]
+}
+
+    const data3 = {
+  "title": "Beauty begins where precision loosens. \nWhen did imperfection feel more alive?",
+  "images": [
+    {
+      "image_id": "img-upload-pcm12",
+        "image_url": "/image_for_video/constellate3_1.png",
+      "pcm_ref": "PCM-12",
+      "reason": "The wool version is not exact, but its awkwardness gives it charm."
+    },
+    {
+      "image_id": "img-upload-pcm35",
+      "image_url": "/image_for_video/constellate3_2.png",
+      "pcm_ref": "PCM-35",
+      "reason": "The handmade cat bag feels vivid because its shape is strange and slightly off."
+    },
+    {
+      "image_id": "img-upload-pcm41",
+      "image_url": "/image_for_video/constellate3_3.png",
+      "pcm_ref": "PCM-41",
+      "reason": "These odd dolls feel more alive because their details are weirdly imperfect."
+    }
+  ]
+}
     const response = {
         success: true,
-        data: {
-            title: "constellate text",
-            images: [
-                {
-                    image_url:
-                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-                    image_id: "img-crop-20260312161530-a8f3c1d2b0",
-                    pcm_ref: "PCM-yyy",
-                    reason: "画中白鹿被金色光芒环绕，与'包裹'的温暖感共鸣",
-                },
-                {
-                    image_url:
-                        "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/pcm/PCM-20260314082828077-88c89eceac/uploads/20260314082828_0_dc4c1a5b26ae.png",
-                    image_id: "memory-20260313050838889-937a186605",
-                    type: "memory",
-                    text: "这是一段记忆的文本描述，包含了丰富的细节和情感。它可能描述了一个特定的事件、场景或经历，唤起了人们内心深处的共鸣和回忆。这段文本可能充满了生动的语言和形象的描绘，让人仿佛身临其境，感受到当时的氛围和情绪。无论是快乐、悲伤、激动还是平静，这段记忆文本都承载着独特的故事和意义，成为人们心中珍贵的回忆之一。",
-                },
-            ],
-        },
+        data: ConstellateSuggestNum === 1 ? data1 : ConstellateSuggestNum === 2 ? data2 : data3,
     };
 
     return new Promise(function (resolve) {
@@ -630,7 +813,7 @@ export const ConstellateSuggest = (data: any): any => {
 
 export const ResonanceHint = (data: any): any => {
     console.log("ResonanceHint data:", data);
-    return request.post("/api/resonance/hint", data);
+    // return request.post("/api/resonance/hint", data);
 
     const response = {
         success: true,
@@ -646,15 +829,19 @@ export const ResonanceHint = (data: any): any => {
             perspectives: [
                 {
                     id: "perspective-YYYY***-***",
-                    name: "过去的你",
+                    name: "After Function",
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "诗人",
+                    name: "Resonant Scar",
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "人类学家",
+                    name: "Sacred Contraption",
+                },
+                {
+                    id: "perspective-YYYY***-***",
+                    name: "Earned Reverence",
                 },
             ],
         },
@@ -668,112 +855,74 @@ export const ResonanceHint = (data: any): any => {
 };
 
 export const ResonanceAnalysis = (_data: any): any => {
-    return request.post("/api/resonance/analysis", _data);
+    // return request.post("/api/resonance/analysis", _data);
 
     const response = {
         success: true,
         data: {
     "analysis": [
         {
-            "id": "analysis-20260318102859808-6eb5255b0f",
-            "type": "analysis",
-            "kind": "similarity",
-            "level": 1,
-            "keyword": "温暖亲切",
-            "text": "这两个记忆元素都表达了对宠物店环境的温暖亲切感，尤其是在情感和美学的微特征上高度一致，因此揭示了个人放松和慰藉的本质渴望。",
-            "confidence": 0.88,
-            "created_at": "2026-03-18T10:28:59.808Z",
-            "actions": [
-                {
-                    "id": "action-20260318102859808-15126c87d4",
-                    "type": "action",
-                    "kind": "whisper",
-                    "description": "为这组温暖亲切的元素写一段低语注释，捕捉其情感共鸣",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-bff8d9b560",
-                    "type": "action",
-                    "kind": "crop",
-                    "description": "裁取图片中温暖亲切的核心画面，突出这份感受",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-13a88e717d",
-                    "type": "action",
-                    "kind": "add_memory",
-                    "description": "补充一段曾在类似环境中获得温暖亲切的记忆",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                }
-            ]
+          "kind": "sequence",
+          "level": 4,
+          "keyword": "Retired Voice",
+          "text": "A story could grow from an object that fails at its assigned task, then slowly learns it can move people in another way.",
+          "confidence": 0.89,
+          "actions": [
+            {
+              "kind": "whisper",
+              "description": "Write one line about a life beginning after usefulness."
+            },
+            {
+              "kind": "crop",
+              "description": "Crop the detail that feels closest to a mouth or voice."
+            },
+            {
+              "kind": "add_memory",
+              "description": "Add a memory of quiet attachment to an old object."
+            }
+          ]
         },
         {
-            "id": "analysis-20260318102859808-c42ad2fbe8",
-            "type": "analysis",
-            "kind": "contrast",
-            "level": 2,
-            "keyword": "仅剩思念",
-            "text": "元素 1 的“怡然自得”和元素 2 的“仅剩思念”略显对比，尽管表面相似，却反映出个人内心存在的一丝差异状态。",
-            "confidence": 0.75,
-            "created_at": "2026-03-18T10:28:59.808Z",
-            "actions": [
-                {
-                    "id": "action-20260318102859808-744065fdd7",
-                    "type": "action",
-                    "kind": "whisper",
-                    "description": "为这组对比写一段低语注释，探讨内心差异感",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-10ae2c3c74",
-                    "type": "action",
-                    "kind": "crop",
-                    "description": "裁取图片中体现微小情感差异的细节",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-d5cfa00b71",
-                    "type": "action",
-                    "kind": "add_memory",
-                    "description": "补充一段感受到内心微小变化的记忆",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                }
-            ]
+          "kind": "metaphor",
+          "level": 4,
+          "keyword": "Sacred Scrap",
+          "text": "This could become a world where damaged things gather followers because their flaws make them more believable than perfect ones.",
+          "confidence": 0.85,
+          "actions": [
+            {
+              "kind": "whisper",
+              "description": "Frame the group as devotion to imperfect things."
+            },
+            {
+              "kind": "crop",
+              "description": "Crop the flaw that feels most magnetic."
+            },
+            {
+              "kind": "add_memory",
+              "description": "Add a memory of being drawn to something visibly imperfect."
+            }
+          ]
         },
         {
-            "id": "analysis-20260318102859808-9d45cf4f8c",
-            "type": "analysis",
-            "kind": "sequence",
-            "level": 3,
-            "keyword": "日常放松",
-            "text": "这两个记忆元素反映了个体在宠物店中获得日常放松感的过程，揭示了日常环境如何引导到心灵休憩的轨迹。",
-            "confidence": 0.65,
-            "created_at": "2026-03-18T10:28:59.808Z",
-            "actions": [
-                {
-                    "id": "action-20260318102859808-91455d5c3e",
-                    "type": "action",
-                    "kind": "whisper",
-                    "description": "为这段放松过程写下低语注释，探索日常放松的微妙变化",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-f23c4dbc56",
-                    "type": "action",
-                    "kind": "crop",
-                    "description": "裁取图片中展示日常放松轨迹的部分",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                },
-                {
-                    "id": "action-20260318102859808-47d990e7f7",
-                    "type": "action",
-                    "kind": "add_memory",
-                    "description": "补充一段有关日常环境如何帮助心灵休憩的记忆",
-                    "created_at": "2026-03-18T10:28:59.808Z"
-                }
-            ]
-        }
-    ]
+          "kind": "echo",
+          "level": 4,
+          "keyword": "After Duty",
+          "text": "The pair suggests a character who was built to serve, but becomes unforgettable only after leaving its proper function behind.",
+          "confidence": 0.82,
+          "actions": [
+            {
+              "kind": "whisper",
+              "description": "Write a line about identity arriving after duty ends."
+            },
+            {
+              "kind": "crop",
+              "description": "Crop the detail that feels most like a scar or emblem."
+            },
+            {
+              "kind": "add_memory",
+              "description": "Add a memory of someone or something changed by no longer being needed."
+            }
+          ]}]
 },
     };
 
@@ -810,29 +959,29 @@ export const ResonanceFuse = (_data: any): any => {
 
 
 export const ResonanceFuseNew = (_data: any): any => {
-    return request.post("/api/resonance/fuse_new", _data);
+    // return request.post("/api/resonance/fuse_new", _data);
 
     const response = {
         success: true,
         data: {
   "id": "fuse-20260331100000000-a1b2c3d4e5",
   "type": "fuse_new",
-  "description": "小猫从窗台上醒来，阳光正好落在它蜷曲的尾巴尖上，把那一小撮毛照得透亮。它伸了个懒腰，跳下窗台，穿过满是旧书和干花的走廊，每一步都踩出细碎的灰尘光斑。走廊尽头是一扇半开的门，门外是被雨洗过的小院，石板缝里长出青苔和一株不知名的小花，小猫趴在门槛上，眯着眼看雨后的水洼里映出整片天空的倒影。",
+  "description": "一段故事描述",
   "keywords": ["窗台暖光", "旧书走廊", "雨后小院"],
   "images": [
     {
       "index": 0,
-      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-0.png",
+            "image_url": "/image_for_video/fuse1_1.png",
       "image_prompt": "A soft picture-book collage illustration of a small tabby cat waking up on a sunlit windowsill..."
     },
     {
       "index": 1,
-      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-1.png",
+            "image_url": "/image_for_video/fuse1_2.png",
       "image_prompt": "A soft picture-book collage illustration of a narrow corridor filled with old books and dried flowers..."
     },
     {
       "index": 2,
-      "image_url": "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net/api/images/test_user/resonance/fuse_new/fuse-xxx/img-gen-xxx-2.png",
+            "image_url": "/image_for_video/fuse1_3.png",
       "image_prompt": "A soft picture-book collage illustration of a rain-washed courtyard with moss between stone tiles..."
     }
   ],
@@ -1042,7 +1191,8 @@ export const cropUpdate = (data: any): any => {
 
 export const whisperUpdate = (data: any): any => {
     console.log("ConstellateHint data:", data);
-    return request.post("/api/whisper/add ", data);
+    // return request.post("/api/whisper/add ", data);
+
 
     const response = {
         success: true,
@@ -1051,73 +1201,13 @@ export const whisperUpdate = (data: any): any => {
                 {
                     interpretation_ref:
                         "PCM-20260314055223235-372f15e117-interp-3",
-                    text: "宠物陪伴",
+                    text: ReflectQuestionsNum == 1 ? "Not ready to \nthrow it away" : ReflectQuestionsNum == 2 ? "Caring for what \ncannot be repaired" : "A robot learns to live\n with its brokenness",
                     kind: "meaning",
-                    x: -115,
-                    y: 107,
+                    x: ReflectQuestionsNum== 1 ? 170 : ReflectQuestionsNum== 2 ? 340 : 540,
+                    y: 0,
                     r: 30,
                     specificity: 4,
                     id: "PCM-20260314055223235-372f15e117-bubble-3",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-4",
-                    text: "放松愉悦",
-                    kind: "emotion",
-                    x: -152,
-                    y: 39,
-                    r: 30,
-                    specificity: 4,
-                    id: "PCM-20260314055223235-372f15e117-bubble-4",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-5",
-                    text: "怀念温暖",
-                    kind: "emotion",
-                    x: -152,
-                    y: -39,
-                    r: 30,
-                    specificity: 5,
-                    id: "PCM-20260314055223235-372f15e117-bubble-5",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-6",
-                    text: "毛软蓬松",
-                    kind: "sensory",
-                    x: -115,
-                    y: -107,
-                    r: 30,
-                    specificity: 2,
-                    id: "PCM-20260314055223235-372f15e117-bubble-6",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-8",
-                    text: "温馨柔和",
-                    kind: "aesthetic",
-                    x: -50,
-                    y: -149,
-                    r: 30,
-                    specificity: 3,
-                    id: "PCM-20260314055223235-372f15e117-bubble-7",
-                    type: "bubble",
-                },
-                {
-                    interpretation_ref:
-                        "PCM-20260314055223235-372f15e117-interp-9",
-                    text: "画面静谧",
-                    kind: "aesthetic",
-                    x: 27,
-                    y: -155,
-                    r: 30,
-                    specificity: 3,
-                    id: "PCM-20260314055223235-372f15e117-bubble-8",
                     type: "bubble",
                 },
             ],
@@ -1133,7 +1223,7 @@ export const whisperUpdate = (data: any): any => {
 
 export const feedbackConfirm = (data: any): any => {
     console.log("feedbackConfirm data:", data);
-    return request.post("/api/feedback/confirm", data);
+    // return request.post("/api/feedback/confirm", data);
 
     const response = {
         success: true,
