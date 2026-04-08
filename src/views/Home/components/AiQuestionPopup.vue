@@ -7,7 +7,7 @@
         :class="{ draggable: isDraggableView }"
         @mousedown="handleHeaderMouseDown"
       >
-        <span>AI Tool - {{ toolType }}</span>
+        <span>AI Tool - {{ displayToolType }}</span>
         <el-icon class="close-icon" @click="handleCancel"><Close /></el-icon>
       </div>
 
@@ -364,6 +364,15 @@ const isDraggableView = computed(
   () => props.toolType === "Reflect" || props.toolType === "Constellate"
 );
 const isConstellateView = computed(() => props.toolType === "Constellate");
+const displayToolType = computed(() => {
+  if (props.toolType === "Constellate") {
+    return "Connect";
+  }
+  if (props.toolType === "Resonance") {
+    return "Compose";
+  }
+  return props.toolType;
+});
 
 // Constellate：必须至少选择 1 张图片
 // Reflect：必须选择 1 个问题项

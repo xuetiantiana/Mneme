@@ -213,6 +213,7 @@ const whisperPopupRef = ref(null);
 const wmContainer = ref(null);
 const selectedNodesData = ref([]);
 const currentNav = ref(""); // 当前选中的导航项
+const activeAiAssistTool = ref(""); // 当前仍保留在画布上的 AI 环所属工具
 const reflectSelectedNodes = ref(null); // Reflect 模式下选中的节点
 const reflectTargetNode = ref(null); // Reflect 对应的真实 Konva 节点
 const reflectTargetType = ref(""); // Reflect 对应节点类型
@@ -253,6 +254,40 @@ const isWmGroupNode = (node) => {
   const selectedType = String(node?.getAttr?.("customType") || "");
   const selectedName = String(node?.name?.() || "");
   return selectedType === "group" && selectedName === "wm-group";
+};
+
+const AI_ASSIST_TOOLS = new Set(["Reflect", "Constellate", "Resonance"]);
+
+const isAiAssistTool = (tool) => AI_ASSIST_TOOLS.has(String(tool || ""));
+
+// 统一读取“当前还有效的 AI 主工具”。
+// 优先取仍挂在画布上的环所属工具；若环刚创建但状态尚未完全同步，
+// 再回退到 currentNav，避免后续请求和弹窗标题拿到空工具名。
+const getCurrentAiAssistTool = (fallback = "") =>
+  String(activeAiAssistTool.value || currentNav.value || fallback || "");
+
+// 统一重置 AI 环相关的前端 UI 状态。
+// 这里只处理 WorkingMemory 本地状态，不主动调用 Konva 销毁环；
+// 是否真正销毁画布上的 AI 环由调用方自行决定，避免副作用混在一起。
+const resetAiAssistUiState = ({ clearCurrentNav = false } = {}) => {
+  activeAiAssistTool.value = "";
+  if (clearCurrentNav && isAiAssistTool(currentNav.value)) {
+    currentNav.value = "";
+  }
+  closeAiPopup();
+};
+
+// 如果当前确实存在 AI 环，则统一执行“销毁画布环 + 清理本地 UI 状态”。
+// 返回值用于告诉调用方这次是否真的处理了一个激活中的 AI assist，
+// 这样按钮点击逻辑可以根据结果决定是否继续后续流程。
+const cancelActiveAiAssist = ({ clearCurrentNav = false } = {}) => {
+  if (!isAiAssistTool(activeAiAssistTool.value)) {
+    return false;
+  }
+
+  konvaRef.value?.cancelAiAssist?.();
+  resetAiAssistUiState({ clearCurrentNav });
+  return true;
 };
 
 // 只要祖先链上已经进入某个 wm-group，就不允许再次参与顶部 Group，
@@ -414,8 +449,8 @@ const primaryTopNavItems = computed(() => [
     key: "Reflect",
     label: "Reflect",
     hintKey: "Reflect",
-    active: currentNav.value === "Reflect",
-    disabled: currentNav.value !== "Reflect" && !canUseReflect.value,
+    active: activeAiAssistTool.value === "Reflect",
+    disabled: activeAiAssistTool.value !== "Reflect" && currentNav.value !== "Reflect" && !canUseReflect.value,
     loading: hintLoading.value && pendingAiTool.value === "Reflect",
     onClick: () => handleNavClick("Reflect"),
   },
@@ -423,8 +458,11 @@ const primaryTopNavItems = computed(() => [
     key: "Constellate",
     label: "Connect",
     hintKey: "Constellate",
-    active: currentNav.value === "Constellate",
-    disabled: currentNav.value !== "Constellate" && !canUseConstellate.value,
+    active: activeAiAssistTool.value === "Constellate",
+    disabled:
+      activeAiAssistTool.value !== "Constellate" &&
+      currentNav.value !== "Constellate" &&
+      !canUseConstellate.value,
     loading: hintLoading.value && pendingAiTool.value === "Constellate",
     onClick: () => handleNavClick("Constellate"),
   },
@@ -432,8 +470,11 @@ const primaryTopNavItems = computed(() => [
     key: "Resonance",
     label: "Compose",
     hintKey: "Resonance",
-    active: currentNav.value === "Resonance",
-    disabled: currentNav.value !== "Resonance" && !canUseResonance.value,
+    active: activeAiAssistTool.value === "Resonance",
+    disabled:
+      activeAiAssistTool.value !== "Resonance" &&
+      currentNav.value !== "Resonance" &&
+      !canUseResonance.value,
     loading: hintLoading.value && pendingAiTool.value === "Resonance",
     onClick: () => handleNavClick("Resonance"),
   },
@@ -809,26 +850,16 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
 
   // 顶部 AI 工具按钮再次点击时，统一视为“关闭当前环”，
   // 不继续请求 hint，也不因为当前已切到别的节点而重建新环。
-  if (currentNav.value === toolType) {
-    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
-      konvaRef.value.cancelAiAssist();
+  if (activeAiAssistTool.value === toolType) {
+    cancelActiveAiAssist();
+    if (currentNav.value === toolType) {
+      currentNav.value = "";
     }
-    closeAiPopup();
-    currentNav.value = "";
     return;
   }
 
   // 如果之前有其他工具处于激活状态，先取消之前的
-  if (
-    currentNav.value === "Reflect" ||
-    currentNav.value === "Constellate" ||
-    currentNav.value === "Resonance"
-  ) {
-    if (konvaRef.value && konvaRef.value.cancelAiAssist) {
-      konvaRef.value.cancelAiAssist();
-    }
-    closeAiPopup();
-  }
+  cancelActiveAiAssist();
 
   if (!konvaRef.value || !konvaRef.value.triggerAiAssist) {
     ElMessage({
@@ -931,8 +962,9 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
       type: "warning",
     });
   } else {
-    // 启动成功，设置当前工具状态
+    // currentNav 表示当前操作上下文；activeAiAssistTool 表示当前画布上保留的 AI 环属于哪个工具。
     currentNav.value = toolType;
+    activeAiAssistTool.value = toolType;
   }
 };
 
@@ -986,10 +1018,10 @@ const handleNavClick = async (navItem) => {
             type: "warning",
           });
         } else {
-          ElMessage({
-            message: `分组成功，已圈住 ${result.count || 0} 个节点`,
-            type: "success",
-          });
+          // ElMessage({
+          //   message: `分组成功，已圈住 ${result.count || 0} 个节点`,
+          //   type: "success",
+          // });
         }
       } else {
         ElMessage({
@@ -1079,16 +1111,7 @@ const handleNavClick = async (navItem) => {
     }
 
     // 其他导航项点击逻辑，切换时取消 AI 状态
-    if (
-      currentNav.value === "Reflect" ||
-      currentNav.value === "Constellate" ||
-      currentNav.value === "Resonance"
-    ) {
-      if (konvaRef.value && konvaRef.value.cancelAiAssist) {
-        konvaRef.value.cancelAiAssist();
-      }
-      closeAiPopup();
-    }
+    cancelActiveAiAssist();
     closeWhisperPopup();
     currentNav.value = navItem;
 
@@ -1356,7 +1379,7 @@ const runResonanceFuse = async () => {
   if (konvaRef.value?.cancelAiAssist) {
     konvaRef.value.cancelAiAssist();
   }
-  closeAiPopup();
+  resetAiAssistUiState();
   currentNav.value = "";
 
   const payload = buildAiBasePayload(
@@ -1411,10 +1434,10 @@ const runResonanceFuse = async () => {
       layer.batchDraw();
     }
 
-    ElMessage({
-      message: "Fuse 已生成多图节点",
-      type: "success",
-    });
+    // ElMessage({
+    //   message: "Fuse 已生成多图节点",
+    //   type: "success",
+    // });
   } catch (error) {
     console.error("ResonanceFuse failed:", error);
     const detail = String(
@@ -1583,6 +1606,7 @@ const resetCropPopupState = () => {
 const exitReflectMode = () => {
   // 工具跳转时仅退出 Reflect 交互态，不主动关闭已打开的 AI 弹窗。
   currentNav.value = "";
+  activeAiAssistTool.value = "";
 
   if (konvaRef.value && konvaRef.value.clearAiGuideLine) {
     konvaRef.value.clearAiGuideLine();
@@ -1780,10 +1804,10 @@ const handleCropConfirm = async ({ dataUrl }) => {
     }
 
     currentNav.value = "";
-    ElMessage({
-      message: "图片分析完成，已在主图周边生成 segment 与泡泡",
-      type: "success",
-    });
+    // ElMessage({
+    //   message: "图片分析完成，已在主图周边生成 segment 与泡泡",
+    //   type: "success",
+    // });
   } catch (error) {
     console.error("cropUpdate failed:", error);
     ElMessage({
@@ -1899,10 +1923,10 @@ const handleWhisperSubmit = async (payload) => {
 
       closeWhisperPopup();
       currentNav.value = "";
-      ElMessage({
-        message: "记忆创建成功，已添加到列表与画布",
-        type: "success",
-      });
+      // ElMessage({
+      //   message: "记忆创建成功，已添加到列表与画布",
+      //   type: "success",
+      // });
     } catch (error) {
       console.error("CreateOnePCM failed:", error);
       ElMessage({
@@ -1981,10 +2005,10 @@ const handleWhisperSubmit = async (payload) => {
 
       closeWhisperPopup();
       currentNav.value = "";
-      ElMessage({
-        message: "分析完成，已在该 segment 周边生成泡泡",
-        type: "success",
-      });
+      // ElMessage({
+      //   message: "分析完成，已在该 segment 周边生成泡泡",
+      //   type: "success",
+      // });
     } catch (error) {
       console.error("whisperUpdate failed:", error);
       ElMessage({
@@ -2040,7 +2064,7 @@ const handleAiRingClick = async (data) => {
 
   aiPopupData.value = {
     label: data.label,
-    toolType: `${currentNav.value || "Reflect"}`, // 动态设置标题
+    toolType: `${getCurrentAiAssistTool("Reflect")}`, // 动态设置标题
     lineLength: data.lineLength,
     position: {
       // 直接保留视口坐标，供 fixed 弹窗立即定位。
@@ -2064,7 +2088,7 @@ const handleAiRingClick = async (data) => {
   aiPopupVisible.value = true;
 
   const hintBasePayload = buildAiBasePayload(
-    currentNav.value,
+    getCurrentAiAssistTool(),
     reflectSelectedNodes.value,
     reflectTargetNode.value
   );
@@ -2078,7 +2102,7 @@ const handleAiRingClick = async (data) => {
   // 构建请求参数
   const requestData = {
     ...hintBasePayload,
-    ...(currentNav.value === "Resonance"
+    ...(getCurrentAiAssistTool() === "Resonance"
       ? { dimension: selectedDimensionOrPerspective }
       : { perspective: selectedDimensionOrPerspective }),
     depth: {
@@ -2090,7 +2114,7 @@ const handleAiRingClick = async (data) => {
   aiPopupData.value.reflectRequestData = requestData;
   console.log("requestData", requestData);
 
-  await fetchAiPopupSuggestions(currentNav.value, requestData);
+  await fetchAiPopupSuggestions(getCurrentAiAssistTool(), requestData);
 };
 
 const fetchAiPopupSuggestions = async (toolType, requestData) => {
@@ -2134,20 +2158,14 @@ const fetchAiPopupSuggestions = async (toolType, requestData) => {
 };
 
 const handleAiPopupRegenerate = async () => {
-  const toolType = aiPopupData.value?.toolType || currentNav.value;
+  const toolType = aiPopupData.value?.toolType || getCurrentAiAssistTool();
   const requestData = aiPopupData.value?.reflectRequestData;
   await fetchAiPopupSuggestions(toolType, requestData);
 };
 
 const handleAiModeChange = (isActive) => {
-  if (
-    !isActive &&
-    (currentNav.value === "Reflect" ||
-      currentNav.value === "Constellate" ||
-      currentNav.value === "Resonance")
-  ) {
-    currentNav.value = "";
-    closeAiPopup();
+  if (!isActive) {
+    resetAiAssistUiState({ clearCurrentNav: true });
   }
 };
 
