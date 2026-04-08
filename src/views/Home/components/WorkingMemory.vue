@@ -306,7 +306,7 @@ const NAV_HINTS = {
 
 const getNavHint = (navItem) => NAV_HINTS[navItem] || "";
 // 把 Konva 当前选中节点标准化成单选判定需要的数据，
-// 顶部 Reflect / Connect / Compass / Fuse 都基于这一组计算结果控制禁用态。
+// 顶部 Reflect / Connect / Compose / Fuse 都基于这一组计算结果控制禁用态。
 const selectedCanvasNodes = computed(() =>
   Array.isArray(selectedNodesData.value) ? selectedNodesData.value.filter(Boolean) : []
 );
@@ -378,7 +378,7 @@ const canUseConstellate = computed(() => {
     selectedCanvasNodeIsGroup.value
   );
 });
-// Resonance/Compass: 仅允许单选由 Group 按钮创建出的 wm-group。
+// Resonance/Compose: 仅允许单选由 Group 按钮创建出的 wm-group。
 const canUseResonance = computed(() => {
   if (hintLoading.value || selectedCanvasNodes.value.length !== 1) {
     return false;
@@ -426,7 +426,7 @@ const primaryTopNavItems = computed(() => [
   },
   {
     key: "Resonance",
-    label: "Compass",
+    label: "Compose",
     hintKey: "Resonance",
     active: currentNav.value === "Resonance",
     disabled: currentNav.value !== "Resonance" && !canUseResonance.value,

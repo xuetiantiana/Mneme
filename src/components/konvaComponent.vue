@@ -253,6 +253,7 @@ type AiRingThemeConfig = {
 };
 
 const defaultAiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
+const AI_RING_WIDTH = 500;
 const AI_RING_BAND_STROKE = "rgba(255, 255, 255, 0.45)";
 const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
 const AI_GUIDE_START_COLOR = "#3FA7FF";
@@ -922,7 +923,7 @@ const updateAiAssistPosition = () => {
   const innerRadius = diagonal / 2 / scaleX;
 
   aiAssistState.innerRadius = innerRadius;
-  aiAssistState.outerRadius = innerRadius + 300; // 固定画布坐标宽度，缩放时视觉宽度随之变化
+  aiAssistState.outerRadius = innerRadius + AI_RING_WIDTH; // 固定画布坐标宽度，缩放时视觉宽度随之变化
 
   // 更新所有扇形的位置和半径
   aiRingSlices.forEach((group) => {
@@ -1556,7 +1557,7 @@ const triggerAiAssist = () => {
     centerX: localPos.x,
     centerY: localPos.y,
     innerRadius,
-    outerRadius: innerRadius + 200, // 外圆半径比内圆大 200（画布坐标）
+    outerRadius: innerRadius + AI_RING_WIDTH, // 外圆半径比内圆大 AI_RING_WIDTH（画布坐标）
     target: target,
   };
 
@@ -1571,7 +1572,8 @@ const triggerAiAssist = () => {
     const group = new Konva.Group({
       x: aiAssistState.centerX,
       y: aiAssistState.centerY,
-      listening: true, // 开启监听，拦截点击事件
+      draggable: false,
+      listening: false, // 开启监听，拦截点击事件
       customType: "ai-assist-slice-group",
     });
 
@@ -1610,6 +1612,7 @@ const triggerAiAssist = () => {
         shadowColor: band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
         shadowBlur: band === 0 ? 8 : 0,
         shadowOffset: band === 0 ? { x: 0, y: 1 } : undefined,
+        draggable: false,
         listening: true,
       });
       group.add(bandArc);
@@ -3623,6 +3626,11 @@ const updateDraggableState = () => {
   const isSelectMode = currentTool.value === "select";
 
   children.forEach((child) => {
+    if (isAiAssistNode(child)) {
+      child.draggable(false);
+      return;
+    }
+
     if (child?.name?.() === "group-ungroup-btn") {
       child.draggable(false);
       child.listening(true);
