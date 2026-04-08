@@ -3336,16 +3336,26 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   const textarea = document.createElement("textarea");
   document.body.appendChild(textarea);
 
+  const TEXTAREA_WIDTH_BUFFER = 4;
+
+  const getTextareaContentWidth = (baseWidth?: number) => {
+    const resolvedWidth = baseWidth || textNodeKonva.width() || 200;
+    return Math.max(
+      1,
+      resolvedWidth - textNodeKonva.padding() * 2 + TEXTAREA_WIDTH_BUFFER
+    );
+  };
+
   textarea.value = textNodeKonva.text();
   textarea.style.position = "fixed";
-  textarea.style.width =
-    (textNodeKonva.width() || 200) - textNodeKonva.padding() * 2 + "px";
+  textarea.style.width = getTextareaContentWidth() + "px";
   // 确保初始高度，即使文字为空也有一行高度
   const initialHeight = textNodeKonva.text() ? textNodeKonva.height() : textNodeKonva.fontSize() * 1.2;
   textarea.style.height =
     initialHeight - textNodeKonva.padding() * 2 + 5 + "px";
   textarea.style.fontSize = textNodeKonva.fontSize() + "px";
   textarea.style.border = "1px solid #1890ff"; // 添加边框更容易看见
+  textarea.style.boxSizing = "border-box";
   textarea.style.padding = "0px";
   textarea.style.margin = "0px";
   textarea.style.overflow = "hidden";
@@ -3459,7 +3469,7 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
     if (!newWidth) {
       newWidth = Math.max((textNodeKonva.text() || "").length * textNodeKonva.fontSize(), textNodeKonva.width(), 200);
     }
-    textarea.style.width = newWidth + "px";
+    textarea.style.width = getTextareaContentWidth(newWidth) + "px";
   }
 
   textarea.addEventListener("keydown", function (e) {
