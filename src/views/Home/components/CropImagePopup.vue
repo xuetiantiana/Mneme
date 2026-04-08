@@ -1,17 +1,17 @@
 <template>
   <div v-if="visible" ref="overlayRef" class="crop-overlay" @click.self="$emit('cancel')">
     <div v-if="imgLoaded" class="crop-toolbar" :style="toolbarStyle">
-      <div class="crop-title">Crop on Canvas</div>
+      <div class="crop-title">{{ t('popupTexts.crop.title') }}</div>
       <div class="size-info">
-        原图尺寸: {{ naturalWidth }} x {{ naturalHeight }}，请直接在当前主图上框选
+        {{ sizeInfoText }}
       </div>
       <div class="analyze-tip">
-        裁剪范围仅作用于当前选中的这张图，确认后会调用接口并在主图周边生成 segment 与泡泡。
+        {{ t('popupTexts.crop.analyzeTip') }}
       </div>
       <div class="crop-actions">
-        <button class="btn" type="button" :disabled="confirmLoading" @click="$emit('cancel')">取消</button>
+        <button class="btn" type="button" :disabled="confirmLoading" @click="$emit('cancel')">{{ t('popupTexts.crop.cancel') }}</button>
         <button class="btn primary" type="button" :disabled="!selection || confirmLoading" @click="handleConfirm">
-          {{ confirmLoading ? "分析中..." : "确认并分析" }}
+          {{ confirmLoading ? t('popupTexts.crop.analyzing') : t('popupTexts.crop.confirmAndAnalyze') }}
         </button>
       </div>
     </div>
@@ -36,6 +36,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   visible: {
@@ -57,6 +58,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["confirm", "cancel", "stage-pan-by", "stage-wheel"]);
+const { t } = useI18n();
 
 const MIN_CROP_SIZE = 8;
 const TOOLBAR_WIDTH = 320;
@@ -78,6 +80,13 @@ const isStagePanning = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const stagePanLast = ref({ x: 0, y: 0 });
 const selection = ref(null);
+
+const sizeInfoText = computed(() =>
+  t('popupTexts.crop.sizeInfo', {
+    width: naturalWidth.value,
+    height: naturalHeight.value,
+  })
+);
 
 const hasFrame = computed(() => {
   return !!(

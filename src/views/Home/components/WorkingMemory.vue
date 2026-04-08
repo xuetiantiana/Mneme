@@ -35,6 +35,7 @@
         @cancel="handleAiPopupCancel"
       />
       <WhisperInputPopup
+        ref="whisperPopupRef"
         :visible="whisperPopupVisible"
         :position="whisperPopupData.position"
         :title="whisperPopupData.toolType || 'Whisper'"
@@ -206,6 +207,7 @@ const pcmStore = usePCMStore();
 
 const memoryItems = ref([]);
 const konvaRef = ref(null);
+const whisperPopupRef = ref(null);
 const wmContainer = ref(null);
 const selectedNodesData = ref([]);
 const currentNav = ref(""); // 当前选中的导航项
@@ -433,15 +435,6 @@ const primaryTopNavItems = computed(() => [
     loading: hintLoading.value && pendingAiTool.value === "Resonance",
     onClick: () => handleNavClick("Resonance"),
   },
-  {
-    key: "Fuse",
-    label: "Fuse",
-    hintKey: "Fuse",
-    active: false,
-    disabled: !canUseFuse.value,
-    loading: fuseLoading.value,
-    onClick: () => runResonanceFuse(),
-  },
 ]);
 const secondaryTopNavItems = computed(() => [
   {
@@ -479,6 +472,15 @@ const secondaryTopNavItems = computed(() => [
     disabled: !canUseGroup.value,
     loading: false,
     onClick: () => handleNavClick("Group"),
+  },
+  {
+    key: "Fuse",
+    label: "Fuse",
+    hintKey: "Fuse",
+    active: false,
+    disabled: !canUseFuse.value,
+    loading: fuseLoading.value,
+    onClick: () => runResonanceFuse(),
   },
 ]);
 const cropPopupVisible = ref(false);
@@ -1660,6 +1662,7 @@ const openWhisperPopupForNode = (targetNode) => {
   };
   applyWhisperHighlight(targetNode);
   whisperPopupVisible.value = true;
+  whisperPopupRef.value?.prepareForOpen?.({ autoStart: true });
   return true;
 };
 
@@ -2706,6 +2709,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: flex-end;
 }
 
 .whisper-mode :deep(.canvas-container),

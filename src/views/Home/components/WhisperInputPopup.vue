@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="visible"
+    v-show="visible"
     class="whisper-input-popup"
     :style="{ left: `${position.x}px`, top: `${position.y}px` }"
     @click.stop
@@ -13,15 +13,15 @@
         class="whisper-input"
         type="textarea"
         :rows="3"
-        placeholder="语音将自动转成文字，也可手动输入"
+        :placeholder="t('popupTexts.whisper.placeholder')"
         :disabled="submitLoading"
         @input="handleInput"
       />
       <div v-if="toolType === 'Add Memory'" class="tool-hint add-memory-hint">
-        提示：生成 PCM 预计需要 2-3 分钟，请耐心等待。
+        {{ t('popupTexts.whisper.addMemoryHint') }}
       </div>
       <div v-if="toolType === 'Add Memory'" class="upload-row">
-        <label class="upload-label" for="memory-upload-input">上传图片</label>
+        <label class="upload-label" for="memory-upload-input">{{ t('popupTexts.whisper.uploadImage') }}</label>
         <input
           id="memory-upload-input"
           class="upload-input"
@@ -32,40 +32,33 @@
         />
       </div>
       <div v-if="imagePreviewUrl" class="preview-wrap">
-        <img :src="imagePreviewUrl" alt="memory" class="preview-image" />
+        <img :src="imagePreviewUrl" :alt="t('popupTexts.whisper.previewAlt')" class="preview-image" />
       </div>
       <!-- Whisper 模式下明确提示：本次提交会触发 segment 重分析 -->
       <div v-if="toolType === 'Whisper'" class="tool-hint">
-        输入文字后会重新分析该 segment 图片，确认后将更新该图附近的泡泡。
+        {{ t('popupTexts.whisper.whisperHint') }}
       </div>
       <div class="popup-actions">
         <button class="action-btn" type="button" :disabled="submitLoading" @click="toggleRecording">
-          {{ isRecording ? "停止录音" : "开始录音" }}
+          {{ isRecording ? t('popupTexts.whisper.stopRecording') : t('popupTexts.whisper.startRecording') }}
         </button>
         <button class="action-btn primary" type="button" :disabled="submitLoading" @click="handleSubmit">
-          {{ submitLoading ? (toolType === 'Add Memory' ? '生成 PCM 中...' : '分析中...') : (toolType === 'Whisper' ? '确定分析' : '提交') }}
+          {{ submitLoading ? (toolType === 'Add Memory' ? t('popupTexts.whisper.generatingPcm') : t('popupTexts.whisper.analyzing')) : (toolType === 'Whisper' ? t('popupTexts.whisper.confirmAnalysis') : t('popupTexts.whisper.submit')) }}
         </button>
         <button class="action-btn" type="button" :disabled="submitLoading" @click="$emit('cancel')">
-          取消
+          {{ t('popupTexts.whisper.cancel') }}
         </button>
       </div>
       <div class="popup-hint">
-        {{
-          submitLoading && toolType === 'Add Memory'
-            ? "正在生成 PCM，预计 2-3 分钟，请勿关闭弹窗或重复提交。"
-            : speechSupported
-            ? isRecording
-              ? "正在录音识别..."
-              : "识别已暂停，可继续"
-            : "当前浏览器不支持语音识别，请手动输入"
-        }}
+        {{ popupHintText }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   visible: {
@@ -91,20 +84,93 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["submit", "cancel"]);
+const { locale, t } = useI18n();
 
 const inputRef = ref(null);
 const textValue = ref("");
 const isRecording = ref(false);
 const imageFile = ref(null);
 const imagePreviewUrl = ref("");
+const recordingError = ref("");
 
 const speechSupported =
   typeof window !== "undefined" &&
   (!!window.SpeechRecognition || !!window.webkitSpeechRecognition);
+const canRequestMicrophone =
+  typeof navigator !== "undefined" &&
+  !!navigator.mediaDevices?.getUserMedia;
 
 let recognition = null;
 let finalTextBuffer = "";
 let shouldAutoRestart = false;
+
+// 统一收口底部提示：优先展示明确错误，其次展示加载态/录音态。
+const popupHintText = computed(() => {
+  if (recordingError.value) {
+    return recordingError.value;
+  }
+
+  if (props.submitLoading && props.toolType === "Add Memory") {
+    return t("popupTexts.whisper.addMemoryLoadingHint");
+  }
+
+  if (!speechSupported) {
+    return t("popupTexts.whisper.speechUnsupported");
+  }
+
+  return isRecording.value
+    ? t("popupTexts.whisper.recordingHint")
+    : t("popupTexts.whisper.pausedHint");
+});
+
+const resetPopupState = () => {
+  textValue.value = "";
+  finalTextBuffer = "";
+  imageFile.value = null;
+  imagePreviewUrl.value = "";
+  recordingError.value = "";
+};
+
+// 浏览器与 Web Speech API 的错误码并不统一，这里做一次归一化映射。
+const resolveRecordingErrorMessage = (reason) => {
+  switch (String(reason || "")) {
+    case "not-allowed":
+    case "service-not-allowed":
+    case "permission-denied":
+    case "NotAllowedError":
+      return t("popupTexts.whisper.microphonePermissionDenied");
+    case "audio-capture":
+    case "NotFoundError":
+    case "NotReadableError":
+    case "TrackStartError":
+      return t("popupTexts.whisper.microphoneUnavailable");
+    case "insecure-context":
+      return t("popupTexts.whisper.insecureContext");
+    default:
+      return t("popupTexts.whisper.recordingStartFailed");
+  }
+};
+
+// 显式申请麦克风权限，确保浏览器能弹出授权框，而不是静默拒绝后续识别启动。
+const ensureMicrophoneAccess = async () => {
+  if (typeof window !== "undefined" && window.isSecureContext === false) {
+    recordingError.value = resolveRecordingErrorMessage("insecure-context");
+    return false;
+  }
+
+  if (!canRequestMicrophone) {
+    return true;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return true;
+  } catch (error) {
+    recordingError.value = resolveRecordingErrorMessage(error?.name || error?.message);
+    return false;
+  }
+};
 
 const createRecognition = () => {
   if (!speechSupported) {
@@ -113,11 +179,12 @@ const createRecognition = () => {
 
   const RecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const rec = new RecognitionCtor();
-  rec.lang = "zh-CN";
+  rec.lang = locale.value === "en" ? "en-US" : "zh-CN";
   rec.continuous = true;
   rec.interimResults = true;
 
   rec.onstart = () => {
+    recordingError.value = "";
     isRecording.value = true;
   };
 
@@ -135,41 +202,60 @@ const createRecognition = () => {
     textValue.value = `${finalTextBuffer} ${interim}`.trim();
   };
 
+  // 识别服务偶发自动结束时，只有在弹窗仍打开且没有错误时才尝试自动续上。
   rec.onend = () => {
     isRecording.value = false;
-    if (props.visible && shouldAutoRestart) {
+    if (props.visible && shouldAutoRestart && !recordingError.value) {
       setTimeout(() => {
         try {
           rec.start();
         } catch (error) {
-          // 忽略重复启动抛出的异常
+          recordingError.value = resolveRecordingErrorMessage(error?.name || error?.message);
         }
       }, 120);
     }
   };
 
-  rec.onerror = () => {
+  rec.onerror = (event) => {
     isRecording.value = false;
+    recordingError.value = resolveRecordingErrorMessage(event?.error);
   };
 
   return rec;
 };
 
-const startRecording = () => {
+// `requestPermission` 为 true 时，要求在当前点击链路里先拉起浏览器麦克风授权。
+const startRecording = async ({ requestPermission = false } = {}) => {
   if (!speechSupported) {
-    return;
+    recordingError.value = t("popupTexts.whisper.speechUnsupported");
+    return false;
   }
+
+  recordingError.value = "";
+
+  if (requestPermission) {
+    const granted = await ensureMicrophoneAccess();
+    if (!granted) {
+      shouldAutoRestart = false;
+      return false;
+    }
+  }
+
   if (!recognition) {
     recognition = createRecognition();
   }
   if (!recognition) {
-    return;
+    recordingError.value = t("popupTexts.whisper.recordingStartFailed");
+    return false;
   }
   shouldAutoRestart = true;
   try {
     recognition.start();
+    return true;
   } catch (error) {
-    // 忽略重复启动抛出的异常
+    recordingError.value = resolveRecordingErrorMessage(error?.name || error?.message);
+    console.warn("Speech recognition start failed:", error);
+    return false;
   }
 };
 
@@ -188,7 +274,7 @@ const toggleRecording = () => {
   if (isRecording.value) {
     stopRecording();
   } else {
-    startRecording();
+    void startRecording({ requestPermission: true });
   }
 };
 
@@ -225,22 +311,44 @@ const handleFileChange = (event) => {
   updateMemoryFile(file);
 };
 
+// 打开弹窗时先重置状态，并尽量在用户点击打开的这条链路里直接启动录音。
+const prepareForOpen = async ({ autoStart = true } = {}) => {
+  resetPopupState();
+  if (autoStart) {
+    void startRecording({ requestPermission: true });
+  }
+  await nextTick();
+  inputRef.value?.focus?.();
+};
+
 watch(
   () => props.visible,
   async (visible) => {
     if (visible) {
-      textValue.value = "";
-      finalTextBuffer = "";
-      imageFile.value = null;
-      imagePreviewUrl.value = "";
       await nextTick();
-      inputRef.value?.focus();
-      startRecording();
+      inputRef.value?.focus?.();
     } else {
       stopRecording();
+      resetPopupState();
     }
   }
 );
+
+// 语言切换后同步更新识别语言，避免中文/英文识别器沿用旧 locale。
+watch(
+  () => locale.value,
+  (language) => {
+    if (recognition) {
+      recognition.lang = language === "en" ? "en-US" : "zh-CN";
+    }
+  }
+);
+
+defineExpose({
+  prepareForOpen,
+  startRecording,
+  stopRecording,
+});
 
 onBeforeUnmount(() => {
   stopRecording();

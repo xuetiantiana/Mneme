@@ -9,6 +9,7 @@ import router from './router/index'
 import 'virtual:svg-icons-register'
 import SvgIcon from './components/svgIcon.vue'
 import VueKonva from 'vue-konva'
+import { i18n } from './i18n'
 
 
 import { createPinia } from 'pinia'
@@ -18,5 +19,6 @@ app.component('SvgIcon', SvgIcon)
 app.use(createPinia())
 app.use(router)
 app.use(VueKonva)
+app.use(i18n)
 
 app.mount('#app')

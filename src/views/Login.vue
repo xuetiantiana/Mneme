@@ -30,6 +30,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStoryStore } from "@/stores/storyStore";
 import { getSessionId, getLanguage, setLanguage } from "@/service/session";
+import { setI18nLanguage } from "@/i18n";
 
 const router = useRouter();
 const route = useRoute();
@@ -46,16 +47,19 @@ const submitting = ref(false);
 onMounted(() => {
   form.session_id = getSessionId();
   form.language = getLanguage();
+  setI18nLanguage(form.language);
 });
 
 const handleLanguageChange = (value) => {
   form.language = setLanguage(value);
+  setI18nLanguage(form.language);
 };
 
 const handleSubmit = async () => {
   const userId = (form.user_id || "").trim();
   const sessionId = (form.session_id || "").trim();
   setLanguage(form.language);
+  setI18nLanguage(form.language);
 
   if (!userId) {
     ElMessage({
