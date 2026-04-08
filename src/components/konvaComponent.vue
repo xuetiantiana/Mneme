@@ -1513,22 +1513,32 @@ const ensureAiRingVisible = () => {
 // 触发 AI 辅助功能
 // 在选中元素周围生成交互式圆环
 // 返回值: 包含成功状态和消息的对象
-const triggerAiAssist = () => {
+const triggerAiAssist = (targetNode = null) => {
   if (!layer) {
     return { success: false, message: "画布未初始化" };
   }
   const { bandCount, fills } = getCurrentAiRingTheme();
 
-  if (selectedNodes.length === 0) {
-    return { success: false, message: "请先选中一个元素" };
+  // hint 请求返回前，用户可能已经改选或清空选区；
+  // 这里优先使用启动 AI 时锁定的目标节点，避免环画到后续选中的节点上。
+  let target = targetNode;
+  if (!target) {
+    if (selectedNodes.length === 0) {
+      return { success: false, message: "请先选中一个元素" };
+    }
+
+    if (selectedNodes.length > 1) {
+      return { success: false, message: "请只选中一个元素后再试" };
+    }
+
+    target = selectedNodes[0];
   }
 
-  if (selectedNodes.length > 1) {
-    return { success: false, message: "请只选中一个元素后再试" };
+  if (!target || typeof target.getClientRect !== "function" || !target.getStage?.()) {
+    return { success: false, message: "目标节点已失效，请重新选择后再试" };
   }
 
-  // 获取选中元素及其边界信息
-  const target = selectedNodes[0];
+  // 获取目标元素及其边界信息
   const box = target.getClientRect({ skipShadow: true });
 
   // 计算对角线长度的一半作为内圆半径，确保能包住整个元素

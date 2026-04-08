@@ -906,6 +906,7 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
   reflectSelectedNodes.value = konvaRef.value.resetNodesData(selectedNodes);
   reflectTargetNode.value = selectedNodes[0] || null;
   reflectTargetType.value = selectedNodes[0]?.getAttr?.("customType") || "";
+  const lockedTargetNode = reflectTargetNode.value;
 
   if (toolType === "Reflect" || toolType === "Constellate" || toolType === "Resonance") {
     pendingAiTool.value = toolType;
@@ -921,7 +922,7 @@ const handleAiAssistClick = async (toolType = "Reflect") => {
     konvaRef.value.setAiRingLabels();
   }
 
-  const result = konvaRef.value.triggerAiAssist();
+  const result = konvaRef.value.triggerAiAssist(lockedTargetNode);
   if (!result?.success) {
     ElMessage({
       message: result?.message || "AI辅助启动失败",

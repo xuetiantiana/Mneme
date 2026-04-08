@@ -38,7 +38,7 @@
             <div class="constellate-image-thumb">
               <img :src="img.image_url" alt="" />
             </div>
-            <div v-if="img.reason" class="constellate-image-reason">
+            <div v-if="img.reason" class="constellate-image-reason" :alt="img.reason">
               {{ img.reason }}
             </div>
           </button>
@@ -629,9 +629,9 @@ onBeforeUnmount(() => {
   line-height: 1.4;
   line-clamp: 2;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow: hidden; */
 }
 
 .constellate-select-icon,
