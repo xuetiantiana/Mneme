@@ -367,7 +367,7 @@ export const createConstellateAiPopupNodes = ({
   let currentY = 0;
   const titleText = String(title || "").trim();
 
-  if (titleText) {
+  if (titleText && false) {
     const titleNode = new Konva.Text({
       x: 0,
       y: currentY,

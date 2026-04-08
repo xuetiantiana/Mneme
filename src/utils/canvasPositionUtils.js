@@ -12,20 +12,20 @@ export const getBubbleColor = (type, specificity) => {
   // 定义每种类型的颜色范围（从低到高）
   const colorRanges = {
     aesthetic: {
-      low: { r: 255, g: 250, b: 240 }, // 浅米色
-      high: { r: 245, g: 222, b: 179 }, // 深米色
+      low: { r: 146, g: 227, b: 169, a: .2 }, // 浅米色
+      high: { r: 146, g: 227, b: 169 }, // 深米色
     },
     emotion: {
-      low: { r: 255, g: 240, b: 245 }, // 浅粉色
-      high: { r: 255, g: 105, b: 180 }, // 深粉色
+      low: { r: 222, g: 154, b: 231, a: .2 }, // 浅粉色
+      high: { r: 222, g: 154, b: 231 }, // 深粉色
     },
     sensory: {
-      low: { r: 248, g: 248, b: 242 }, // 浅米色
-      high: { r: 193, g: 205, b: 193 }, // 深绿色
+      low: { r: 255, g: 197, b: 138, a: .2 }, // 浅米色
+      high: { r: 255, g: 197, b: 138 }, // 深绿色
     },
     meaning: {
-      low: { r: 240, g: 248, b: 255 }, // 浅蓝色
-      high: { r: 176, g: 224, b: 230 }, // 深蓝色
+      low: { r: 153, g: 200, b: 254, a: .2 }, // 浅蓝色
+      high: { r: 153, g: 200, b: 254 }, // 深蓝色
     },
   };
 
@@ -37,13 +37,21 @@ export const getBubbleColor = (type, specificity) => {
 
   const range = colorRanges[type] || defaultRange;
   const ratio = (specificity - 1) / 4; // 转换为 0-1 范围
+  const lowAlpha = typeof range.low.a === "number" ? range.low.a : 1;
+  const highAlpha = typeof range.high.a === "number" ? range.high.a : 1;
 
   // 计算渐变颜色
   const r = Math.round(range.low.r + (range.high.r - range.low.r) * ratio);
   const g = Math.round(range.low.g + (range.high.g - range.low.g) * ratio);
   const b = Math.round(range.low.b + (range.high.b - range.low.b) * ratio);
+  const alpha = lowAlpha + (highAlpha - lowAlpha) * ratio;
 
-  return `rgb(${r}, ${g}, ${b})`;
+  // Konva 这里仍然消费纯 rgb 字符串，因此把透明度先按白底合成为最终颜色。
+  const finalR = Math.round(255 * (1 - alpha) + r * alpha);
+  const finalG = Math.round(255 * (1 - alpha) + g * alpha);
+  const finalB = Math.round(255 * (1 - alpha) + b * alpha);
+
+  return `rgb(${finalR}, ${finalG}, ${finalB})`;
 };
 
 /**

@@ -1990,9 +1990,11 @@ const handleWhisperSubmit = async (payload) => {
       }
 
       // Whisper 成功后把用户输入原文同步写到新泡泡上方。
-      const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles, {
-        topText: content,
-      });
+      // const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles, {
+      //   topText: content,
+      // });
+      // 为了录制视频，不绘制输入的文本
+      const count = await konvaRef.value.addBubblesAroundTarget(targetNode, bubbles);
       if (!count) {
         throw new Error("bubbles 渲染失败");
       }
@@ -2252,6 +2254,7 @@ const commitAiPopupSelection = async (
     preserveReflectContext = false,
     clearCurrentNav = true,
     cancelAiAssist = true,
+    skipDrawToCanvas = false,
   } = {}
 ) => {
   const selectedItems = Array.isArray(data?.selectedItems) ? data.selectedItems.filter(Boolean) : [];
@@ -2276,22 +2279,24 @@ const commitAiPopupSelection = async (
     await submitFeedbackConfirm(resolveReflectConfirmedIds(data));
   }
 
-  const drawResult = drawAiPopupSelectionToCanvas(
-    {
-      toolType,
-      title: String(data?.title || "").trim(),
-      selectedItems,
-      preserveAiAssist: !cancelAiAssist,
-    },
-    konvaRef.value
-  );
+  if (!skipDrawToCanvas) {
+    const drawResult = drawAiPopupSelectionToCanvas(
+      {
+        toolType,
+        title: String(data?.title || "").trim(),
+        selectedItems,
+        preserveAiAssist: !cancelAiAssist,
+      },
+      konvaRef.value
+    );
 
-  if (!drawResult?.success) {
-    ElMessage({
-      message: drawResult?.message || "AI 内容绘制失败",
-      type: "warning",
-    });
-    return false;
+    if (!drawResult?.success) {
+      ElMessage({
+        message: drawResult?.message || "AI 内容绘制失败",
+        type: "warning",
+      });
+      return false;
+    }
   }
 
   if (cancelAiAssist && konvaRef.value?.cancelAiAssist) {
@@ -2318,6 +2323,7 @@ const handleAiPopupConfirm = async (data) => {
     preserveReflectContext: true,
     clearCurrentNav: false,
     cancelAiAssist: false,
+    skipDrawToCanvas: (data?.toolType || aiPopupData.value?.toolType) === "Reflect",
   });
 };
 
@@ -2364,6 +2370,7 @@ const handleAiPopupToolClick = async ({ tool, item }) => {
         preserveReflectContext: true,
         clearCurrentNav: false,
         cancelAiAssist: false,
+        skipDrawToCanvas: true,
       });
       return;
     }

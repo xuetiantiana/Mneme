@@ -1,9 +1,22 @@
 import { createAxios } from "./axios";
+import { createMockGalleryGroup } from "./mockGalleryGroup";
 
 //其他配置
 const request = createAxios({
     baseURL: "https://mneme-gcakhrgtedbjerhz.westus2-01.azurewebsites.net",
 });
+
+const prependMockGalleryGroup = (topic: any): any => {
+    const mockGroup = createMockGalleryGroup();
+    const groups = Array.isArray(topic?.groups) ? topic.groups : [];
+    const mockItemCount = Array.isArray(mockGroup?.items) ? mockGroup.items.length : 0;
+
+    return {
+        ...topic,
+        count: Number(topic?.count || 0) + mockItemCount,
+        groups: [mockGroup, ...groups],
+    };
+};
 
 export const GetPCMList = (): any => {
     return request.get(
@@ -14,7 +27,19 @@ export const GetPCMList = (): any => {
 export const GetPCMGallery = (): any => {
     return request.get(
         "/api/pcm/gallery",
-    );
+    ).then((response: any) => {
+        if (!Array.isArray(response?.data?.topics)) {
+            return response;
+        }
+
+        return {
+            ...response,
+            data: {
+                ...response.data,
+                topics: response.data.topics.map((topic: any) => prependMockGalleryGroup(topic)),
+            },
+        };
+    });
 };
 
 export const GetStoryList = (): any => {
@@ -724,7 +749,7 @@ export const ConstellateHint = (data: any): any => {
 };
 
 let ConstellateSuggestNum = 0;
-export const ConstellateSuggest = (data: any): any => {
+export const ConstellateSuggest = (_data: any): any => {
     // return request.post("/api/constellate/suggest", data);
 
     ConstellateSuggestNum++;
@@ -829,7 +854,7 @@ export const ResonanceHint = (data: any): any => {
             perspectives: [
                 {
                     id: "perspective-YYYY***-***",
-                    name: "After Function",
+                    name: "Sacred Contraption",
                 },
                 {
                     id: "perspective-YYYY***-***",
@@ -837,11 +862,11 @@ export const ResonanceHint = (data: any): any => {
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "Sacred Contraption",
+                    name: "Earned Reverence",
                 },
                 {
                     id: "perspective-YYYY***-***",
-                    name: "Earned Reverence",
+                    name: "After Function",
                 },
             ],
         },
@@ -1206,7 +1231,7 @@ export const whisperUpdate = (data: any): any => {
                     x: ReflectQuestionsNum== 1 ? 170 : ReflectQuestionsNum== 2 ? 340 : 540,
                     y: 0,
                     r: 30,
-                    specificity: 4,
+                    specificity: ReflectQuestionsNum == 1 ? 4 : ReflectQuestionsNum == 2 ? 3 : 1,
                     id: "PCM-20260314055223235-372f15e117-bubble-3",
                     type: "bubble",
                 },
