@@ -1285,6 +1285,11 @@ const createResonanceFuseNode = async ({
   const imageNodes = [];
 
   for (const entry of imageEntries) {
+    // 这里必须按“图片项序号”计算横向位置，
+    // 不能使用 imageNodes.length：因为 createImageAndTextNodes 会同时返回图片节点和下方文本节点，
+    // 如果拿节点总数参与偏移，后续图片会被额外推远，视觉上就会出现异常的大间隙。
+    const imageStartX = startX + entry.index * (168 + imageGap);
+
     try {
       // FuseNew 的逐图 image_prompt 在这里作为 image+text 组合节点的 text 传入，
       // 最终会绘制在每张图片下方，而不是只保留图片本身。
@@ -1296,7 +1301,7 @@ const createResonanceFuseNode = async ({
           customType: `${nodeType}-image`,
         },
         {
-          startX: startX + imageNodes.length * (168 + imageGap),
+          startX: imageStartX,
           startY: startY + currentY,
           mainImageWidth: 168,
           titleGap: 8,
@@ -1324,7 +1329,7 @@ const createResonanceFuseNode = async ({
           customType: `${nodeType}-image`,
         },
         {
-          startX: startX + imageNodes.length * (168 + imageGap),
+          startX: imageStartX,
           startY: startY + currentY,
           mainImageWidth: 168,
           titleGap: 8,
