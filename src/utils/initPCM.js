@@ -747,7 +747,7 @@ export const initPCMBubbles = (bubbles, options = {}) => {
                         {
                             startX: x,
                             startY: y,
-                            fontSize: bubble.fontSize || 14,
+                            fontSize: bubble.fontSize || 16,
                             fontFamily:
                                 bubble.fontFamily || DEFAULT_FONT_FAMILY,
                             fill: bubbleTextColor,
