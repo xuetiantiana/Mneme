@@ -1,4 +1,5 @@
 import Konva from "konva";
+import { DEFAULT_FONT_FAMILY } from "@/utils/canvasPositionUtils";
 
 /**
  * @typedef {Object} AiPopupSelectionPayload
@@ -353,9 +354,17 @@ export const createConstellateAiPopupNodes = ({
   fontFamily,
 } = {}) => {
   const theme = AI_POPUP_THEME.Constellate;
-  const maxWidth = 320;
+  const selectedCount = Math.max(normalizeSelectedItems(selectedItems).length, 1);
+  const maxColumnsPerRow = 4;
   const bodyPadding = 2;
-  const imageContentWidth = maxWidth - bodyPadding * 2;
+  const gridGap = 6;
+  const imageCellWidth = 150;
+  const gridColumnCount = Math.min(selectedCount, maxColumnsPerRow);
+  // Constellate 结果按“每行最多 4 项”排布：
+  // 每一项固定占 220 宽，整体内容宽度只按当前行的列数计算，
+  // 当选中项超过 4 个时，从下一行继续排布。
+  const maxWidth =
+    bodyPadding * 2 + imageCellWidth * gridColumnCount + gridGap * (gridColumnCount - 1);
   const group = isReturnGroup
     ? new Konva.Group({
         draggable: true,
@@ -397,13 +406,9 @@ export const createConstellateAiPopupNodes = ({
   let contentHeight = currentY;
 
   if (Array.isArray(selectedItems) && selectedItems.length > 0) {
-    const gridColumnCount = 3;
-    const gridGap = 6;
     const imageToReasonGap = 4;
     const rowGap = 12;
-    const imageCellWidth =
-      (imageContentWidth - gridGap * (gridColumnCount - 1)) / gridColumnCount;
-    const imageCellHeight = 72;
+    const imageCellHeight = Math.max(90, Math.round(imageCellWidth * 1));
     const gridStartY = currentY + 8;
 
     const imageEntries = selectedItems
@@ -421,7 +426,7 @@ export const createConstellateAiPopupNodes = ({
               x: 0,
               y: 0,
               text: reasonTextValue,
-              fontSize: 11,
+              fontSize: 12,
               fontFamily,
               fill: theme.reasonColor,
               width: imageCellWidth,
@@ -736,7 +741,7 @@ export const drawAiPopupSelectionToCanvas = (
       title: String(title || "").trim(),
       selectedItems: items,
       isReturnGroup: true,
-      fontFamily: "Georgia, serif",
+      fontFamily: DEFAULT_FONT_FAMILY,
     });
 
     return konvaApi.renderAiPopupSelectionToLayer({
@@ -756,7 +761,7 @@ export const drawAiPopupSelectionToCanvas = (
       title,
       selectedItems: items,
       isReturnGroup: false,
-      fontFamily: "Georgia, serif",
+      fontFamily: DEFAULT_FONT_FAMILY,
     });
 
     return konvaApi.renderAiPopupSelectionToLayer({
@@ -775,7 +780,7 @@ export const drawAiPopupSelectionToCanvas = (
       title,
       selectedItems: items,
       isReturnGroup: true,
-      fontFamily: "Georgia, serif",
+      fontFamily: DEFAULT_FONT_FAMILY,
     });
 
     return konvaApi.renderAiPopupSelectionToLayer({

@@ -1472,6 +1472,66 @@ const getAiGuidePlacementRect = (boxWidth: number, boxHeight: number) => {
   return getAiGuidePlacementRectFromLinePoints(aiGuideLine.points(), boxWidth, boxHeight);
 };
 
+// Resonance 的结果卡片不再沿引导线延长方向摆放，
+// 而是相对当前目标 group 的包围盒做“四向停靠”：
+// 鼠标最终点击落在上/下/左/右哪一侧，就把整组结果贴到对应外侧，
+// 并在该方向上保持水平或垂直居中。
+const getResonancePlacementRect = (boxWidth: number, boxHeight: number) => {
+  if (!aiAssistState?.target || !aiGuideLine || !layer) {
+    return null;
+  }
+
+  const linePoints = aiGuideLine.points();
+  if (!Array.isArray(linePoints) || linePoints.length < 4) {
+    return null;
+  }
+
+  const targetRect = aiAssistState.target.getClientRect({
+    relativeTo: layer,
+    skipShadow: true,
+    skipStroke: true,
+  });
+
+  if (!Number.isFinite(targetRect?.x) || !Number.isFinite(targetRect?.y)) {
+    return null;
+  }
+
+  const anchorX = Number(linePoints[2]) || 0;
+  const anchorY = Number(linePoints[3]) || 0;
+  const targetCenterX = targetRect.x + targetRect.width / 2;
+  const targetCenterY = targetRect.y + targetRect.height / 2;
+  const deltaX = anchorX - targetCenterX;
+  const deltaY = anchorY - targetCenterY;
+  const placementGap = 16;
+
+  let topLeftX = targetCenterX - boxWidth / 2;
+  let topLeftY = targetCenterY - boxHeight / 2;
+
+  // Resonance 结果不再沿引导线延长方向摆放，
+  // 而是根据鼠标最终落点位于目标 group 的哪一侧，
+  // 将整组内容贴到 group 的上/下/左/右，并保持该方向上的中心对齐。
+  if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+    if (deltaY >= 0) {
+      topLeftY = targetRect.y + targetRect.height + placementGap;
+    } else {
+      topLeftY = targetRect.y - boxHeight - placementGap;
+    }
+  } else if (deltaX >= 0) {
+    topLeftX = targetRect.x + targetRect.width + placementGap;
+  } else {
+    topLeftX = targetRect.x - boxWidth - placementGap;
+  }
+
+  return {
+    centerX: topLeftX + boxWidth / 2,
+    centerY: topLeftY + boxHeight / 2,
+    offsetX: boxWidth / 2,
+    offsetY: boxHeight / 2,
+    topLeftX,
+    topLeftY,
+  };
+};
+
 // 取消 AI 辅助锁定状态，恢复交互
 const cancelAiAssist = () => {
   console.log("cancelAiAssist called - destroying AI ring");
@@ -1527,7 +1587,13 @@ const renderAiPopupSelectionToLayer = (
   const createdNodes = validNodes;
   const blockWidth = Math.max(1, Number(contentWidth) || 220);
   const blockHeight = Math.max(1, Number(contentHeight) || 120);
-  const layout = getAiGuidePlacementRect(blockWidth, blockHeight);
+  const layout =
+    // Resonance 优先走“相对 group 停靠”的专用布局；
+    // 只有在拿不到目标包围盒或引导线终点时，才回退到通用的引导线外侧布局。
+    toolType === "Resonance"
+      ? getResonancePlacementRect(blockWidth, blockHeight) ||
+        getAiGuidePlacementRect(blockWidth, blockHeight)
+      : getAiGuidePlacementRect(blockWidth, blockHeight);
 
   if (!layout) {
     return {
@@ -5013,7 +5079,7 @@ const clearSelection = () => {
 };
 
 const GROUP_PREV_DRAG_BOUND_FUNC_ATTR = "__groupPrevDragBoundFunc";
-const GROUP_MEANING_DEFAULT_TEXT = "这是对group的描述";
+const GROUP_MEANING_DEFAULT_TEXT = "Please enter a description for the group.";
 
 const applyGroupedChildDragConstraint = (
   node: Konva.Node,

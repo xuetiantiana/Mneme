@@ -1207,7 +1207,9 @@ const buildResonanceFuseImageEntries = (fuseData, fallbackScreenshot = "") => {
     .map((item, index) => ({
       index,
       imageSrc: String(item?.image_url || "").trim(),
-      text: "",
+      // ResonanceFuseNew 每张图都可能带独立的 image_prompt，
+      // 这里直接透传给画布绘制层，作为图片下方的说明文本。
+      text: String(item?.image_prompt || "").trim(),
     }))
     .filter((item) => item.imageSrc);
 
@@ -1284,6 +1286,8 @@ const createResonanceFuseNode = async ({
 
   for (const entry of imageEntries) {
     try {
+      // FuseNew 的逐图 image_prompt 在这里作为 image+text 组合节点的 text 传入，
+      // 最终会绘制在每张图片下方，而不是只保留图片本身。
       const created = await createImageAndTextNodes(
         {
           imageSrc: entry.imageSrc,
