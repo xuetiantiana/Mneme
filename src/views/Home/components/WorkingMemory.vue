@@ -63,6 +63,7 @@
       <el-tooltip
         v-for="item in primaryTopNavItems"
         :key="item.key"
+        :disabled="true"
         placement="bottom"
         effect="dark"
         popper-class="wm-nav-tooltip"
@@ -88,6 +89,7 @@
       <el-tooltip
         v-for="item in secondaryTopNavItems"
         :key="item.key"
+        :disabled="true"
         placement="bottom"
         effect="dark"
         popper-class="wm-nav-tooltip"
