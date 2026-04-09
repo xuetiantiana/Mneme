@@ -1,5 +1,8 @@
 import { createAxios } from "./axios";
 import { createMockGalleryGroup } from "./mockGalleryGroup";
+import { createMockPCMCase } from "./mockPCMcase";
+
+const TARGET_PCM_ID = "PCM-20260409021344359-16ab388f67";
 
 //其他配置
 const request = createAxios({
@@ -7,14 +10,33 @@ const request = createAxios({
 });
 
 const prependMockGalleryGroup = (topic: any): any => {
-    const mockGroup = createMockGalleryGroup();
+    // const mockGroup = createMockGalleryGroup();
     const groups = Array.isArray(topic?.groups) ? topic.groups : [];
-    const mockItemCount = Array.isArray(mockGroup?.items) ? mockGroup.items.length : 0;
+    // const mockItemCount = Array.isArray(mockGroup?.items) ? mockGroup.items.length : 0;
 
     return {
         ...topic,
-        count: Number(topic?.count || 0) + mockItemCount,
-        groups: [mockGroup, ...groups],
+        count: Number(topic?.count || 0) + 0,
+        // groups: [mockGroup, ...groups],
+        groups: groups,
+    };
+};
+
+const replaceTargetPCMInTopic = (topic: any): any => {
+    const groups = Array.isArray(topic?.groups) ? topic.groups : [];
+
+    return {
+        ...topic,
+        groups: groups.map((group: any) => {
+            const items = Array.isArray(group?.items) ? group.items : [];
+
+            return {
+                ...group,
+                items: items.map((item: any) =>
+                    item?.id === TARGET_PCM_ID ? createMockPCMCase() : item
+                ),
+            };
+        }),
     };
 };
 
@@ -36,7 +58,9 @@ export const GetPCMGallery = (): any => {
             ...response,
             data: {
                 ...response.data,
-                topics: response.data.topics.map((topic: any) => prependMockGalleryGroup(topic)),
+                topics: response.data.topics.map((topic: any) =>
+                    replaceTargetPCMInTopic(prependMockGalleryGroup(topic))
+                ),
             },
         };
     });
@@ -1228,7 +1252,7 @@ export const whisperUpdate = (data: any): any => {
                         "PCM-20260314055223235-372f15e117-interp-3",
                     text: ReflectQuestionsNum == 1 ? "Not ready to \nthrow it away" : ReflectQuestionsNum == 2 ? "Caring for what \ncannot be repaired" : "A robot learns to live\n with its brokenness",
                     kind: "meaning",
-                    x: ReflectQuestionsNum== 1 ? 160 : ReflectQuestionsNum== 2 ? 280 : 427,
+                    x: ReflectQuestionsNum== 1 ? 170 : ReflectQuestionsNum== 2 ? 305 : 470,
                     y: ReflectQuestionsNum== 1 ? 50 : 0,
                     r: 30,
                     specificity: ReflectQuestionsNum == 1 ? 5 : ReflectQuestionsNum == 2 ? 3 : 1,
