@@ -232,6 +232,7 @@ let aiRingSlices: Konva.Group[] = []; // 存储环形分区的四个扇形（包
 let aiRightClockLabels: Konva.Text[] = []; // 存储 3 点钟方向固定提示文案
 let aiGuideLine: Konva.Line | null = null; // 存储中心到鼠标的引导线
 let aiGuideEndCircle: Konva.Circle | null = null; // 引导线最外端圆点
+let aiGuideDepthLabel: Konva.Group | null = null; // 引导点正上方的深度提示文案
 let aiAssistState: {
   centerX: number;
   centerY: number;
@@ -249,15 +250,19 @@ type AiRingThemeConfig = {
   bandCount: number;
   fills: string[];
   activeFills: string[];
+  depthLabels: string[];
   rightLabels: string[];
 };
 
 const defaultAiRingLabels = ["灵性的感受", "情绪的流动", "思想的火花", "记忆的碎片"];
-const AI_RING_WIDTH = 500;
+const AI_RING_WIDTH = 300;
+const AI_RING_FILL_OPACITY = 0.8;
 const AI_RING_BAND_STROKE = "rgba(255, 255, 255, 0.45)";
 const AI_RIGHT_DEFAULT_COLOR = "rgba(110, 114, 122, 0.95)";
 const AI_GUIDE_START_COLOR = "#3FA7FF";
 const AI_GUIDE_END_COLOR = "#FF4D4F";
+const AI_GUIDE_DEPTH_POINTER_WIDTH = 8;
+const AI_GUIDE_DEPTH_POINTER_HEIGHT = 6;
 const AI_RIGHT_INNER_DARK = "#6E727A";
 const AI_RIGHT_INNER_LIGHT = "#BFC5CF";
 const AI_RIGHT_OUTER_LIGHT = "#AAB3C1";
@@ -266,6 +271,7 @@ const AI_RIGHT_OUTER_DARK = "#4E5A6B";
 const AI_RING_THEME_CONFIG: Record<AiRingThemeMode, AiRingThemeConfig> = {
   Reflect: {
     bandCount: 5,
+    depthLabels: ["cue", "recall", "significance", "abstraction", "transformation"],
     // rightLabels: ["反思细节", "反思转化"],
     rightLabels: ["cue", "transformation"],
     fills: [
@@ -285,6 +291,7 @@ const AI_RING_THEME_CONFIG: Record<AiRingThemeMode, AiRingThemeConfig> = {
   },
   Constellate: {
     bandCount: 4,
+    depthLabels: ["Cue Match", "Near Associate", "Lateral Bridge", "Remote Leap"],
     // rightLabels: ["直接检索", "远距离启发"],
     rightLabels: ["Cue Match", "Remote Leap"],
     fills: [
@@ -302,6 +309,7 @@ const AI_RING_THEME_CONFIG: Record<AiRingThemeMode, AiRingThemeConfig> = {
   },
   Resonance: {
     bandCount: 4,
+    depthLabels: ["Grounded Composition", "Pattern Completion", "Conceptual Reframing", "Emergent Story"],
     // rightLabels: ["共振追问", "意象扩展"],
     rightLabels: ["Grounded", "Emergent"],
     fills: [
@@ -325,6 +333,24 @@ let currentAiRingThemeMode: AiRingThemeMode = "Reflect";
 
 const getCurrentAiRingTheme = () => {
   return AI_RING_THEME_CONFIG[currentAiRingThemeMode] || AI_RING_THEME_CONFIG.Reflect;
+};
+
+const getCurrentAiDepthLabels = (mode: AiRingThemeMode = currentAiRingThemeMode) => {
+  const theme = AI_RING_THEME_CONFIG[mode] || AI_RING_THEME_CONFIG.Reflect;
+  return Array.isArray(theme?.depthLabels) ? theme.depthLabels : [];
+};
+
+const getAiDepthLabelByBand = (
+  bandIndex: number,
+  mode: AiRingThemeMode = currentAiRingThemeMode
+) => {
+  const labels = getCurrentAiDepthLabels(mode);
+  if (!labels.length || bandIndex < 0) {
+    return "";
+  }
+
+  const safeIndex = Math.min(labels.length - 1, bandIndex);
+  return String(labels[safeIndex] || "").trim();
 };
 
 const getDefaultAiRightLabels = (mode: AiRingThemeMode = currentAiRingThemeMode) => {
@@ -372,6 +398,46 @@ const getAiRingSliceIndex = (dx: number, dy: number) => {
     (Math.atan2(dy, dx) + Math.PI * 2 - startOffset) % (Math.PI * 2);
   const rawIndex = Math.floor(normalized / perSliceRadian);
   return ((rawIndex % sliceCount) + sliceCount) % sliceCount;
+};
+
+const withAlphaColor = (color: string, alpha = 1) => {
+  const normalizedAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
+  const value = String(color || "").trim();
+
+  const rgbMatch = value.match(/^rgb\(([^)]+)\)$/i);
+  if (rgbMatch) {
+    const channels = rgbMatch[1].trim().split(/\s*,\s*|\s+/).filter(Boolean);
+    if (channels.length >= 3) {
+      const [r, g, b] = channels;
+      return `rgba(${r}, ${g}, ${b}, ${normalizedAlpha})`;
+    }
+  }
+
+  const rgbaMatch = value.match(/^rgba\(([^)]+)\)$/i);
+  if (rgbaMatch) {
+    const channels = rgbaMatch[1].trim().split(/\s*,\s*/).filter(Boolean);
+    if (channels.length >= 3) {
+      const [r, g, b] = channels;
+      return `rgba(${r}, ${g}, ${b}, ${normalizedAlpha})`;
+    }
+  }
+
+  const hex = value.replace(/^#/, "");
+  if (/^[0-9a-f]{6}$/i.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${normalizedAlpha})`;
+  }
+
+  if (/^[0-9a-f]{3}$/i.test(hex)) {
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    return `rgba(${r}, ${g}, ${b}, ${normalizedAlpha})`;
+  }
+
+  return value;
 };
 
 const mixHexColor = (startHex: string, endHex: string, t: number) => {
@@ -458,7 +524,109 @@ const updateAiAssistLabelScale = () => {
     label.scale({ x: rightLabelScale, y: rightLabelScale });
   });
 
+  if (aiGuideDepthLabel) {
+    const depthLabelScale = Math.max(1, Math.min(1.8, compensate));
+    aiGuideDepthLabel.scale({ x: depthLabelScale, y: depthLabelScale });
+  }
+
   updateAiRightClockLabelsPosition();
+};
+
+const hideAiGuideDepthLabel = () => {
+  if (aiGuideDepthLabel) {
+    aiGuideDepthLabel.hide();
+  }
+};
+
+const updateAiGuideDepthLabel = (
+  pos: { x: number; y: number },
+  text: string
+) => {
+  if (!layer || !text) {
+    hideAiGuideDepthLabel();
+    return;
+  }
+
+  if (!aiGuideDepthLabel) {
+    aiGuideDepthLabel = new Konva.Group({
+      listening: false,
+      opacity: 1,
+    });
+
+    aiGuideDepthLabel.add(
+      new Konva.Rect({
+        name: "depthLabelBg",
+        fill: "rgba(255, 255, 255, 0.94)",
+        cornerRadius: 999,
+        shadowColor: "rgba(31, 41, 55, 0.14)",
+        shadowBlur: 12,
+        shadowOffset: { x: 0, y: 3 },
+        shadowOpacity: 1,
+      })
+    );
+
+    aiGuideDepthLabel.add(
+      new Konva.Line({
+        name: "depthLabelPointer",
+        closed: true,
+        fill: "rgba(255, 255, 255, 0.94)",
+        shadowColor: "rgba(31, 41, 55, 0.08)",
+        shadowBlur: 6,
+        shadowOffset: { x: 0, y: 2 },
+        shadowOpacity: 1,
+      })
+    );
+
+    aiGuideDepthLabel.add(
+      new Konva.Text({
+        name: "depthLabelText",
+        text: "",
+        fontSize: 13,
+        fontFamily: DEFAULT_FONT_FAMILY,
+        fill: "#374151",
+        padding: 8,
+        align: "center",
+      })
+    );
+
+    layer.add(aiGuideDepthLabel);
+  }
+
+  const bgNode = aiGuideDepthLabel.findOne(".depthLabelBg") as Konva.Rect;
+  const pointerNode = aiGuideDepthLabel.findOne(".depthLabelPointer") as Konva.Line;
+  const textNode = aiGuideDepthLabel.findOne(".depthLabelText") as Konva.Text;
+  if (!bgNode || !pointerNode || !textNode) {
+    return;
+  }
+
+  textNode.text(text);
+  const textWidth = textNode.width();
+  const textHeight = textNode.height();
+
+  bgNode.setAttrs({
+    x: -textWidth / 2,
+    y: -(textHeight + AI_GUIDE_DEPTH_POINTER_HEIGHT),
+    width: textWidth,
+    height: textHeight,
+  });
+
+  pointerNode.points([
+    -AI_GUIDE_DEPTH_POINTER_WIDTH / 2,
+    -AI_GUIDE_DEPTH_POINTER_HEIGHT,
+    0,
+    0,
+    AI_GUIDE_DEPTH_POINTER_WIDTH / 2,
+    -AI_GUIDE_DEPTH_POINTER_HEIGHT,
+  ]);
+
+  textNode.position({
+    x: -textWidth / 2,
+    y: -(textHeight + AI_GUIDE_DEPTH_POINTER_HEIGHT),
+  });
+
+  aiGuideDepthLabel.position({ x: pos.x, y: pos.y });
+  aiGuideDepthLabel.show();
+  aiGuideDepthLabel.moveToTop();
 };
 
 // 根据“引导线长度 - 内环半径”动态调节右侧两个标签颜色：
@@ -877,6 +1045,11 @@ const clearAiAssist = () => {
     aiGuideEndCircle = null;
   }
 
+  if (aiGuideDepthLabel) {
+    aiGuideDepthLabel.destroy();
+    aiGuideDepthLabel = null;
+  }
+
   // 移除事件监听
   if (aiAssistState && aiAssistState.target) {
     const target = aiAssistState.target;
@@ -965,6 +1138,7 @@ const updateAiAssistPosition = () => {
   if (aiGuideEndCircle) {
     aiGuideEndCircle.hide();
   }
+  hideAiGuideDepthLabel();
 
   layer!.batchDraw();
 };
@@ -1004,9 +1178,11 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       Math.floor(distanceInRing / bandWidth)
     );
     updateAiRightClockLabelsColorByGuideLength(distance);
+    updateAiGuideDepthLabel(pos, getAiDepthLabelByBand(activeBandIndex));
   } else {
     // 没有引导线时，两侧标签保持相同默认色
     resetAiRightClockLabelsDefaultColor();
+    hideAiGuideDepthLabel();
   }
 
   // 更新所有扇区的样式
@@ -1019,7 +1195,10 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
       if (bandArc) {
         const isActiveBand = isActiveSlice && band === activeBandIndex;
         bandArc.setAttrs({
-          fill: isActiveBand ? activeFills[band] : fills[band],
+          fill: withAlphaColor(
+            isActiveBand ? activeFills[band] : fills[band],
+            AI_RING_FILL_OPACITY
+          ),
           stroke: isActiveBand ? "rgba(255, 255, 255, 0.92)" : AI_RING_BAND_STROKE,
           strokeWidth: isActiveBand ? 2.4 : 2,
           shadowColor: isActiveBand ? "rgba(96, 165, 250, 0.26)" : band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
@@ -1135,9 +1314,11 @@ const updateAiAssistInteraction = (pos: { x: number; y: number }) => {
     if (aiGuideEndCircle) {
       aiGuideEndCircle.hide();
     }
+    hideAiGuideDepthLabel();
     resetAiRightClockLabelsDefaultColor();
   } else {
     resetAiRightClockLabelsDefaultColor();
+    hideAiGuideDepthLabel();
   }
 
   // 确保变换器始终在最上层
@@ -1178,6 +1359,7 @@ const handleStageClick = (
       // 弹窗已经锁定时，不重复触发同一轮 AI 交互。
       if (aiAssistState.isLocked) return;
 
+      const { bandCount } = getCurrentAiRingTheme();
       const index = getAiRingSliceIndex(dx, dy);
       const label = aiRingLabels[index];
       const lineLength = distance - aiAssistState.innerRadius;
@@ -1185,6 +1367,13 @@ const handleStageClick = (
         0,
         aiAssistState.outerRadius - aiAssistState.innerRadius
       );
+      const bandWidth = Math.max(ringWidth / bandCount, 1);
+      const distanceInRing = Math.max(0, distance - aiAssistState.innerRadius);
+      const activeBandIndex = Math.min(
+        bandCount - 1,
+        Math.floor(distanceInRing / bandWidth)
+      );
+      const depthLabel = getAiDepthLabelByBand(activeBandIndex);
 
       const pointerPos = stage!.getPointerPosition();
       const screenPos = pointerPos
@@ -1228,6 +1417,7 @@ const handleStageClick = (
         }
         aiGuideEndCircle.show();
         aiGuideEndCircle.moveToTop();
+        updateAiGuideDepthLabel(pos, depthLabel);
         layer.batchDraw();
       }
 
@@ -1616,7 +1806,7 @@ const triggerAiAssist = (targetNode = null) => {
         outerRadius: bandOuter,
         angle: sliceAngle,
         rotation: index * sliceAngle + rotationOffset,
-        fill: fills[band],
+        fill: withAlphaColor(fills[band], AI_RING_FILL_OPACITY),
         stroke: AI_RING_BAND_STROKE,
         strokeWidth: 2,
         shadowColor: band === 0 ? "rgba(120, 126, 138, 0.22)" : undefined,
