@@ -518,7 +518,7 @@ const secondaryTopNavItems = computed(() => [
   },
   {
     key: "Fuse",
-    label: "Fuse",
+    label: "✨Fuse",
     hintKey: "Fuse",
     active: false,
     disabled: !canUseFuse.value,
