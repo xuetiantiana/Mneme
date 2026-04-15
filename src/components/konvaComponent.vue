@@ -24,6 +24,10 @@
       >
         Text
       </button>
+      <div class="tool-group" style="margin-left: 1em;">
+        <!-- <span class="zoom-label">scale:</span> -->
+        <span class="zoom-level">Scale:{{ Math.round(scale * 100) }}%</span>
+      </div>
     </div>
     <div class="toolbar">
       <div class="tool-group">
@@ -3729,7 +3733,10 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
   }
 
   textarea.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    const isSubmitShortcut = e.key === "Enter" && (e.ctrlKey || e.metaKey);
+
+    if (isSubmitShortcut) {
+      e.preventDefault();
       textNodeKonva.text(textarea.value);
       resizeGroupMeaningBg();
       removeTextarea();
@@ -3739,6 +3746,7 @@ const enterTextEditMode = (textNodeKonva: Konva.Text) => {
       }
     }
     if (e.key === "Escape") {
+      e.preventDefault();
       textNodeKonva.text(textarea.value);
       resizeGroupMeaningBg();
       removeTextarea();
@@ -5651,6 +5659,7 @@ defineExpose({
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
+  display: flex;
 }
 
 .toolbar {
@@ -5727,7 +5736,7 @@ input[type="range"] {
 }
 
 .zoom-level {
-  padding: 8px 12px;
+  padding: 2px 8px;
   background: #f0f0f0;
   border: 1px solid #ddd;
   border-radius: 4px;
